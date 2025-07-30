@@ -6,6 +6,10 @@ const cors = require('cors');
 const aigcRoutes = require('./routes/aigc');
 const classRoutes = require('./routes/classRoutes');
 const feedbackRouter = require('./routes/feedback');
+const allowedOrigins = [
+  'http://localhost:5173',
+  'https://pot-platform.vercel.app',
+];
 
 
 
@@ -18,7 +22,16 @@ const app = express();
 
 
 // 中间件配置
-app.use(cors({ origin: 'http://localhost:5173', credentials: true }));
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+}));
 app.use(express.json());
 
 
