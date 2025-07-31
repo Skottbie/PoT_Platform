@@ -173,11 +173,13 @@ const SubmitTask = () => {
             <div
               className={`border rounded-2xl p-4 bg-gray-50 space-y-3 transform transition-all duration-500 ease-in-out
                 ${isFullscreen
-                  ? 'fixed inset-0 w-full h-full z-50 bg-white p-4 flex flex-col opacity-100 scale-100'
+                  ? 'fixed inset-0 w-full h-full z-50 bg-white p-4 flex flex-col opacity-100 scale-100 
+                    md:items-center md:justify-center md:px-0'
                   : 'relative opacity-100 scale-100'
                 }
               `}
             >
+
 
 
               <div className="flex justify-between items-center mb-2">
@@ -210,7 +212,8 @@ const SubmitTask = () => {
               <div
                 className={`bg-white border flex-1 p-3 rounded-lg overflow-y-auto space-y-2
                   ${isFullscreen 
-                    ? 'flex-1 h-full text-lg leading-relaxed px-2 sm:px-4 space-y-3'
+                    ? 'flex-1 h-full text-lg leading-relaxed px-2 sm:px-4 space-y-3 
+                      md:max-w-3xl md:w-full md:mx-auto' 
                     : 'h-40 sm:h-52 md:h-64 text-sm leading-snug'
                   }
                 `}
@@ -218,6 +221,7 @@ const SubmitTask = () => {
                   if (el) el.scrollTop = el.scrollHeight;
                 }}
               >
+
 
                 {aigcLog.map((msg, idx) => (
                   <div key={idx}>
@@ -266,7 +270,8 @@ const SubmitTask = () => {
 
 
               {/* 输入区 */}
-              <div className="flex gap-2 mt-2 pb-16">
+              <div className={`flex gap-2 mt-2 pb-16 
+                ${isFullscreen ? 'md:max-w-3xl md:mx-auto w-full' : ''}`}>
                 <input
                   type="text"
                   value={input}
@@ -282,6 +287,7 @@ const SubmitTask = () => {
                   发送
                 </button>
               </div>
+                
             </div>
           )}
 
