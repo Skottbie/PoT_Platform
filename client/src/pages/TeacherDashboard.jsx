@@ -141,7 +141,7 @@ const TeacherDashboard = () => {
             </div>
 
             <div>
-              <p className="text-sm font-medium text-gray-700 mb-1">📌 选择关联班级</p>
+              <p className="text-sm font-semibold text-gray-700 mb-1">📌 选择关联班级</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {myClasses.map((cls) => (
                   <label key={cls._id} className="flex items-center gap-2 text-sm">
@@ -166,7 +166,7 @@ const TeacherDashboard = () => {
               </div>
             </div>
 
-
+            <p className="text-sm font-semibold text-gray-700 mb-1">📅设置截止时间</p>
             <input
               type="date"
               name="deadline"

@@ -37,7 +37,7 @@ const Navbar = ({ user }) => {
       {/* 第 2 行：邮箱 + 身份 + 登出 */}
       <div className="flex flex-wrap justify-between items-center text-sm gap-y-1 sm:gap-x-4">
         <span className="text-gray-600 truncate max-w-[80vw] sm:max-w-[200px] lg:max-w-[300px]">
-          👋 {user.email}
+           {user.email}
         </span>
         <span className="text-gray-500 text-xs">
           （{user.role === 'teacher' ? '教师' : '学生'}）
