@@ -199,7 +199,7 @@ const SubmitTask = () => {
               {/* 对话内容 */}
               <div
                 className={`bg-white border flex-1 p-3 rounded-lg text-sm space-y-2 overflow-y-auto
-                  ${isFullscreen ? 'flex-1 h-full' : 'h-40 sm:h-52 md:h-64'}
+                  ${isFullscreen ? 'text-base leading-relaxed' : 'h-40 sm:h-52 md:h-64'}
                 `}
                 ref={(el) => {
                   if (el) {
