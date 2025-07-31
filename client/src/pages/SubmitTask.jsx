@@ -197,8 +197,18 @@ const SubmitTask = () => {
               </div>
 
               {/* 对话内容 */}
-              <div className="bg-white border flex-1 overflow-y-auto p-3 rounded-lg text-sm space-y-2">
-                {(isFullscreen ? aigcLog : aigcLog.slice(-3)).map((msg, idx) => (
+              <div
+                className={`bg-white border flex-1 p-3 rounded-lg text-sm space-y-2 overflow-y-auto
+                  ${isFullscreen ? 'flex-1 h-full' : 'h-40 sm:h-52 md:h-64'}
+                `}
+                ref={(el) => {
+                  if (el) {
+                    // 每次渲染滚动到底部
+                    el.scrollTop = el.scrollHeight;
+                  }
+                }}
+              >
+                {aigcLog.map((msg, idx) => (
                   <div key={idx}>
                     <strong
                       className={msg.role === 'user' ? 'text-blue-600' : 'text-green-600'}
@@ -233,6 +243,7 @@ const SubmitTask = () => {
 
                 {loading && <p className="text-gray-400 text-xs mt-1">AI 生成中...</p>}
               </div>
+
 
               {/* 输入区 */}
               <div className="flex gap-2 mt-2 pb-16">
