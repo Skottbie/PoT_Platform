@@ -21,6 +21,12 @@ const SubmitTask = () => {
   const [isFullscreen, setIsFullscreen] = useState(false); // 全屏模式
 
   useEffect(() => {
+  localStorage.setItem('hideFeedback', isFullscreen ? '1' : '0');
+  const event = new Event('toggleFeedback');
+  window.dispatchEvent(event);
+}, [isFullscreen]);
+
+  useEffect(() => {
     const fetchTask = async () => {
       try {
         const res = await api.get(`/task/${taskId}`);
@@ -154,11 +160,14 @@ const SubmitTask = () => {
 
           {task.allowAIGC && (
             <div
-              className={`border rounded-2xl p-4 bg-gray-50 space-y-3 transition-all duration-500 ease-in-out
-              ${isFullscreen
-                ? 'fixed inset-0 w-full h-full z-50 bg-white p-4 flex flex-col'
-                : ''}`}
+              className={`border rounded-2xl p-4 bg-gray-50 space-y-3 
+                transition-all duration-500 ease-in-out transform
+                ${isFullscreen
+                  ? 'fixed inset-0 w-full h-full z-50 bg-white p-4 flex flex-col opacity-100 scale-100'
+                  : 'opacity-0 scale-95 pointer-events-none'}
+              `}
             >
+
               <div className="flex justify-between items-center mb-2">
                 <label className="font-semibold text-gray-700">💬 AIGC 对话区</label>
                 <button
@@ -187,7 +196,7 @@ const SubmitTask = () => {
 
               {/* 对话内容 */}
               <div className="bg-white border flex-1 overflow-y-auto p-3 rounded-lg text-sm space-y-2">
-                {aigcLog.map((msg, idx) => (
+                {(isFullscreen ? aigcLog : aigcLog.slice(-3)).map((msg, idx) => (
                   <div key={idx}>
                     <strong
                       className={msg.role === 'user' ? 'text-blue-600' : 'text-green-600'}
@@ -219,6 +228,7 @@ const SubmitTask = () => {
                     </ReactMarkdown>
                   </div>
                 ))}
+
                 {loading && <p className="text-gray-400 text-xs mt-1">AI 生成中...</p>}
               </div>
 

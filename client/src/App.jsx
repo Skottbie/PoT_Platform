@@ -11,7 +11,7 @@ import MyClasses from './pages/MyClasses';
 import ClassStudents from './pages/ClassStudents';
 import JoinClass from './pages/JoinClass';
 import ProtectedLayout from './components/ProtectedLayout';
-
+import { useState, useEffect } from 'react';
 import FeedbackWidget from './components/FeedbackWidget';
 
 
@@ -19,6 +19,15 @@ import Test from './Test'; // 导入测试组件
 
 
 function App() {
+  const [hideFeedback, setHideFeedback] = useState(false);
+  useEffect(() => {
+    const handler = () => {
+      setHideFeedback(localStorage.getItem('hideFeedback') === '1');
+    };
+    window.addEventListener('toggleFeedback', handler);
+    handler(); // 初始化同步
+    return () => window.removeEventListener('toggleFeedback', handler);
+  }, []);
   return (
     <Router>
       <Routes>
@@ -38,7 +47,7 @@ function App() {
 
         <Route path="/test" element={<Test />} />
       </Routes>
-      <FeedbackWidget />
+      {!hideFeedback && <FeedbackWidget />}
     </Router>
   );
 }
