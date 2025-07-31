@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../api/axiosInstance';
+import ReactMarkdown from 'react-markdown';
+
 
 const SubmitTask = () => {
   const { taskId } = useParams();
@@ -13,6 +15,8 @@ const SubmitTask = () => {
   const [aigcLog, setAigcLog] = useState([]);
   const [input, setInput] = useState('');
   const [alreadySubmitted, setAlreadySubmitted] = useState(false);
+  const [expanded, setExpanded] = useState(false);
+
 
   useEffect(() => {
     const fetchTask = async () => {
@@ -130,53 +134,106 @@ const SubmitTask = () => {
               required
             />
           </div>
-
+        
+          {/* AIGC 对话区 */}
           {task.allowAIGC && (
-            <div className="border rounded-2xl p-4 bg-gray-50 space-y-3">
-              <label className="block font-semibold text-gray-700">💬 AIGC 对话区</label>
+            <>
+              {/* ⬇️ 展示在小窗口中（非展开） */}
+              {!expanded && (
+                <div className="border rounded-2xl p-4 bg-gray-50 space-y-3">
+                  <label className="block font-semibold text-gray-700">💬 AIGC 对话区</label>
 
-              {/* 模型选择 */}
-              <div className="mb-2">
-                <label className="text-sm font-medium block mb-1 text-gray-600">选择 AI 模型</label>
-                <select
-                  value={model}
-                  onChange={(e) => setModel(e.target.value)}
-                  className="border p-2 rounded-lg w-full bg-white"
-                >
-                  <option value="openai">🌍 ChatGPT (OpenAI)</option>
-                  <option value="qwen">🇨🇳 通义千问 (Alibaba)</option>
-                </select>
-              </div>
+                  {/* 模型选择 */}
+                  <div className="mb-2">
+                    <label className="text-sm font-medium block mb-1 text-gray-600">选择 AI 模型</label>
+                    <select
+                      value={model}
+                      onChange={(e) => setModel(e.target.value)}
+                      className="border p-2 rounded-lg w-full bg-white"
+                    >
+                      <option value="openai">🌍 ChatGPT (OpenAI)</option>
+                      <option value="qwen">🇨🇳 通义千问 (Alibaba)</option>
+                    </select>
+                  </div>
 
-              <div className="bg-white border h-40 overflow-y-auto p-3 rounded-lg text-sm space-y-1">
-                {aigcLog.map((msg, idx) => (
-                  <p key={idx}>
-                    <strong className={msg.role === 'user' ? 'text-blue-600' : 'text-green-600'}>
-                      {msg.role === 'user' ? '我：' : 'AI：'}
-                    </strong>{' '}
-                    {msg.content}
-                  </p>
-                ))}
-              </div>
+                  <div className="h-32 overflow-y-auto bg-white border rounded-lg p-3 text-sm space-y-2">
+                    {aigcLog.map((msg, idx) => (
+                      <div key={idx}>
+                        <strong className={msg.role === 'user' ? 'text-blue-600' : 'text-green-600'}>
+                          {msg.role === 'user' ? '我：' : 'AI：'}
+                        </strong>{' '}
+                        <ReactMarkdown>{msg.content}</ReactMarkdown>
+                      </div>
+                    ))}
+                  </div>
 
-              <div className="flex gap-2 mt-2">
-                <input
-                  type="text"
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  placeholder="输入你的问题..."
-                  className="flex-1 border rounded-lg p-2"
-                />
-                <button
-                  type="button"
-                  onClick={handleAIGCSubmit}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700"
-                >
-                  发送
-                </button>
-              </div>
-            </div>
+                  <div className="flex gap-2 mt-2">
+                    <input
+                      type="text"
+                      value={input}
+                      onChange={(e) => setInput(e.target.value)}
+                      placeholder="输入你的问题..."
+                      className="flex-1 border rounded-lg p-2"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        handleAIGCSubmit();
+                        if (!expanded) setExpanded(true); // 自动展开
+                      }}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700"
+                    >
+                      发送
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* ⬇️ 展开模式（全屏） */}
+              {expanded && (
+                <div className="fixed inset-0 bg-white z-50 p-6 flex flex-col">
+                  <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-lg font-bold text-gray-800">💬 AIGC 对话中</h2>
+                    <button
+                      onClick={() => setExpanded(false)}
+                      className="text-sm text-blue-600 underline"
+                    >
+                      结束对话
+                    </button>
+                  </div>
+
+                  <div className="flex-1 overflow-y-auto border p-4 rounded-lg bg-gray-50 space-y-3 text-sm">
+                    {aigcLog.map((msg, idx) => (
+                      <div key={idx}>
+                        <strong className={msg.role === 'user' ? 'text-blue-600' : 'text-green-600'}>
+                          {msg.role === 'user' ? '我：' : 'AI：'}
+                        </strong>{' '}
+                        <ReactMarkdown>{msg.content}</ReactMarkdown>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="mt-4 flex gap-2">
+                    <input
+                      type="text"
+                      value={input}
+                      onChange={(e) => setInput(e.target.value)}
+                      placeholder="输入你的问题..."
+                      className="flex-1 border rounded-lg p-2"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleAIGCSubmit}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700"
+                    >
+                      发送
+                    </button>
+                  </div>
+                </div>
+              )}
+            </>
           )}
+
 
           <button
             type="submit"
