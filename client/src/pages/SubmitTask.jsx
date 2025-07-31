@@ -163,8 +163,10 @@ const SubmitTask = () => {
               className={`border rounded-2xl p-4 bg-gray-50 space-y-3 
                 transition-all duration-500 ease-in-out transform
                 ${isFullscreen
-                  ? 'fixed inset-0 w-full h-full z-50 bg-white p-4 flex flex-col opacity-100 scale-100'
-                  : 'opacity-0 scale-95 pointer-events-none'}
+                    ? 'fixed inset-0 w-full h-full z-50 bg-white p-4 flex flex-col opacity-100 scale-100'
+                    : 'opacity-100 scale-100 border rounded-2xl p-4 bg-gray-50 space-y-3'
+                  }
+
               `}
             >
 
