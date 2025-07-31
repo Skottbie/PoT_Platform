@@ -43,16 +43,31 @@
 
 
 @media (prefers-color-scheme: dark) {
-  body, html {
-    background: white !important;
+  html, body {
+    background-color: white !important;
     color: black !important;
+    -webkit-appearance: none !important;
   }
 
-  input, textarea, button {
-    background: white !important;
+  input, textarea, select, button {
+    background-color: white !important;
     color: black !important;
     border: 1px solid #ccc !important;
+    -webkit-appearance: none !important;
+    appearance: none !important;
+    box-shadow: none !important;
   }
 
-  /* 其他全局强制覆盖 */
+  ::placeholder {
+    color: #888 !important;
+    opacity: 1 !important;
+  }
+
+  /* 防止 iOS Safari 仍然自动黑化滚动条或边框 */
+  * {
+    background-color: white !important;
+    color: black !important;
+    border-color: #ccc !important;
+  }
 }
+
