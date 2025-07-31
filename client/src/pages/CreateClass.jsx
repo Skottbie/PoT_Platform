@@ -188,10 +188,10 @@ const CreateClass = () => {
         </form>
 
         <button
-          onClick={() => navigate('/teacher')}
-          className="mt-6 text-blue-600 underline text-sm"
-        >
-          ← 返回教师仪表盘
+              onClick={() => navigate('/teacher')}
+              className="bg-gray-300 text-gray-800 py-2 px-4 rounded-xl shadow hover:bg-gray-400 transition"
+            >
+              👈 返回仪表盘
         </button>
       </div>
     </div>
