@@ -198,20 +198,21 @@ const SubmitTask = () => {
 
               {/* 对话内容 */}
               <div
-                className={`bg-white border flex-1 p-3 rounded-lg text-sm space-y-2 overflow-y-auto
-                  ${isFullscreen ? 'text-base leading-relaxed' : 'h-40 sm:h-52 md:h-64'}
+                className={`bg-white border flex-1 p-3 rounded-lg overflow-y-auto space-y-2
+                  ${isFullscreen 
+                    ? 'flex-1 h-full text-lg leading-relaxed'  // 全屏时字体大、行距舒适
+                    : 'h-40 sm:h-52 md:h-64 text-sm leading-snug' // 非全屏字体小一点
+                  }
                 `}
                 ref={(el) => {
-                  if (el) {
-                    // 每次渲染滚动到底部
-                    el.scrollTop = el.scrollHeight;
-                  }
+                  if (el) el.scrollTop = el.scrollHeight; // 自动滚动到底部
                 }}
               >
                 {aigcLog.map((msg, idx) => (
                   <div key={idx}>
                     <strong
-                      className={msg.role === 'user' ? 'text-blue-600' : 'text-green-600'}
+                      className={`${msg.role === 'user' ? 'text-blue-600' : 'text-green-600'}
+                        ${isFullscreen ? 'text-xl' : 'text-base'}`} // 角色名也大一点
                     >
                       {msg.role === 'user' ? '我：' : 'AI：'}
                     </strong>{' '}
@@ -225,7 +226,9 @@ const SubmitTask = () => {
                               style={duotoneLight}
                               language={match ? match[1] : 'text'}
                               PreTag="div"
-                              className="rounded-lg my-1"
+                              className={`rounded-lg my-1 ${
+                                isFullscreen ? 'text-base' : 'text-sm'
+                              }`}
                               {...props}
                             >
                               {String(children).replace(/\n$/, '')}
@@ -241,8 +244,13 @@ const SubmitTask = () => {
                   </div>
                 ))}
 
-                {loading && <p className="text-gray-400 text-xs mt-1">AI 生成中...</p>}
+                {loading && (
+                  <p className={`mt-1 text-gray-400 ${isFullscreen ? 'text-base' : 'text-xs'}`}>
+                    AI 生成中...
+                  </p>
+                )}
               </div>
+
 
 
               {/* 输入区 */}
