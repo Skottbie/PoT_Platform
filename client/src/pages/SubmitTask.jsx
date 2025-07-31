@@ -27,6 +27,17 @@ const SubmitTask = () => {
 }, [isFullscreen]);
 
   useEffect(() => {
+  if (isFullscreen) {
+    document.body.style.overflow = 'hidden'; // 禁止背景滚动
+  } else {
+    document.body.style.overflow = '';
+  }
+  return () => (document.body.style.overflow = '');
+}, [isFullscreen]);
+
+
+
+  useEffect(() => {
     const fetchTask = async () => {
       try {
         const res = await api.get(`/task/${taskId}`);
@@ -160,15 +171,14 @@ const SubmitTask = () => {
 
           {task.allowAIGC && (
             <div
-              className={`border rounded-2xl p-4 bg-gray-50 space-y-3 
-                transition-all duration-500 ease-in-out transform
+              className={`border rounded-2xl p-4 bg-gray-50 space-y-3 transform transition-all duration-500 ease-in-out
                 ${isFullscreen
-                    ? 'fixed inset-0 w-full h-full z-50 bg-white p-4 flex flex-col opacity-100 scale-100'
-                    : 'opacity-100 scale-100 border rounded-2xl p-4 bg-gray-50 space-y-3'
-                  }
-
+                  ? 'fixed inset-0 w-full h-full z-50 bg-white p-4 flex flex-col opacity-100 scale-100'
+                  : 'relative opacity-100 scale-100'
+                }
               `}
             >
+
 
               <div className="flex justify-between items-center mb-2">
                 <label className="font-semibold text-gray-700">💬 AIGC 对话区</label>
@@ -200,22 +210,25 @@ const SubmitTask = () => {
               <div
                 className={`bg-white border flex-1 p-3 rounded-lg overflow-y-auto space-y-2
                   ${isFullscreen 
-                    ? 'flex-1 h-full text-lg leading-relaxed'  // 全屏时字体大、行距舒适
-                    : 'h-40 sm:h-52 md:h-64 text-sm leading-snug' // 非全屏字体小一点
+                    ? 'flex-1 h-full text-lg leading-relaxed px-2 sm:px-4 space-y-3'
+                    : 'h-40 sm:h-52 md:h-64 text-sm leading-snug'
                   }
                 `}
                 ref={(el) => {
-                  if (el) el.scrollTop = el.scrollHeight; // 自动滚动到底部
+                  if (el) el.scrollTop = el.scrollHeight;
                 }}
               >
+
                 {aigcLog.map((msg, idx) => (
                   <div key={idx}>
                     <strong
                       className={`${msg.role === 'user' ? 'text-blue-600' : 'text-green-600'}
-                        ${isFullscreen ? 'text-xl' : 'text-base'}`} // 角色名也大一点
+                        ${isFullscreen ? 'text-xl block mb-1' : 'text-base'}
+                      `}
                     >
                       {msg.role === 'user' ? '我：' : 'AI：'}
-                    </strong>{' '}
+                    </strong>
+                    {' '}
                     <ReactMarkdown
                       className="inline"
                       components={{
@@ -226,11 +239,10 @@ const SubmitTask = () => {
                               style={duotoneLight}
                               language={match ? match[1] : 'text'}
                               PreTag="div"
-                              className={`rounded-lg my-1 ${
-                                isFullscreen ? 'text-base' : 'text-sm'
-                              }`}
+                              className={`rounded-lg my-1 overflow-x-auto ${isFullscreen ? 'text-base leading-relaxed' : 'text-sm'}`}
                               {...props}
                             >
+
                               {String(children).replace(/\n$/, '')}
                             </SyntaxHighlighter>
                           ) : (
