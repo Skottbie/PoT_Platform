@@ -1,6 +1,8 @@
+// src/pages/TeacherTaskSubmissions.jsx
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../api/axiosInstance';
+import { API_BASE_URL } from '../config';
 
 const TeacherTaskSubmissions = () => {
   const { taskId } = useParams();
@@ -43,7 +45,7 @@ const TeacherTaskSubmissions = () => {
       <div className="space-y-1 text-sm">
         {isPreviewable && (
           <a
-            href={`http://localhost:5000/${url}`}
+            href={`${API_BASE_URL}/${url}`}
             target="_blank"
             rel="noreferrer"
             className="text-blue-600 underline mr-4"
@@ -52,7 +54,7 @@ const TeacherTaskSubmissions = () => {
           </a>
         )}
         <a
-          href={`http://localhost:5000/${filename}`}
+          href={`${API_BASE_URL}/${url}`}
           className="text-blue-600 underline"
         >
           ⬇️ 下载作业文件
@@ -73,7 +75,7 @@ const TeacherTaskSubmissions = () => {
         setExpandedJsons((prev) => ({ ...prev, [url]: null }));
       } else {
         try {
-          const res = await fetch(`http://localhost:5000/${url}`);
+          const res = await fetch(`${API_BASE_URL}/${url}`);
           const json = await res.json();
           setExpandedJsons((prev) => ({ ...prev, [url]: json }));
         } catch {
@@ -89,7 +91,7 @@ const TeacherTaskSubmissions = () => {
       <div className="mt-2 space-y-2">
         <div className="space-x-4 text-sm">
           <a
-            href={`http://localhost:5000/${filename}`}
+            href={`${API_BASE_URL}/${url}`}
             className="text-blue-600 underline"
           >
             ⬇️ 下载 AIGC记录
