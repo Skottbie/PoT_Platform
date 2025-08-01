@@ -1,3 +1,5 @@
+//src/pages/SubmitTask.jsx
+
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../api/axiosInstance';
@@ -138,7 +140,17 @@ const SubmitTask = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-10 px-4">
+    <div className="min-h-screen bg-gray-50 py-10 px-4 relative">
+      {/* 左上角返回按钮 */}
+      <button
+        onClick={() => navigate('/student')}
+        className="absolute top-6 left-6 text-sm px-4 py-2 rounded-lg
+                  bg-gray-200 hover:bg-gray-300 text-gray-700 shadow
+                  transition-colors"
+      >
+        ← 返回仪表盘
+      </button>
+
       <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow p-8 relative">
         <h1 className="text-2xl font-bold mb-4 text-gray-800">
           提交任务：{task.title}
@@ -171,7 +183,8 @@ const SubmitTask = () => {
 
           {task.allowAIGC && (
             <div
-              className={`border rounded-2xl p-4 bg-gray-50 space-y-3 transform transition-all duration-500 ease-in-out
+              className={`border rounded-2xl p-4 bg-gray-50 space-y-3
+                transform transition-all duration-500 ease-in-out
                 ${isFullscreen
                   ? `fixed inset-0 w-full h-full z-50 bg-white p-4 flex flex-col opacity-100 scale-100 
                     md:items-center md:justify-center md:px-0`
@@ -187,10 +200,13 @@ const SubmitTask = () => {
                 <button
                   type="button"
                   onClick={() => setIsFullscreen(!isFullscreen)}
-                  className="text-xs text-gray-500 underline"
+                  className="px-3 py-1 text-xs rounded-lg shadow 
+                            bg-gray-100 hover:bg-gray-200 text-gray-600 
+                            transition-colors"
                 >
                   {isFullscreen ? '退出全屏' : '全屏'}
                 </button>
+
               </div>
 
               {/* 模型选择 */}
@@ -270,7 +286,7 @@ const SubmitTask = () => {
 
 
               {/* 输入区 */}
-              <div className={`flex gap-2 mt-2 pb-16 
+              <div className={`flex gap-2 mt-2 
                 ${isFullscreen ? 'md:max-w-3xl md:mx-auto w-full' : ''}`}>
                 <input
                   type="text"
