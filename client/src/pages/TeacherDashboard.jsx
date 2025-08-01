@@ -84,21 +84,21 @@ const TeacherDashboard = () => {
           <div className="flex gap-3 mb-6">
             <button
               onClick={() => navigate('/create-class')}
-              className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-medium shadow transition-all"
+              className="px-3 py-1.5 text-sm rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium shadow-sm transition-all"
             >
               ➕ 创建新班级
             </button>
 
             <button
               onClick={() => navigate('/my-classes')}
-              className="px-4 py-2 rounded-xl bg-green-600 hover:bg-green-700 text-white font-medium shadow transition-all"
+              className="px-3 py-1.5 text-sm rounded-lg bg-green-600 hover:bg-green-700 text-white font-medium shadow-sm transition-all"
             >
               📚 管理我的班级
             </button>
           </div>
 
 
-          <h2 className="text-lg font-semibold text-gray-700 mb-4">发布新任务</h2>
+          <h2 className="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-4">发布新任务</h2>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <input
@@ -149,7 +149,7 @@ const TeacherDashboard = () => {
             </div>
 
             <div>
-              <p className="text-sm font-semibold text-gray-700 mb-1">📌 选择关联班级</p>
+              <p className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1">📌 选择关联班级</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {myClasses.map((cls) => (
                   <label key={cls._id} className="flex items-center gap-2 text-sm">
@@ -174,7 +174,7 @@ const TeacherDashboard = () => {
               </div>
             </div>
 
-            <p className="text-sm font-semibold text-gray-700 mb-1">📅设置截止时间</p>
+            <p className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1">📅设置截止时间</p>
             <input
               type="date"
               name="deadline"
@@ -233,12 +233,12 @@ const TeacherDashboard = () => {
                       : '未设置'}
                   </p>
                   <button
-                    onClick={() =>
-                      navigate(`/task/${task._id}/submissions`)
-                    }
-                    className="mt-2 inline-block text-blue-700 text-sm underline"
+                    onClick={() => navigate(`/task/${task._id}/submissions`)}
+                    className="mt-2 px-3 py-1.5 text-sm rounded-md 
+                                bg-blue-600 hover:bg-blue-700 
+                                text-white shadow-sm transition-all"
                   >
-                    查看提交记录 →
+                    查看提交记录
                   </button>
                 </div>
               ))}
