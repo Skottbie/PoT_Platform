@@ -194,30 +194,44 @@ const SubmitTask = () => {
           {task.allowAIGC && (
             <AnimatePresence mode="wait">
               <motion.div
-                key={isFullscreen ? 'fullscreen' : 'normal'}
+                layout
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
                 transition={{ duration: 0.3, ease: 'easeInOut' }}
-                className={`border rounded-2xl p-4 bg-gray-50 dark:bg-gray-700 space-y-3 relative 
+                className={`border rounded-2xl p-4 bg-gray-50 dark:bg-gray-700 space-y-3
                   ${isFullscreen
-                    ? `fixed inset-0 w-full h-full z-50 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm p-4 flex flex-col
-                      md:items-center md:justify-center md:px-0`
+                    ? 'fixed inset-0 w-full h-full z-50 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm p-4 flex flex-col md:items-center md:justify-center md:px-0'
                     : 'relative'
                   }
                 `}
               >
-              <div className="flex justify-between items-center mb-2">
-                <label className="font-semibold text-gray-700 dark:text-gray-200">💬 AIGC 对话区</label>
-                <button
-                  type="button"
-                  onClick={() => setIsFullscreen(!isFullscreen)}
-                  className="absolute top-4 right-4 px-3 py-1 text-xs rounded-lg bg-gray-200 hover:bg-gray-300 text-gray-700 
-                             dark:bg-gray-600 dark:text-gray-200 dark:hover:bg-gray-500 transition"
-                >
-                  {isFullscreen ? '退出全屏' : '全屏'}
-                </button>
-              </div>
+                <div className="flex justify-between items-center mb-2">
+                  <label className="font-semibold text-gray-700 dark:text-gray-200">💬 AIGC 对话区</label>
+
+                  {!isFullscreen && (
+                    <button
+                      type="button"
+                      onClick={() => setIsFullscreen(true)}
+                      className="px-3 py-1 text-xs rounded-lg bg-gray-200 hover:bg-gray-300 text-gray-700 
+                                dark:bg-gray-600 dark:text-gray-200 dark:hover:bg-gray-500 transition"
+                    >
+                      全屏
+                    </button>
+                  )}
+                </div>
+
+                {isFullscreen && (
+                  <button
+                    type="button"
+                    onClick={() => setIsFullscreen(false)}
+                    className="absolute top-4 right-4 px-3 py-1 text-xs rounded-lg bg-gray-200 hover:bg-gray-300 text-gray-700 
+                              dark:bg-gray-600 dark:text-gray-200 dark:hover:bg-gray-500 transition"
+                  >
+                    退出全屏
+                  </button>
+                )}
+
 
               {/* 模型选择 */}
               <div className="mb-2">
