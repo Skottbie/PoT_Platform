@@ -1,3 +1,4 @@
+//src/pages/CreateClass.jsx
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Papa from 'papaparse'; // CSV解析库
@@ -92,78 +93,110 @@ const CreateClass = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-10 px-4">
-      <div className="max-w-xl mx-auto bg-white p-8 rounded-2xl shadow">
-        <h1 className="text-2xl font-bold mb-4 text-gray-800">📘 创建新班级</h1>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-10 px-4 transition-colors duration-300">
+      <div className="relative max-w-xl mx-auto bg-white dark:bg-gray-800 
+                      p-8 rounded-2xl shadow-lg transition-colors duration-300">
+
+        {/* 返回仪表盘按钮 */}
+        <button
+          onClick={() => navigate('/teacher')}
+          className="absolute top-4 right-4 px-3 py-1.5 text-sm rounded-md 
+                    bg-gray-300 hover:bg-gray-400 text-gray-800 
+                    dark:bg-gray-600 dark:hover:bg-gray-500 dark:text-gray-100 
+                    shadow-sm transition-all"
+        >
+          👈 返回仪表盘
+        </button>
+
+        <h1 className="text-2xl font-bold mb-6 text-gray-800 dark:text-gray-100">
+          📘 创建新班级
+        </h1>
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label className="block font-medium text-gray-700 mb-1">班级名称 *</label>
+            <label className="block font-medium text-gray-700 dark:text-gray-200 mb-1">
+              班级名称 *
+            </label>
             <input
               name="name"
               value={form.name}
               onChange={handleChange}
-              className="w-full border p-2 rounded-lg"
+              className="w-full border border-gray-300 dark:border-gray-600
+                        rounded-lg bg-white dark:bg-gray-700
+                        text-gray-900 dark:text-gray-100 p-2
+                        transition-colors duration-300"
               placeholder="如：高一英语班A组"
               required
             />
           </div>
 
           <div>
-            <label className="block font-medium text-gray-700 mb-1">班级描述</label>
+            <label className="block font-medium text-gray-700 dark:text-gray-200 mb-1">
+              班级描述
+            </label>
             <textarea
               name="description"
               value={form.description}
               onChange={handleChange}
-              className="w-full border p-2 rounded-lg"
+              className="w-full border border-gray-300 dark:border-gray-600
+                        rounded-lg bg-white dark:bg-gray-700
+                        text-gray-900 dark:text-gray-100 p-2
+                        transition-colors duration-300"
               placeholder="可选，如教学目标、备注等"
               rows={3}
             />
           </div>
 
           <div>
-            <label className="block font-medium text-gray-700 mb-1">学生名单（CSV）*</label>
+            <label className="block font-medium text-gray-700 dark:text-gray-200 mb-1">
+              学生名单（CSV）*
+            </label>
             <input
               type="file"
               accept=".csv"
               onChange={handleFileChange}
-              className="w-full p-2 border rounded-lg bg-gray-50"
+              className="w-full border border-gray-300 dark:border-gray-600
+                        rounded-lg bg-white dark:bg-gray-700
+                        text-gray-900 dark:text-gray-100 p-2
+                        transition-colors duration-300"
               required
             />
-            <p className="text-xs text-gray-500 mt-1">
-              文件必须包含列 <strong>name</strong> 和 <strong>studentId</strong><br />
-              示例：
-              <br />
-              name,studentId<br />
-              张三,20230001<br />
-              李四,20230002
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              文件必须包含列 <strong>name</strong> 和 <strong>studentId</strong>
             </p>
           </div>
 
-          {/* ✅ CSV预览部分 */}
+          {/* CSV预览 */}
           {previewData.length > 0 && (
-            <div className="border rounded-lg bg-gray-50 p-3 text-sm">
-              <p className="font-medium mb-2 text-gray-700">👀 预览学生名单：</p>
+            <div className="border border-gray-300 dark:border-gray-600 
+                            rounded-lg bg-gray-50 dark:bg-gray-700 
+                            p-3 text-sm transition-colors duration-300">
+              <p className="font-medium mb-2 text-gray-700 dark:text-gray-200">
+                👀 预览学生名单：
+              </p>
               <div className="max-h-40 overflow-y-auto">
-                <table className="w-full text-left text-xs border">
-                  <thead className="bg-gray-200">
+                <table className="w-full text-left text-xs border border-gray-200 dark:border-gray-600">
+                  <thead className="bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-100">
                     <tr>
-                      <th className="p-1 border">姓名</th>
-                      <th className="p-1 border">学号</th>
+                      <th className="p-1 border border-gray-200 dark:border-gray-600">姓名</th>
+                      <th className="p-1 border border-gray-200 dark:border-gray-600">学号</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {/* 确保这里使用处理过的键名 */}
                     {previewData.map((row, idx) => (
-                      <tr key={idx} className="border-t">
-                        <td className="p-1 border">{row.name}</td>
-                        <td className="p-1 border">{row.studentId}</td>
+                      <tr
+                        key={idx}
+                        className="border-t border-gray-200 dark:border-gray-600
+                                  hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors duration-200"
+                      >
+                        <td className="p-1 border border-gray-200 dark:border-gray-600">{row.name}</td>
+                        <td className="p-1 border border-gray-200 dark:border-gray-600">{row.studentId}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                 共 {previewData.length} 条记录
               </p>
             </div>
@@ -171,28 +204,19 @@ const CreateClass = () => {
 
           <button
             type="submit"
-            className="w-full bg-blue-600 text-white py-2 rounded-xl shadow hover:bg-blue-700 transition-all"
+            className="w-full bg-blue-600 hover:bg-blue-700 
+                      text-white py-2 rounded-xl shadow 
+                      font-medium transition-all duration-300"
           >
             ✅ 创建班级
           </button>
 
           {message && (
-            <p
-              className={`text-sm mt-2 ${
-                message.startsWith('✅') ? 'text-green-600' : 'text-red-500'
-              }`}
-            >
+            <p className={`text-sm mt-2 ${message.startsWith('✅') ? 'text-green-600' : 'text-red-500'}`}>
               {message}
             </p>
           )}
         </form>
-
-        <button
-              onClick={() => navigate('/teacher')}
-              className="bg-gray-300 text-gray-800 py-2 px-4 rounded-xl shadow hover:bg-gray-400 transition"
-            >
-              👈 返回仪表盘
-        </button>
       </div>
     </div>
   );
