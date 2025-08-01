@@ -1,11 +1,12 @@
-//src/pages/SubmitTask.jsx
+// src/pages/SubmitTask.jsx
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../api/axiosInstance';
 import ReactMarkdown from 'react-markdown';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { duotoneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const SubmitTask = () => {
   const { taskId } = useParams();
@@ -22,22 +23,24 @@ const SubmitTask = () => {
   const [loading, setLoading] = useState(false); // AI生成中
   const [isFullscreen, setIsFullscreen] = useState(false); // 全屏模式
 
+  const chatBoxRef = useRef(null);
+
+  // 监听全屏状态，隐藏底部反馈
   useEffect(() => {
-  localStorage.setItem('hideFeedback', isFullscreen ? '1' : '0');
-  const event = new Event('toggleFeedback');
-  window.dispatchEvent(event);
-}, [isFullscreen]);
+    localStorage.setItem('hideFeedback', isFullscreen ? '1' : '0');
+    const event = new Event('toggleFeedback');
+    window.dispatchEvent(event);
+  }, [isFullscreen]);
 
+  // 全屏时禁用背景滚动
   useEffect(() => {
-  if (isFullscreen) {
-    document.body.style.overflow = 'hidden'; // 禁止背景滚动
-  } else {
-    document.body.style.overflow = '';
-  }
-  return () => (document.body.style.overflow = '');
-}, [isFullscreen]);
-
-
+    if (isFullscreen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => (document.body.style.overflow = '');
+  }, [isFullscreen]);
 
   useEffect(() => {
     const fetchTask = async () => {
@@ -53,6 +56,12 @@ const SubmitTask = () => {
     };
     fetchTask();
   }, [taskId, navigate]);
+
+  useEffect(() => {
+    if (chatBoxRef.current) {
+      chatBoxRef.current.scrollTop = chatBoxRef.current.scrollHeight;
+    }
+  }, [aigcLog, loading]);
 
   const handleAIGCSubmit = async () => {
     if (!input.trim()) return;
@@ -118,12 +127,12 @@ const SubmitTask = () => {
   };
 
   if (!task)
-    return <p className="text-center mt-10 text-gray-500">加载任务中...</p>;
+    return <p className="text-center mt-10 text-gray-500 dark:text-gray-400">加载任务中...</p>;
 
   if (alreadySubmitted) {
     return (
       <div className="p-8 max-w-xl mx-auto">
-        <h1 className="text-2xl font-bold mb-4 text-gray-800">
+        <h1 className="text-2xl font-bold mb-4 text-gray-800 dark:text-gray-100">
           提交任务：{task.title}
         </h1>
         <p className="text-green-600 text-sm">
@@ -140,23 +149,24 @@ const SubmitTask = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-10 px-4 relative">
-      {/* 左上角返回按钮 */}
-      <button
-        onClick={() => navigate('/student')}
-        className="absolute top-6 left-6 text-sm px-4 py-2 rounded-lg
-                  bg-gray-200 hover:bg-gray-300 text-gray-700 shadow
-                  transition-colors"
-      >
-        ← 返回仪表盘
-      </button>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-10 px-4 transition-colors duration-300">
+      <div className="max-w-2xl mx-auto bg-white dark:bg-gray-800 rounded-2xl shadow p-8 relative transition-colors duration-300">
 
-      <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow p-8 relative">
-        <h1 className="text-2xl font-bold mb-4 text-gray-800">
+        {/* 返回仪表盘按钮（卡片右上角） */}
+        <button
+          onClick={() => navigate('/student')}
+          className="absolute top-4 right-4 px-3 py-1 text-sm rounded-lg
+                     bg-gray-200 hover:bg-gray-300 text-gray-700 shadow
+                     dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 transition"
+        >
+          ← 返回仪表盘
+        </button>
+
+        <h1 className="text-2xl font-bold mb-4 text-gray-800 dark:text-gray-100">
           提交任务：{task.title}
         </h1>
 
-        <div className="text-sm text-gray-600 space-y-1 mb-6">
+        <div className="text-sm text-gray-600 dark:text-gray-300 space-y-1 mb-6">
           <p>📁 任务类型：{task.category}</p>
           <p>
             ⏰ 截止时间：
@@ -170,54 +180,54 @@ const SubmitTask = () => {
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label className="block mb-1 font-medium text-gray-700">
+            <label className="block mb-1 font-medium text-gray-700 dark:text-gray-200">
               作业文件（必传）
             </label>
             <input
               type="file"
               onChange={(e) => setFile(e.target.files[0])}
-              className="w-full p-2 border rounded-lg bg-gray-50"
+              className="w-full p-2 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:text-gray-100"
               required
             />
           </div>
 
           {task.allowAIGC && (
-            <div
-              className={`border rounded-2xl p-4 bg-gray-50 space-y-3
-                transform transition-all duration-500 ease-in-out
-                ${isFullscreen
-                  ? `fixed inset-0 w-full h-full z-50 bg-white p-4 flex flex-col opacity-100 scale-100 
-                    md:items-center md:justify-center md:px-0`
-                  : 'relative opacity-100 scale-100'
-                }
-              `}
-            >
-
-
-
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={isFullscreen ? 'fullscreen' : 'normal'}
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.3, ease: 'easeInOut' }}
+                className={`border rounded-2xl p-4 bg-gray-50 dark:bg-gray-700 space-y-3 
+                  ${isFullscreen
+                    ? `fixed inset-0 w-full h-full z-50 bg-white dark:bg-gray-800 p-4 flex flex-col
+                      md:items-center md:justify-center md:px-0`
+                    : 'relative'
+                  }
+                `}
+              >
               <div className="flex justify-between items-center mb-2">
-                <label className="font-semibold text-gray-700">💬 AIGC 对话区</label>
+                <label className="font-semibold text-gray-700 dark:text-gray-200">💬 AIGC 对话区</label>
                 <button
                   type="button"
                   onClick={() => setIsFullscreen(!isFullscreen)}
-                  className="px-3 py-1 text-xs rounded-lg shadow 
-                            bg-gray-100 hover:bg-gray-200 text-gray-600 
-                            transition-colors"
+                  className="px-3 py-1 text-xs rounded-lg bg-gray-200 hover:bg-gray-300 text-gray-700 
+                             dark:bg-gray-600 dark:text-gray-200 dark:hover:bg-gray-500 transition"
                 >
                   {isFullscreen ? '退出全屏' : '全屏'}
                 </button>
-
               </div>
 
               {/* 模型选择 */}
               <div className="mb-2">
-                <label className="text-sm font-medium block mb-1 text-gray-600">
+                <label className="text-sm font-medium block mb-1 text-gray-600 dark:text-gray-300">
                   选择 AI 模型
                 </label>
                 <select
                   value={model}
                   onChange={(e) => setModel(e.target.value)}
-                  className="border p-2 rounded-lg w-full bg-white"
+                  className="border p-2 rounded-lg w-full bg-white dark:bg-gray-600 dark:text-gray-100"
                 >
                   <option value="openai">🌍 ChatGPT (OpenAI)</option>
                   <option value="qwen">🇨🇳 通义千问 (Alibaba)</option>
@@ -226,19 +236,15 @@ const SubmitTask = () => {
 
               {/* 对话内容 */}
               <div
-                className={`bg-white border flex-1 p-3 rounded-lg overflow-y-auto space-y-2
+                ref={chatBoxRef}
+                className={`bg-white dark:bg-gray-600 border dark:border-gray-500 flex-1 p-3 rounded-lg overflow-y-auto space-y-2
                   ${isFullscreen 
                     ? `flex-1 h-full text-lg leading-relaxed px-2 sm:px-4 space-y-3 
                       md:max-w-3xl md:w-full md:mx-auto`
                     : 'h-40 sm:h-52 md:h-64 text-sm leading-snug'
                   }
                 `}
-                ref={(el) => {
-                  if (el) el.scrollTop = el.scrollHeight;
-                }}
               >
-
-
                 {aigcLog.map((msg, idx) => (
                   <div key={idx}>
                     <strong
@@ -247,8 +253,7 @@ const SubmitTask = () => {
                       `}
                     >
                       {msg.role === 'user' ? '我：' : 'AI：'}
-                    </strong>
-                    {' '}
+                    </strong>{' '}
                     <ReactMarkdown
                       className="inline"
                       components={{
@@ -262,11 +267,10 @@ const SubmitTask = () => {
                               className={`rounded-lg my-1 overflow-x-auto ${isFullscreen ? 'text-base leading-relaxed' : 'text-sm'}`}
                               {...props}
                             >
-
                               {String(children).replace(/\n$/, '')}
                             </SyntaxHighlighter>
                           ) : (
-                            <code className="bg-gray-200 px-1 rounded">{children}</code>
+                            <code className="bg-gray-200 dark:bg-gray-800 px-1 rounded">{children}</code>
                           );
                         },
                       }}
@@ -283,8 +287,6 @@ const SubmitTask = () => {
                 )}
               </div>
 
-
-
               {/* 输入区 */}
               <div className={`flex gap-2 mt-2 
                 ${isFullscreen ? 'md:max-w-3xl md:mx-auto w-full' : ''}`}>
@@ -293,18 +295,18 @@ const SubmitTask = () => {
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   placeholder="输入你的问题..."
-                  className="flex-1 border rounded-lg p-2"
+                  className="flex-1 border rounded-lg p-2 dark:bg-gray-800 dark:text-gray-100"
                 />
                 <button
                   type="button"
                   onClick={handleAIGCSubmit}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 whitespace-nowrap"
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 whitespace-nowrap transition"
                 >
                   发送
                 </button>
               </div>
-                
-            </div>
+              </motion.div>
+            </AnimatePresence>
           )}
 
           <button
