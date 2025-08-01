@@ -129,50 +129,68 @@ const TeacherTaskSubmissions = () => {
   }
 
   return (
-    <div className="p-8 max-w-4xl mx-auto">
-      <h1 className="text-2xl font-bold mb-4 text-gray-800">📄 提交记录</h1>
-      <button
-        onClick={() => navigate('/teacher')}
-        className="text-blue-600 underline text-sm mb-6 inline-block"
-      >
-        ← 返回教师首页
-      </button>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 px-4 py-8">
+      <div className="max-w-4xl mx-auto relative">
+        <button
+          onClick={() => navigate('/teacher')}
+          className="absolute top-0 right-0 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200
+                    py-2 px-4 rounded-xl shadow hover:bg-gray-300 dark:hover:bg-gray-600 transition"
+        >
+          ← 返回教师首页
+        </button>
 
-      {submissions.length === 0 ? (
-        <p className="text-gray-600">暂无学生提交。</p>
-      ) : (
-        <ul className="space-y-6">
-          {submissions.map((s) => (
-            <li
-              key={s._id}
-              className="border p-5 rounded-2xl bg-white shadow-md space-y-3"
-            >
-              <p className="text-sm text-gray-800">
-                <strong>👤 学生:</strong> {s.student?.email || '未知'}
-              </p>
-              <p className="text-sm text-gray-800">
-                <strong>📅 提交时间:</strong>{' '}
-                {new Date(s.submittedAt).toLocaleString()}
-              </p>
+        <h1 className="text-2xl font-bold mb-6 text-gray-800 dark:text-gray-100">
+          📄 提交记录
+        </h1>
 
-              <div>
-                <p className="font-semibold text-gray-700 mb-1">📎 作业文件:</p>
-                {renderFileLinks(s.fileUrl)}
-              </div>
-
-              {s.aigcLogUrl && (
-                <div>
-                  <p className="font-semibold text-gray-700 mt-4 mb-1">
-                    🤖 AIGC 原始记录:
+        {submissions.length === 0 ? (
+          <p className="text-gray-600 dark:text-gray-400">暂无学生提交。</p>
+        ) : (
+          <ul className="space-y-6">
+            {submissions.map((s) => {
+              const isMissingFile = !s.fileUrl;
+              return (
+                <li
+                  key={s._id}
+                  className={`p-5 rounded-2xl shadow-md space-y-3 border 
+                              transition 
+                              ${isMissingFile 
+                                  ? "bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-700 hover:bg-red-100 dark:hover:bg-red-900/30" 
+                                  : "bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:shadow-lg"}`}
+                >
+                  <p className="text-sm text-gray-800 dark:text-gray-200">
+                    <strong>👤 学生:</strong> {s.student?.email || '未知'}
                   </p>
-                  {renderAIGCLog(s.aigcLogUrl)}
-                </div>
-              )}
-            </li>
-          ))}
-        </ul>
-      )}
+                  <p className="text-sm text-gray-800 dark:text-gray-200">
+                    <strong>📅 提交时间:</strong>{' '}
+                    {new Date(s.submittedAt).toLocaleString()}
+                  </p>
+
+                  {s.fileUrl ? (
+                    <div>
+                      <p className="font-semibold text-gray-700 dark:text-gray-300 mb-1">📎 作业文件:</p>
+                      {renderFileLinks(s.fileUrl)}
+                    </div>
+                  ) : (
+                    <p className="text-red-600 dark:text-red-400 font-medium">❌ 学生未提交作业文件</p>
+                  )}
+
+                  {s.aigcLogUrl && (
+                    <div>
+                      <p className="font-semibold text-gray-700 dark:text-gray-300 mt-4 mb-1">
+                        🤖 AIGC 原始记录:
+                      </p>
+                      {renderAIGCLog(s.aigcLogUrl)}
+                    </div>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
     </div>
+
   );
 };
 
