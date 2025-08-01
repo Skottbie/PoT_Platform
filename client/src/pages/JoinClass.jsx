@@ -30,7 +30,7 @@ const JoinClass = () => {
       if (res.data.success) {
         setSuccessMsg('🎉 加入成功！');
         setTimeout(() => {
-          navigate('/'); // 成功后跳转主页或学生班级页
+          navigate('/student'); // 推荐跳转学生仪表盘
         }, 1500);
       } else {
         setError(res.data.message || '加入失败');
@@ -44,12 +44,25 @@ const JoinClass = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-      <div className="bg-white p-8 rounded-2xl shadow-md w-full max-w-md">
-        <h1 className="text-2xl font-bold text-center text-blue-700 mb-6">🔑 加入班级</h1>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center px-4 py-10">
+      <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-md w-full max-w-md relative">
+        
+        {/* 返回仪表盘按钮 */}
+        <button
+          onClick={() => navigate('/student')}
+          className="absolute top-4 right-4 text-sm px-3 py-1 rounded-lg
+                     bg-gray-200 hover:bg-gray-300 text-gray-700 shadow
+                     dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
+        >
+          ← 返回仪表盘
+        </button>
+
+        <h1 className="text-2xl font-bold text-center text-blue-700 dark:text-blue-400 mb-6">
+          🔑 加入班级
+        </h1>
 
         {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
-        {successMsg && <p className="text-green-600 text-sm mb-4">{successMsg}</p>}
+        {successMsg && <p className="text-green-600 dark:text-green-400 text-sm mb-4">{successMsg}</p>}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <input
@@ -59,7 +72,8 @@ const JoinClass = () => {
             value={formData.inviteCode}
             onChange={handleChange}
             required
-            className="w-full px-4 py-2 border rounded-lg"
+            className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400
+                       dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
           />
           <input
             type="text"
@@ -68,7 +82,8 @@ const JoinClass = () => {
             value={formData.studentId}
             onChange={handleChange}
             required
-            className="w-full px-4 py-2 border rounded-lg"
+            className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400
+                       dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
           />
           <input
             type="text"
@@ -77,13 +92,15 @@ const JoinClass = () => {
             value={formData.name}
             onChange={handleChange}
             required
-            className="w-full px-4 py-2 border rounded-lg"
+            className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400
+                       dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
           />
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition"
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg shadow transition
+                       dark:bg-blue-700 dark:hover:bg-blue-800 disabled:opacity-50"
           >
             {loading ? '正在提交...' : '加入班级'}
           </button>
@@ -94,3 +111,4 @@ const JoinClass = () => {
 };
 
 export default JoinClass;
+
