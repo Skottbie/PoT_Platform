@@ -253,7 +253,7 @@ const SubmitTask = () => {
                 ref={chatBoxRef}
                 className={`bg-white dark:bg-gray-600 border dark:border-gray-500 flex-1 p-3 rounded-lg overflow-y-auto space-y-2
                   ${isFullscreen 
-                    ? `flex-1 h-full pb-24 text-lg leading-relaxed px-2 sm:px-4 space-y-3 
+                    ? `flex-1 pb-32 text-lg leading-relaxed px-2 sm:px-4 space-y-3 
                       md:max-w-3xl md:w-full md:mx-auto`
                     : 'h-40 sm:h-52 md:h-64 text-sm leading-snug'
                   }
