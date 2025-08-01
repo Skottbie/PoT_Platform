@@ -42,32 +42,36 @@ const TeacherTaskSubmissions = () => {
     const isPreviewable = /\.(pdf|jpg|jpeg|png|gif)$/i.test(decoded);
 
     return (
-      <div className="space-y-1 text-sm">
-        {isPreviewable && (
+      <div className="space-y-2 text-sm mt-1">
+        <div className="flex flex-wrap gap-2">
+          {isPreviewable && (
+            <a
+              href={`${API_BASE_URL}/${url}`}
+              target="_blank"
+              rel="noreferrer"
+              className="px-3 py-1 rounded-lg bg-blue-600 text-white hover:bg-blue-700 
+                        dark:bg-blue-700 dark:hover:bg-blue-800 text-xs shadow"
+            >
+              🔍 预览文件
+            </a>
+          )}
           <a
             href={`${API_BASE_URL}/${url}`}
-            target="_blank"
-            rel="noreferrer"
-            className="text-blue-600 underline mr-4"
+            className="px-3 py-1 rounded-lg bg-blue-600 text-white hover:bg-blue-700 
+                      dark:bg-blue-700 dark:hover:bg-blue-800 text-xs shadow"
           >
-            🔍 预览文件
+            ⬇️ 下载作业文件
           </a>
-        )}
-        <a
-          href={`${API_BASE_URL}/${url}`}
-          className="text-blue-600 underline"
-        >
-          ⬇️ 下载作业文件
-        </a>
-        <p className="text-xs text-gray-500 mt-1">
+        </div>
+        <p className="text-xs text-gray-500 dark:text-gray-400">
           文件名：{decodeFilename(url)}
         </p>
       </div>
     );
   };
 
+
   const renderAIGCLog = (url) => {
-    const filename = decodeURIComponent(url.split('/').pop());
     const isExpanded = expandedJsons[url];
 
     const toggleJson = async () => {
@@ -89,30 +93,36 @@ const TeacherTaskSubmissions = () => {
 
     return (
       <div className="mt-2 space-y-2">
-        <div className="space-x-4 text-sm">
+        <div className="flex flex-wrap gap-2">
           <a
             href={`${API_BASE_URL}/${url}`}
-            className="text-blue-600 underline"
+            className="px-3 py-1 rounded-lg bg-blue-600 text-white hover:bg-blue-700 
+                      dark:bg-blue-700 dark:hover:bg-blue-800 text-xs shadow"
           >
             ⬇️ 下载 AIGC记录
           </a>
-          <button onClick={toggleJson} className="text-blue-600 underline">
+          <button
+            onClick={toggleJson}
+            className="px-3 py-1 rounded-lg bg-gray-200 hover:bg-gray-300 
+                      dark:bg-gray-700 dark:hover:bg-gray-600 
+                      text-gray-800 dark:text-gray-200 text-xs shadow"
+          >
             {isExpanded ? '🔽 收起内容' : '📖 展开查看内容'}
           </button>
         </div>
 
         {Array.isArray(isExpanded) && (
-          <div className="mt-3 border rounded-xl p-4 bg-gray-50 max-h-96 overflow-y-auto space-y-3">
+          <div className="mt-3 border rounded-xl p-4 bg-gray-50 dark:bg-gray-900 
+                          max-h-96 overflow-y-auto space-y-3">
             {isExpanded.map((entry, idx) => (
               <div
                 key={idx}
-                className={`max-w-[75%] px-4 py-2 rounded-xl shadow-sm text-sm whitespace-pre-wrap ${
-                  entry.role === 'user'
-                    ? 'bg-blue-100 self-start text-left ml-2'
-                    : 'bg-green-100 self-end text-right mr-2'
-                }`}
+                className={`max-w-[75%] px-4 py-2 rounded-xl shadow-sm text-sm whitespace-pre-wrap 
+                          ${entry.role === 'user'
+                              ? 'bg-blue-100 dark:bg-blue-900/40 self-start text-left ml-2'
+                              : 'bg-green-100 dark:bg-green-900/40 self-end text-right mr-2'}`}
               >
-                <div className="text-xs font-medium text-gray-600 mb-1">
+                <div className="text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">
                   {entry.role === 'user' ? '🧑 学生提问' : '🤖 AI 回复'}
                 </div>
                 {entry.content}
@@ -123,6 +133,7 @@ const TeacherTaskSubmissions = () => {
       </div>
     );
   };
+
 
   if (loading) {
     return <p className="text-center mt-10 text-gray-500">加载中...</p>;
