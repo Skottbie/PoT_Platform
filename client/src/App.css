@@ -43,17 +43,18 @@
 }
 
 
+/* 暗色模式样式，修正为暗底亮字 */
 @media (prefers-color-scheme: dark) {
   html, body {
-    background-color: white !important;
-    color: black !important;
+    background-color: #121212 !important;
+    color: #e0e0e0 !important;
     -webkit-appearance: none !important;
   }
 
   input, textarea, select, button {
-    background-color: white !important;
-    color: black !important;
-    border: 1px solid #ccc !important;
+    background-color: #1e1e1e !important;
+    color: #e0e0e0 !important;
+    border: 1px solid #444 !important;
     -webkit-appearance: none !important;
     appearance: none !important;
     box-shadow: none !important;
@@ -66,9 +67,9 @@
 
   /* 防止 iOS Safari 仍然自动黑化滚动条或边框 */
   * {
-    background-color: white !important;
-    color: black !important;
-    border-color: #ccc !important;
+    background-color: transparent !important;
+    color: inherit !important;
+    border-color: #444 !important;
   }
 }
 
