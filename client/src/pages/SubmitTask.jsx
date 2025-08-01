@@ -305,7 +305,7 @@ const SubmitTask = () => {
               <div
                 className={`flex gap-2 mt-2 ${
                   isFullscreen
-                    ? 'md:max-w-3xl md:mx-auto w-full mb-20'
+                    ? 'md:max-w-3xl md:mx-auto w-full pb-16'
                     : ''
                 }`}
               >
