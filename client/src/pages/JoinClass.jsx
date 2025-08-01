@@ -50,11 +50,11 @@ const JoinClass = () => {
         {/* 返回仪表盘按钮 */}
         <button
           onClick={() => navigate('/student')}
-          className="absolute top-4 right-4 text-sm px-3 py-1 rounded-lg
+          className="absolute top-4 left-4 text-sm px-3 py-1 rounded-lg
                      bg-gray-200 hover:bg-gray-300 text-gray-700 shadow
                      dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
         >
-          ← 返回仪表盘
+          👈 返回仪表盘
         </button>
 
         <h1 className="text-2xl font-bold text-center text-blue-700 dark:text-blue-400 mb-6">
