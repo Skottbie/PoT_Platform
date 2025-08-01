@@ -162,7 +162,11 @@ const CreateClass = () => {
               required
             />
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              文件必须包含列 <strong>name</strong> 和 <strong>studentId</strong>
+              文件必须包含列 <strong>name</strong> 和 <strong>studentId</strong><br />
+              示例：<br />
+              name,studentId<br />
+              张三,20230001<br />
+              李四,20230002
             </p>
           </div>
 
