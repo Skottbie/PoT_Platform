@@ -159,7 +159,7 @@ const SubmitTask = () => {
                      bg-gray-200 hover:bg-gray-300 text-gray-700 shadow
                      dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 transition"
         >
-          ← 返回仪表盘
+          👈 返回仪表盘
         </button>
 
         <h1 className="text-2xl font-bold mb-4 text-gray-800 dark:text-gray-100">
@@ -199,115 +199,131 @@ const SubmitTask = () => {
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
                 transition={{ duration: 0.3, ease: 'easeInOut' }}
-                className={`border rounded-2xl p-4 bg-gray-50 dark:bg-gray-700 space-y-3 
+                className={`border rounded-2xl p-4 space-y-3 transform transition-all duration-500 ease-in-out
                   ${isFullscreen
-                    ? `fixed inset-0 w-full h-full z-50 bg-white dark:bg-gray-800 p-4 flex flex-col
-                      md:items-center md:justify-center md:px-0`
-                    : 'relative'
+                    ? `fixed inset-0 w-full h-full z-50 bg-white/80 dark:bg-gray-800/80
+                      backdrop-blur-md shadow-2xl p-6 flex flex-col pb-24 md:items-center md:justify-center`
+                    : 'relative bg-gray-50 dark:bg-gray-700'
                   }
                 `}
               >
-              <div className="flex justify-between items-center mb-2">
-                <label className="font-semibold text-gray-700 dark:text-gray-200">💬 AIGC 对话区</label>
-                <button
-                  type="button"
-                  onClick={() => setIsFullscreen(!isFullscreen)}
-                  className="px-3 py-1 text-xs rounded-lg bg-gray-200 hover:bg-gray-300 text-gray-700 
-                             dark:bg-gray-600 dark:text-gray-200 dark:hover:bg-gray-500 transition"
-                >
-                  {isFullscreen ? '退出全屏' : '全屏'}
-                </button>
-              </div>
+                {/* 顶部标题 + 退出全屏按钮 */}
+                <div className="flex justify-between items-center mb-2 relative">
+                  <label className="font-semibold text-gray-700 dark:text-gray-200">💬 AIGC 对话区</label>
 
-              {/* 模型选择 */}
-              <div className="mb-2">
-                <label className="text-sm font-medium block mb-1 text-gray-600 dark:text-gray-300">
-                  选择 AI 模型
-                </label>
-                <select
-                  value={model}
-                  onChange={(e) => setModel(e.target.value)}
-                  className="border p-2 rounded-lg w-full bg-white dark:bg-gray-600 dark:text-gray-100"
-                >
-                  <option value="openai">🌍 ChatGPT (OpenAI)</option>
-                  <option value="qwen">🇨🇳 通义千问 (Alibaba)</option>
-                </select>
-              </div>
-
-              {/* 对话内容 */}
-              <div
-                ref={chatBoxRef}
-                className={`bg-white dark:bg-gray-600 border dark:border-gray-500 flex-1 p-3 rounded-lg overflow-y-auto space-y-2
-                  ${isFullscreen 
-                    ? `flex-1 h-full text-lg leading-relaxed px-2 sm:px-4 space-y-3 
-                      md:max-w-3xl md:w-full md:mx-auto`
-                    : 'h-40 sm:h-52 md:h-64 text-sm leading-snug'
-                  }
-                `}
-              >
-                {aigcLog.map((msg, idx) => (
-                  <div key={idx}>
-                    <strong
-                      className={`${msg.role === 'user' ? 'text-blue-600' : 'text-green-600'}
-                        ${isFullscreen ? 'text-xl block mb-1' : 'text-base'}
-                      `}
+                  {isFullscreen ? (
+                    <button
+                      type="button"
+                      onClick={() => setIsFullscreen(false)}
+                      className="absolute top-0 right-0 m-2 p-2 bg-gray-800/70 hover:bg-gray-700
+                                text-white rounded-full shadow transition"
                     >
-                      {msg.role === 'user' ? '我：' : 'AI：'}
-                    </strong>{' '}
-                    <ReactMarkdown
-                      className="inline"
-                      components={{
-                        code({ inline, className, children, ...props }) {
-                          const match = /language-(\w+)/.exec(className || '');
-                          return !inline ? (
-                            <SyntaxHighlighter
-                              style={duotoneLight}
-                              language={match ? match[1] : 'text'}
-                              PreTag="div"
-                              className={`rounded-lg my-1 overflow-x-auto ${isFullscreen ? 'text-base leading-relaxed' : 'text-sm'}`}
-                              {...props}
-                            >
-                              {String(children).replace(/\n$/, '')}
-                            </SyntaxHighlighter>
-                          ) : (
-                            <code className="bg-gray-200 dark:bg-gray-800 px-1 rounded">{children}</code>
-                          );
-                        },
-                      }}
+                      ✖
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setIsFullscreen(true)}
+                      className="text-xs text-gray-500 hover:text-gray-700 underline"
                     >
-                      {msg.content}
-                    </ReactMarkdown>
-                  </div>
-                ))}
+                      全屏
+                    </button>
+                  )}
+                </div>
 
-                {loading && (
-                  <p className={`mt-1 text-gray-400 ${isFullscreen ? 'text-base' : 'text-xs'}`}>
-                    AI 生成中...
-                  </p>
-                )}
-              </div>
+                {/* 模型选择 */}
+                <div className="mb-2">
+                  <label className="text-sm font-medium block mb-1 text-gray-600 dark:text-gray-300">
+                    选择 AI 模型
+                  </label>
+                  <select
+                    value={model}
+                    onChange={(e) => setModel(e.target.value)}
+                    className="border p-2 rounded-lg w-full bg-white dark:bg-gray-900 dark:text-gray-100"
+                  >
+                    <option value="openai">🌍 ChatGPT (OpenAI)</option>
+                    <option value="qwen">🇨🇳 通义千问 (Alibaba)</option>
+                  </select>
+                </div>
 
-              {/* 输入区 */}
-              <div className={`flex gap-2 mt-2 
-                ${isFullscreen ? 'md:max-w-3xl md:mx-auto w-full' : ''}`}>
-                <input
-                  type="text"
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  placeholder="输入你的问题..."
-                  className="flex-1 border rounded-lg p-2 dark:bg-gray-800 dark:text-gray-100"
-                />
-                <button
-                  type="button"
-                  onClick={handleAIGCSubmit}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 whitespace-nowrap transition"
+                {/* 对话内容 */}
+                <div
+                  className={`bg-white dark:bg-gray-900 border dark:border-gray-600 flex-1 p-3 
+                              rounded-lg overflow-y-auto space-y-2
+                    ${isFullscreen 
+                      ? 'flex-1 h-full text-lg leading-relaxed px-2 sm:px-4 space-y-3 md:max-w-3xl md:w-full md:mx-auto'
+                      : 'h-40 sm:h-52 md:h-64 text-sm leading-snug'
+                    }
+                  `}
+                  ref={(el) => {
+                    if (el) el.scrollTop = el.scrollHeight;
+                  }}
                 >
-                  发送
-                </button>
-              </div>
+                  {aigcLog.map((msg, idx) => (
+                    <div key={idx}>
+                      <strong
+                        className={`${msg.role === 'user' ? 'text-blue-600' : 'text-green-600'}
+                          ${isFullscreen ? 'text-xl block mb-1' : 'text-base'}
+                        `}
+                      >
+                        {msg.role === 'user' ? '我：' : 'AI：'}
+                      </strong>{' '}
+                      <ReactMarkdown
+                        className="inline"
+                        components={{
+                          code({ inline, className, children, ...props }) {
+                            const match = /language-(\w+)/.exec(className || '');
+                            return !inline ? (
+                              <SyntaxHighlighter
+                                style={duotoneLight}
+                                language={match ? match[1] : 'text'}
+                                PreTag="div"
+                                className={`rounded-lg my-1 overflow-x-auto ${
+                                  isFullscreen ? 'text-base leading-relaxed' : 'text-sm'
+                                }`}
+                                {...props}
+                              >
+                                {String(children).replace(/\n$/, '')}
+                              </SyntaxHighlighter>
+                            ) : (
+                              <code className="bg-gray-200 dark:bg-gray-700 px-1 rounded">{children}</code>
+                            );
+                          },
+                        }}
+                      >
+                        {msg.content}
+                      </ReactMarkdown>
+                    </div>
+                  ))}
+
+                  {loading && (
+                    <p className={`mt-1 text-gray-400 ${isFullscreen ? 'text-base' : 'text-xs'}`}>
+                      AI 生成中...
+                    </p>
+                  )}
+                </div>
+
+                {/* 输入区 */}
+                <div className={`flex gap-2 mt-2 ${isFullscreen ? 'md:max-w-3xl md:mx-auto w-full' : ''}`}>
+                  <input
+                    type="text"
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    placeholder="输入你的问题..."
+                    className="flex-1 border rounded-lg p-2 dark:bg-gray-800 dark:text-gray-100"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAIGCSubmit}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 whitespace-nowrap"
+                  >
+                    发送
+                  </button>
+                </div>
               </motion.div>
             </AnimatePresence>
           )}
+
 
           <button
             type="submit"
