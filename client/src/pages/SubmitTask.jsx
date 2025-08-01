@@ -155,7 +155,7 @@ const SubmitTask = () => {
         {/* 返回仪表盘按钮（卡片右上角） */}
         <button
           onClick={() => navigate('/student')}
-          className="absolute top-4 right-4 px-3 py-1 text-sm rounded-lg
+          className="absolute top-2 right-4 px-3 py-1 text-sm rounded-lg
                      bg-gray-200 hover:bg-gray-300 text-gray-700 shadow
                      dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 transition"
         >
