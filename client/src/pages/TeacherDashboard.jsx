@@ -74,26 +74,28 @@ const TeacherDashboard = () => {
     return <p className="text-center mt-10 text-gray-500">加载中...</p>;
 
   return (
-    <div className="min-h-screen bg-gray-50 py-10 px-4">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-10 px-4 transition-colors duration-300">
       <div className="max-w-2xl mx-auto space-y-10">
-        <div className="bg-white rounded-2xl shadow p-6">
-          <h1 className="text-2xl font-bold text-gray-800 mb-2">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 transition-colors duration-300">
+          <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-4">
             👩‍🏫 欢迎回来，{user.email}
           </h1>
 
-          <button
-            onClick={() => navigate('/create-class')}
-            className="mb-4 inline-block text-blue-600 text-sm underline"
-          >
-            ➕ 创建新班级
-          </button>
+          <div className="flex gap-3 mb-6">
+            <button
+              onClick={() => navigate('/create-class')}
+              className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-medium shadow transition-all"
+            >
+              ➕ 创建新班级
+            </button>
 
-          <button
-            onClick={() => navigate('/my-classes')}
-            className="mb-4 inline-block text-green-600 text-sm underline ml-4"
-          >
-            📚 管理我的班级
-          </button>
+            <button
+              onClick={() => navigate('/my-classes')}
+              className="px-4 py-2 rounded-xl bg-green-600 hover:bg-green-700 text-white font-medium shadow transition-all"
+            >
+              📚 管理我的班级
+            </button>
+          </div>
 
 
           <h2 className="text-lg font-semibold text-gray-700 mb-4">发布新任务</h2>
@@ -106,14 +108,20 @@ const TeacherDashboard = () => {
               value={form.title}
               onChange={handleChange}
               required
-              className="w-full border p-2 rounded-lg bg-gray-50"
+              className="w-full border border-gray-300 dark:border-gray-600 
+                        rounded-lg bg-white dark:bg-gray-700 
+                        text-gray-900 dark:text-gray-100 
+                        transition-colors duration-300 p-2"
             />
 
             <select
               name="category"
               value={form.category}
               onChange={handleChange}
-              className="w-full border p-2 rounded-lg bg-gray-50"
+              className="w-full border border-gray-300 dark:border-gray-600 
+                        rounded-lg bg-white dark:bg-gray-700 
+                        text-gray-900 dark:text-gray-100 
+                        transition-colors duration-300 p-2"
             >
               <option value="课堂练习">课堂练习</option>
               <option value="课程任务">课程任务</option>
@@ -172,10 +180,15 @@ const TeacherDashboard = () => {
               name="deadline"
               value={form.deadline}
               onChange={handleChange}
-              className="w-full border p-2 rounded-lg bg-gray-50"
+              className="w-full border border-gray-300 dark:border-gray-600 
+                        rounded-lg bg-white dark:bg-gray-700 
+                        text-gray-900 dark:text-gray-100 
+                        transition-colors duration-300 p-2"
             />
 
-            <button className="w-full bg-blue-600 text-white p-2 rounded-xl shadow hover:bg-blue-700 transition-all">
+            <button className="w-full bg-blue-600 hover:bg-blue-700 
+                              text-white p-2 rounded-xl shadow 
+                              font-medium transition-all duration-300">
               📤 发布任务
             </button>
 
@@ -192,26 +205,28 @@ const TeacherDashboard = () => {
         </div>
 
         <div>
-          <h2 className="text-lg font-bold text-gray-800 mb-3">📂 我发布的任务</h2>
+          <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-3">📂 我发布的任务</h2>
           {tasks.length === 0 ? (
-            <p className="text-sm text-gray-600">暂无任务</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400">暂无任务</p>
           ) : (
             <div className="space-y-4">
               {tasks.map((task) => (
                 <div
                   key={task._id}
-                  className="border rounded-2xl p-4 bg-white shadow-sm"
+                  className="border border-gray-200 dark:border-gray-700 
+                            rounded-2xl p-4 bg-white dark:bg-gray-800 
+                            shadow transition-colors duration-300"
                 >
-                  <p className="font-semibold text-lg text-gray-800">
+                  <p className="font-semibold text-lg text-gray-800 dark:text-gray-100">
                     {task.title}
                   </p>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
                     分类：{task.category}
                   </p>
 
 
 
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
                     截止时间：{' '}
                     {task.deadline
                       ? new Date(task.deadline).toLocaleDateString()
