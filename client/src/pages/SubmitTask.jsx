@@ -201,7 +201,7 @@ const SubmitTask = () => {
                 transition={{ duration: 0.3, ease: 'easeInOut' }}
                 className={`border rounded-2xl p-4 bg-gray-50 dark:bg-gray-700 space-y-3 relative 
                   ${isFullscreen
-                    ? `fixed inset-0 w-full h-full z-50 bg-white dark:bg-gray-800 p-4 flex flex-col
+                    ? `fixed inset-0 w-full h-full z-50 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm p-4 flex flex-col
                       md:items-center md:justify-center md:px-0`
                     : 'relative'
                   }
@@ -239,7 +239,7 @@ const SubmitTask = () => {
                 ref={chatBoxRef}
                 className={`bg-white dark:bg-gray-600 border dark:border-gray-500 flex-1 p-3 rounded-lg overflow-y-auto space-y-2
                   ${isFullscreen 
-                    ? `flex-1 h-full pb-12 text-lg leading-relaxed px-2 sm:px-4 space-y-3 
+                    ? `flex-1 h-full pb-24 text-lg leading-relaxed px-2 sm:px-4 space-y-3 
                       md:max-w-3xl md:w-full md:mx-auto`
                     : 'h-40 sm:h-52 md:h-64 text-sm leading-snug'
                   }
