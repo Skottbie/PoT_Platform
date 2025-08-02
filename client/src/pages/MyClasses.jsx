@@ -53,23 +53,27 @@ const MyClasses = () => {
           <div className="flex space-x-2 sm:space-x-3 shrink-0">
             <button
               onClick={() => navigate('/teacher')}
-              className="bg-gray-300 dark:bg-gray-700 text-gray-800 dark:text-gray-100 
-                        py-1 sm:py-2 px-3 sm:px-4 rounded-xl shadow 
-                        hover:bg-gray-400 dark:hover:bg-gray-600 transition 
-                        text-xs sm:text-sm md:text-base"
+              className="px-3 sm:px-4 py-1 sm:py-2 text-xs sm:text-sm md:text-base rounded-xl
+                        bg-white/60 dark:bg-gray-700/60
+                        border border-gray-300/40 dark:border-gray-600/40
+                        text-gray-800 dark:text-gray-100 shadow-sm backdrop-blur-md
+                        hover:bg-white/80 dark:hover:bg-gray-700/80 hover:shadow-md hover:scale-[1.02]
+                        active:scale-95 transition-all duration-200"
             >
               👈 返回仪表盘
             </button>
 
             <button
               onClick={() => navigate('/create-class')}
-              className="bg-blue-600 text-white 
-                        py-1 sm:py-2 px-3 sm:px-4 rounded-xl shadow 
-                        hover:bg-blue-700 transition 
-                        text-xs sm:text-sm md:text-base"
+              className="px-3 sm:px-4 py-1 sm:py-2 text-xs sm:text-sm md:text-base rounded-xl
+                        bg-gradient-to-r from-blue-500/80 to-purple-500/80
+                        text-white shadow-md backdrop-blur-md
+                        hover:from-blue-500 hover:to-purple-500 hover:shadow-lg hover:scale-[1.02]
+                        active:scale-95 transition-all duration-200"
             >
               ➕ 创建新班级
             </button>
+
           </div>
         </div>
 
@@ -86,9 +90,13 @@ const MyClasses = () => {
             {classes.map((cls) => (
               <div
                 key={cls._id}
-                className="bg-white dark:bg-gray-800 p-5 rounded-2xl 
-                          shadow hover:shadow-lg transition-colors duration-200"
+                className="p-5 rounded-2xl 
+                          bg-white/70 dark:bg-gray-800/60
+                          border border-gray-200/50 dark:border-gray-700/50
+                          shadow-md backdrop-blur-md
+                          hover:shadow-xl hover:scale-[1.01] transition-all duration-200"
               >
+
                 <h2 className="text-lg font-bold text-blue-700 dark:text-blue-400">
                   {cls.name}
                 </h2>
@@ -121,11 +129,15 @@ const MyClasses = () => {
 
                 <button
                   onClick={() => navigate(`/class/${cls._id}/students`)}
-                  className="mt-4 w-full text-sm bg-blue-600 text-white 
-                            hover:bg-blue-700 rounded-lg py-2 transition"
+                  className="mt-4 w-full text-sm py-2 rounded-xl
+                            bg-gradient-to-r from-blue-500/80 to-purple-500/80
+                            text-white shadow-md backdrop-blur-md
+                            hover:from-blue-500 hover:to-purple-500 hover:shadow-lg hover:scale-[1.02]
+                            active:scale-95 transition-all duration-200"
                 >
                   👀 查看学生
                 </button>
+
               </div>
             ))}
           </div>
