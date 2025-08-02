@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../api/axiosInstance';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { duotoneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -260,16 +261,16 @@ const SubmitTask = () => {
                 `}
               >
                 {aigcLog.map((msg, idx) => (
-                  <div key={idx}>
+                  <div key={idx} className="mb-2">
                     <strong
                       className={`${msg.role === 'user' ? 'text-blue-600' : 'text-green-600'}
-                        ${isFullscreen ? 'text-xl block mb-1' : 'text-base'}
-                      `}
+                        ${isFullscreen ? 'text-xl block mb-1' : 'text-base'}`}
                     >
                       {msg.role === 'user' ? '我：' : 'AI：'}
-                    </strong>{' '}
+                    </strong>
+
                     <ReactMarkdown
-                      className="inline"
+                      remarkPlugins={[remarkGfm]}
                       components={{
                         code({ inline, className, children, ...props }) {
                           const match = /language-(\w+)/.exec(className || '');
@@ -278,13 +279,40 @@ const SubmitTask = () => {
                               style={duotoneLight}
                               language={match ? match[1] : 'text'}
                               PreTag="div"
-                              className={`rounded-lg my-1 overflow-x-auto ${isFullscreen ? 'text-base leading-relaxed' : 'text-sm'}`}
+                              className={`rounded-lg my-2 overflow-x-auto ${
+                                isFullscreen ? 'text-base leading-relaxed' : 'text-sm'
+                              }`}
                               {...props}
                             >
                               {String(children).replace(/\n$/, '')}
                             </SyntaxHighlighter>
                           ) : (
-                            <code className="bg-gray-200 dark:bg-gray-800 px-1 rounded">{children}</code>
+                            <code className="bg-gray-200 dark:bg-gray-800 px-1 rounded">
+                              {children}
+                            </code>
+                          );
+                        },
+                        table({ children }) {
+                          return (
+                            <div className="overflow-x-auto my-2">
+                              <table className="table-auto border-collapse border border-gray-300 dark:border-gray-600 w-full text-left">
+                                {children}
+                              </table>
+                            </div>
+                          );
+                        },
+                        th({ children }) {
+                          return (
+                            <th className="border border-gray-300 dark:border-gray-600 px-2 py-1 bg-gray-100 dark:bg-gray-700">
+                              {children}
+                            </th>
+                          );
+                        },
+                        td({ children }) {
+                          return (
+                            <td className="border border-gray-300 dark:border-gray-600 px-2 py-1">
+                              {children}
+                            </td>
                           );
                         },
                       }}
@@ -293,6 +321,7 @@ const SubmitTask = () => {
                     </ReactMarkdown>
                   </div>
                 ))}
+
 
                 {loading && (
                   <p className={`mt-1 text-gray-400 ${isFullscreen ? 'text-base' : 'text-xs'}`}>
