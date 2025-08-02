@@ -20,39 +20,52 @@ export default function Button({
     lg: 'px-6 py-3 text-lg',
   };
 
-  const variantStyles = {
-    primary: `
-        bg-gradient-to-r from-blue-500 to-purple-500
-        text-white shadow-md
-        hover:shadow-lg hover:scale-[1.02]
-        active:scale-95
-        disabled:opacity-50 disabled:cursor-not-allowed
-    `,
-    secondary: `
-        bg-gray-200/40 dark:bg-gray-700/40
-        text-gray-800 dark:text-gray-200
-        border border-gray-300/50 dark:border-gray-600/50
-        backdrop-blur-xl
-        hover:bg-gray-300/60 dark:hover:bg-gray-600/60
-        hover:shadow-lg hover:scale-[1.02]
-        active:scale-95
-        transition-colors
-        disabled:opacity-50 disabled:cursor-not-allowed
-    `,
-    danger: `
-        bg-red-500/90 text-white
-        hover:bg-red-500 hover:shadow-lg
-        active:scale-95
-        disabled:opacity-50 disabled:cursor-not-allowed
-    `,
-    ghost: `
-        bg-transparent text-gray-600 dark:text-gray-300
-        hover:text-blue-500 dark:hover:text-blue-400
-        hover:bg-gray-100/50 dark:hover:bg-gray-700/50
-        active:scale-95
-        disabled:opacity-50 disabled:cursor-not-allowed
-    `,
-    };
+const variantStyles = {
+  primary: `
+    bg-gradient-to-r from-sky-400 to-blue-500
+    text-white
+    shadow-md shadow-blue-500/20
+    ring-1 ring-white/30
+    backdrop-blur-lg
+    hover:brightness-110 hover:shadow-lg hover:shadow-blue-500/30
+    active:scale-95
+    transition-all
+    disabled:opacity-50 disabled:cursor-not-allowed
+  `,
+  secondary: `
+    bg-white/20 dark:bg-white/10
+    text-gray-900 dark:text-gray-200
+    shadow-sm shadow-black/10 dark:shadow-white/5
+    ring-1 ring-black/10 dark:ring-white/10
+    backdrop-blur-xl
+    hover:bg-white/30 dark:hover:bg-white/20
+    hover:shadow-md hover:scale-[1.02]
+    active:scale-95
+    transition-all
+    disabled:opacity-50 disabled:cursor-not-allowed
+  `,
+  danger: `
+    bg-gradient-to-r from-rose-400 to-red-500
+    text-white
+    shadow-md shadow-red-500/30
+    ring-1 ring-white/20
+    backdrop-blur-lg
+    hover:brightness-110 hover:shadow-lg hover:shadow-red-500/40
+    active:scale-95
+    transition-all
+    disabled:opacity-50 disabled:cursor-not-allowed
+  `,
+  ghost: `
+    bg-transparent
+    text-gray-600 dark:text-gray-300
+    hover:text-blue-500 dark:hover:text-blue-400
+    hover:bg-gray-500/10 dark:hover:bg-gray-500/10
+    backdrop-blur-sm
+    active:scale-95
+    disabled:opacity-50 disabled:cursor-not-allowed
+  `,
+};
+
 
   return (
     <button
