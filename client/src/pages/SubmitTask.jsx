@@ -151,17 +151,24 @@ const SubmitTask = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-10 px-4 transition-colors duration-300">
-      <div className="max-w-2xl mx-auto bg-white dark:bg-gray-800 rounded-2xl shadow p-8 relative transition-colors duration-300">
+      <div className="max-w-2xl mx-auto 
+                bg-white/70 dark:bg-gray-800/70
+                backdrop-blur-xl border border-gray-200/50 dark:border-gray-700/50
+                rounded-2xl shadow-xl p-8 relative
+                transition-colors duration-300">
+
 
         {/* 返回仪表盘按钮（卡片右上角） */}
         <button
           onClick={() => navigate('/student')}
           className="absolute top-2 right-4 px-3 py-1 text-sm rounded-lg
-                     bg-gray-200 hover:bg-gray-300 text-gray-700 shadow
-                     dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 transition"
+                    bg-gray-200/80 hover:bg-gray-300/80
+                    text-gray-700 shadow-sm backdrop-blur
+                    dark:bg-gray-700/70 dark:text-gray-200 dark:hover:bg-gray-600/70 transition"
         >
           👈 返回仪表盘
         </button>
+
 
         <h1 className="text-2xl font-bold mb-4 text-gray-800 dark:text-gray-100">
           提交任务：{task.title}
@@ -187,9 +194,15 @@ const SubmitTask = () => {
             <input
               type="file"
               onChange={(e) => setFile(e.target.files[0])}
-              className="w-full p-2 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:text-gray-100"
-              required
+              className="w-full p-2 rounded-xl border
+                        bg-white/70 dark:bg-gray-700/70
+                        text-gray-900 dark:text-gray-100
+                        border-gray-300 dark:border-gray-600
+                        shadow-sm backdrop-blur-sm
+                        focus:outline-none focus:ring-2 focus:ring-blue-400
+                        transition"
             />
+
           </div>
 
           {task.allowAIGC && (
@@ -200,7 +213,7 @@ const SubmitTask = () => {
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
                 transition={{ duration: 0.3, ease: 'easeInOut' }}
-                className={`border rounded-2xl p-4 bg-gray-50 dark:bg-gray-700 space-y-3
+                className={`border rounded-2xl p-4 bg-gray-50/60 dark:bg-gray-700/60 backdrop-blur-md space-y-3
                   ${isFullscreen
                     ? 'fixed inset-0 w-full h-full z-50 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm p-4 flex flex-col md:items-center md:justify-center md:px-0'
                     : 'relative'
@@ -244,8 +257,8 @@ const SubmitTask = () => {
                   onChange={(e) => setModel(e.target.value)}
                   className="border p-2 rounded-lg w-full bg-white dark:bg-gray-600 dark:text-gray-100"
                 >
-                  <option value="openai">🌍 ChatGPT (OpenAI)</option>
-                  <option value="qwen">🇨🇳 通义千问 (Alibaba)</option>
+                  <option value="openai">ChatGPT *维护中</option>
+                  <option value="qwen">通义千问</option>
                 </select>
               </div>
 
@@ -287,7 +300,7 @@ const SubmitTask = () => {
                               {String(children).replace(/\n$/, '')}
                             </SyntaxHighlighter>
                           ) : (
-                            <code className="bg-gray-200 dark:bg-gray-800 px-1 rounded">
+                            <code className="bg-gray-200/70 dark:bg-gray-800/70 px-1 rounded">
                               {children}
                             </code>
                           );
@@ -359,20 +372,24 @@ const SubmitTask = () => {
 
           <button
             type="submit"
-            className="w-full bg-blue-600 text-white py-2 rounded-xl shadow hover:bg-blue-700 transition-all"
+            className="w-full bg-blue-600/90 hover:bg-blue-700/90
+                      text-white py-2 rounded-xl shadow-lg backdrop-blur
+                      font-medium transition-all duration-300"
           >
             📤 提交作业
           </button>
 
+
           {message && (
-            <p
-              className={`text-sm mt-2 ${
-                message.startsWith('✅') ? 'text-green-600' : 'text-red-500'
-              }`}
-            >
+            <p className={`text-sm mt-2 px-3 py-1 rounded-lg
+                          ${message.startsWith('✅') 
+                            ? 'text-green-700 bg-green-50/70 dark:text-green-400 dark:bg-green-900/30'
+                            : 'text-red-600 bg-red-50/70 dark:text-red-400 dark:bg-red-900/30'}
+                          `}>
               {message}
             </p>
           )}
+
         </form>
       </div>
     </div>
