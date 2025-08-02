@@ -33,23 +33,26 @@ const Navbar = ({ user }) => {
       </div>
 
       {/* User Info */}
-      <div className="flex items-center gap-3 text-sm">
-        <span className="truncate max-w-[120px] sm:max-w-[200px] lg:max-w-[300px] text-gray-700 dark:text-gray-200">
-          {user.email}
-        </span>
-        <span className="px-2 py-0.5 rounded-full text-xs font-medium 
-          bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300">
-          {user.role === 'teacher' ? '教师' : '学生'}
-        </span>
+      <div className="w-full flex justify-between items-center text-xs sm:text-sm">
+        <div className="flex items-center gap-2">
+          <span className="truncate max-w-[120px] sm:max-w-[200px] lg:max-w-[300px] text-gray-700 dark:text-gray-200">
+            {user.email}
+          </span>
+          <span className="px-2 py-0.5 rounded-full text-xs font-medium 
+            bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300">
+            {user.role === 'teacher' ? '教师' : '学生'}
+          </span>
+        </div>
+
         <button
           onClick={handleLogout}
-          className="px-3 py-1 rounded-lg text-sm 
-            bg-red-500 text-white hover:bg-red-600 transition
-            shadow-sm active:scale-95"
+          className="px-3 py-1 rounded-lg text-xs sm:text-sm 
+            bg-red-500 text-white hover:bg-red-600 transition shadow-sm active:scale-95 ml-2"
         >
           登出
         </button>
       </div>
+
     </div>
   );
 };

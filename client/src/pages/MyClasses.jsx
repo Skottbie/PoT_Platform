@@ -41,29 +41,31 @@ const MyClasses = () => {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8 px-4">
       <div className="max-w-5xl mx-auto">
         {/* 顶部导航 */}
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">
+        <div className="flex items-center justify-between mb-6 flex-nowrap min-w-0 text-xs sm:text-sm md:text-base">
+          <h1 className="font-bold text-gray-800 dark:text-gray-100 truncate">
             📚 我的班级
           </h1>
 
-          <div className="flex space-x-3">
+          <div className="flex gap-x-2 sm:gap-x-3 flex-shrink-0">
             <button
               onClick={() => navigate('/teacher')}
               className="bg-gray-300 dark:bg-gray-700 text-gray-800 dark:text-gray-100 
-                        py-2 px-4 rounded-xl shadow hover:bg-gray-400 dark:hover:bg-gray-600 transition"
+                        py-1 sm:py-2 px-2 sm:px-4 rounded-xl shadow 
+                        hover:bg-gray-400 dark:hover:bg-gray-600 transition text-xs sm:text-sm"
             >
               👈 返回仪表盘
             </button>
 
             <button
               onClick={() => navigate('/create-class')}
-              className="bg-blue-600 text-white py-2 px-4 rounded-xl shadow 
-                        hover:bg-blue-700 transition"
+              className="bg-blue-600 text-white py-1 sm:py-2 px-2 sm:px-4 rounded-xl shadow 
+                        hover:bg-blue-700 transition text-xs sm:text-sm"
             >
               ➕ 创建新班级
             </button>
           </div>
         </div>
+
 
         {loading ? (
           <p className="text-gray-600 dark:text-gray-300">加载中...</p>
