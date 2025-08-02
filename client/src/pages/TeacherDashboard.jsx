@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/axiosInstance';
+import Button from '../components/Button';
 
 const TeacherDashboard = () => {
   const [user, setUser] = useState(null);
@@ -82,19 +83,13 @@ const TeacherDashboard = () => {
           </h1>
 
           <div className="flex gap-3 mb-6">
-            <button
-              onClick={() => navigate('/create-class')}
-              className="px-3 py-1.5 text-sm rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium shadow-sm transition-all"
-            >
+            <Button variant="primary" size="sm" onClick={() => navigate('/create-class')}>
               ➕ 创建新班级
-            </button>
-
-            <button
-              onClick={() => navigate('/my-classes')}
-              className="px-3 py-1.5 text-sm rounded-lg bg-green-600 hover:bg-green-700 text-white font-medium shadow-sm transition-all"
-            >
+            </Button>
+            <Button variant="secondary" size="sm" onClick={() => navigate('/my-classes')}>
               📚 管理我的班级
-            </button>
+            </Button>
+
           </div>
 
 
@@ -186,11 +181,10 @@ const TeacherDashboard = () => {
                         transition-colors duration-300 p-2"
             />
 
-            <button className="w-full bg-blue-600 hover:bg-blue-700 
-                              text-white p-2 rounded-xl shadow 
-                              font-medium transition-all duration-300">
+            <Button variant="primary" size="md" fullWidth>
               📤 发布任务
-            </button>
+            </Button>
+
 
             {message && (
               <p
@@ -232,14 +226,15 @@ const TeacherDashboard = () => {
                       ? new Date(task.deadline).toLocaleDateString()
                       : '未设置'}
                   </p>
-                  <button
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="mt-2"
                     onClick={() => navigate(`/task/${task._id}/submissions`)}
-                    className="mt-2 px-3 py-1.5 text-sm rounded-md 
-                                bg-blue-600 hover:bg-blue-700 
-                                text-white shadow-sm transition-all"
                   >
                     查看提交记录
-                  </button>
+                  </Button>
+
                 </div>
               ))}
             </div>
