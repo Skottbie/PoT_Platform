@@ -33,22 +33,26 @@ const variantStyles = {
     disabled:opacity-50 disabled:cursor-not-allowed
   `,
   secondary: `
-    bg-white/20 dark:bg-gray-800/30
+    bg-white/20 dark:bg-white/10
     text-gray-900 dark:text-gray-200
-    border border-white/20 dark:border-white/10
+    shadow-sm shadow-black/10 dark:shadow-white/5
+    ring-1 ring-black/10 dark:ring-white/10
     backdrop-blur-xl
-    hover:bg-white/30 dark:hover:bg-gray-700/40
+    hover:bg-white/30 dark:hover:bg-white/20
     hover:shadow-md hover:scale-[1.02]
     active:scale-95
     transition-all
     disabled:opacity-50 disabled:cursor-not-allowed
   `,
   danger: `
-    bg-red-400/80 text-white
+    bg-gradient-to-r from-rose-400 to-red-500
+    text-white
     shadow-md shadow-red-500/30
+    ring-1 ring-white/20
     backdrop-blur-lg
-    hover:bg-red-500/90 hover:shadow-lg
+    hover:brightness-110 hover:shadow-lg hover:shadow-red-500/40
     active:scale-95
+    transition-all
     disabled:opacity-50 disabled:cursor-not-allowed
   `,
   ghost: `
