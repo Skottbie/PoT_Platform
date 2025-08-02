@@ -22,37 +22,33 @@ export default function Button({
 
 const variantStyles = {
   primary: `
-    bg-gradient-to-r from-sky-400 to-blue-500
+    bg-gradient-to-r from-blue-400 to-purple-500
     text-white
     shadow-md shadow-blue-500/20
-    ring-1 ring-white/30
+    ring-1 ring-white/20
     backdrop-blur-lg
-    hover:brightness-110 hover:shadow-lg hover:shadow-blue-500/30
+    hover:brightness-110 hover:shadow-lg hover:shadow-purple-500/30
     active:scale-95
     transition-all
     disabled:opacity-50 disabled:cursor-not-allowed
   `,
   secondary: `
-    bg-white/20 dark:bg-white/10
+    bg-white/20 dark:bg-gray-800/30
     text-gray-900 dark:text-gray-200
-    shadow-sm shadow-black/10 dark:shadow-white/5
-    ring-1 ring-black/10 dark:ring-white/10
+    border border-white/20 dark:border-white/10
     backdrop-blur-xl
-    hover:bg-white/30 dark:hover:bg-white/20
+    hover:bg-white/30 dark:hover:bg-gray-700/40
     hover:shadow-md hover:scale-[1.02]
     active:scale-95
     transition-all
     disabled:opacity-50 disabled:cursor-not-allowed
   `,
   danger: `
-    bg-gradient-to-r from-rose-400 to-red-500
-    text-white
+    bg-red-400/80 text-white
     shadow-md shadow-red-500/30
-    ring-1 ring-white/20
     backdrop-blur-lg
-    hover:brightness-110 hover:shadow-lg hover:shadow-red-500/40
+    hover:bg-red-500/90 hover:shadow-lg
     active:scale-95
-    transition-all
     disabled:opacity-50 disabled:cursor-not-allowed
   `,
   ghost: `
@@ -65,6 +61,7 @@ const variantStyles = {
     disabled:opacity-50 disabled:cursor-not-allowed
   `,
 };
+
 
 
   return (
