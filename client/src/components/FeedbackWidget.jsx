@@ -73,39 +73,43 @@ export default function FeedbackWidget() {
   return (
     <>
       {/* 悬浮按钮及气泡 */}
-        <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end">
-          {/* 气泡：按钮左上角 */}
-          {hintVisible && (
-            <div
-              className="mb-2 mr-16 bg-white dark:bg-gray-800 shadow-lg
-                        border border-gray-200 dark:border-gray-700 px-3 py-1 rounded-xl
-                        text-sm text-gray-700 dark:text-gray-200 animate-bounce
-                        transition-opacity duration-500 opacity-100 relative"
-            >
-              有任何问题可以点击我反馈哦(`v´)
-              <div className="absolute -bottom-2 right-2 w-0 h-0
-                              border-l-4 border-r-4 border-t-8
-                              border-l-transparent border-r-transparent
-                              border-t-white dark:border-t-gray-800"></div>
-            </div>
-          )}
-
-          {/* 按钮本身 */}
-          <button
-            onClick={toggleOpen}
-            className="w-14 h-14 rounded-full shadow-lg bg-white flex items-center justify-center
-                      cursor-pointer hover:scale-110 transition-transform"
-            title="点击反馈"
+      <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end">
+        {/* 气泡：按钮左上角 */}
+        {hintVisible && (
+          
+          <div
+            className="relative mb-2 mr-16 bg-white dark:bg-gray-800 shadow-lg
+                      border border-gray-200 dark:border-gray-700 px-3 py-1 rounded-xl
+                      text-sm text-gray-700 dark:text-gray-200 animate-bounce
+                      transition-opacity duration-500 opacity-100"
           >
-            <img src={logo} alt="Feedback" className="w-10 h-10" />
-          </button>
-        </div>
+            有任何问题可以点击我反馈哦(`v´)
+            {/* 右下角箭头指向按钮 */}
+            <div className="absolute -bottom-2 right-2 w-0 h-0
+                            border-l-6 border-l-transparent
+                            border-r-6 border-r-transparent
+                            border-t-8 border-t-white dark:border-t-gray-800">
+            </div>
+          </div>
+        )}
+
+        {/* 按钮本身 */}
+        <button
+          onClick={toggleOpen}
+          className="w-14 h-14 rounded-full shadow-lg bg-white flex items-center justify-center
+                    cursor-pointer hover:scale-110 transition-transform"
+          title="点击反馈"
+        >
+          <img src={logo} alt="Feedback" className="w-10 h-10" />
+        </button>
+      </div>
+
 
 
 
       {/* 弹出反馈表单 */}
       <div
-        className={`fixed bottom-28 right-6 z-50 w-80 
+        className={`fixed bottom-24 right-6 z-50 w-80 
           transform transition-all duration-300 origin-bottom-right
           ${open ? 'scale-100 opacity-100 translate-y-0' : 'scale-95 opacity-0 translate-y-4 pointer-events-none'}
         `}
