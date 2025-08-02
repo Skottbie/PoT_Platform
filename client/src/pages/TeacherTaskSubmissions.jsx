@@ -147,7 +147,7 @@ const TeacherTaskSubmissions = () => {
           className="absolute top-0 right-0 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200
                     py-2 px-4 rounded-xl shadow hover:bg-gray-300 dark:hover:bg-gray-600 transition"
         >
-          ← 返回教师首页
+          👈 返回教师首页
         </button>
 
         <h1 className="text-2xl font-bold mb-6 text-gray-800 dark:text-gray-100">

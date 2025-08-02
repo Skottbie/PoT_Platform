@@ -33,8 +33,13 @@ const Navbar = ({ user }) => {
       </div>
 
       {/* User Info */}
-      <div className="w-full flex justify-between items-center text-xs sm:text-sm">
-        <div className="flex items-center gap-2">
+      <div className="
+        flex w-full sm:w-auto 
+        justify-between sm:justify-start 
+        items-center text-xs sm:text-sm
+      ">
+        {/* 左侧：邮箱 + 角色 */}
+        <div className="flex items-center gap-2 truncate">
           <span className="truncate max-w-[120px] sm:max-w-[200px] lg:max-w-[300px] text-gray-700 dark:text-gray-200">
             {user.email}
           </span>
@@ -44,16 +49,18 @@ const Navbar = ({ user }) => {
           </span>
         </div>
 
+        {/* 右侧：登出按钮 */}
         <button
           onClick={handleLogout}
           className="px-3 py-1 rounded-lg text-xs sm:text-sm 
-            bg-red-500 text-white hover:bg-red-600 transition shadow-sm active:scale-95 ml-2"
+            bg-red-500 text-white hover:bg-red-600 transition
+            shadow-sm active:scale-95 ml-2 sm:ml-3"
         >
           登出
         </button>
       </div>
-
     </div>
+
   );
 };
 
