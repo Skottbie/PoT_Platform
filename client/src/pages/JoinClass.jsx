@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/axiosInstance';
+import Button from '../components/Button';
 
 const JoinClass = () => {
   const [formData, setFormData] = useState({
@@ -45,17 +46,21 @@ const JoinClass = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center px-4 py-10">
-      {/* 返回仪表盘按钮（卡片外左上角） */}
-      <button
+      {/* 返回仪表盘按钮 */}
+      <Button
+        variant="secondary"
+        size="sm"
+        className="absolute top-6 left-6"
         onClick={() => navigate('/student')}
-        className="absolute top-6 left-6 text-sm px-4 py-2 rounded-lg
-                  bg-gray-200 hover:bg-gray-300 text-gray-700 shadow
-                  dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
       >
         👈 返回仪表盘
-      </button>
+      </Button>
 
-      <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-md w-full max-w-md relative">
+      <div className="bg-white/70 dark:bg-gray-800/70
+                backdrop-blur-xl p-8 rounded-2xl
+                shadow-xl w-full max-w-md relative
+                border border-gray-200/50 dark:border-gray-700/50
+                transition-all duration-300">
         <h1 className="text-2xl font-bold text-center text-blue-700 dark:text-blue-400 mb-6">
           🔑 加入班级
         </h1>
@@ -71,8 +76,13 @@ const JoinClass = () => {
             value={formData.inviteCode}
             onChange={handleChange}
             required
-            className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400
-                       dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
+            className="w-full px-4 py-2 border rounded-xl
+                      bg-white/70 dark:bg-gray-700/70
+                      border-gray-300 dark:border-gray-600
+                      text-gray-900 dark:text-gray-100
+                      shadow-sm backdrop-blur-sm
+                      focus:outline-none focus:ring-2 focus:ring-blue-400
+                      transition"
           />
           <input
             type="text"
@@ -81,8 +91,13 @@ const JoinClass = () => {
             value={formData.studentId}
             onChange={handleChange}
             required
-            className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400
-                       dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
+            className="w-full px-4 py-2 border rounded-xl
+                      bg-white/70 dark:bg-gray-700/70
+                      border-gray-300 dark:border-gray-600
+                      text-gray-900 dark:text-gray-100
+                      shadow-sm backdrop-blur-sm
+                      focus:outline-none focus:ring-2 focus:ring-blue-400
+                      transition"
           />
           <input
             type="text"
@@ -91,18 +106,26 @@ const JoinClass = () => {
             value={formData.name}
             onChange={handleChange}
             required
-            className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400
-                       dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
+            className="w-full px-4 py-2 border rounded-xl
+                      bg-white/70 dark:bg-gray-700/70
+                      border-gray-300 dark:border-gray-600
+                      text-gray-900 dark:text-gray-100
+                      shadow-sm backdrop-blur-sm
+                      focus:outline-none focus:ring-2 focus:ring-blue-400
+                      transition"
           />
 
-          <button
+          {/* 提交按钮 */}
+          <Button
             type="submit"
+            variant="primary"
+            size="md"
+            fullWidth
             disabled={loading}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg shadow transition
-                       dark:bg-blue-700 dark:hover:bg-blue-800 disabled:opacity-50"
           >
             {loading ? '正在提交...' : '加入班级'}
-          </button>
+          </Button>
+
         </form>
       </div>
     </div>
