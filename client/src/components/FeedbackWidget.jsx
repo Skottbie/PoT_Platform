@@ -78,7 +78,7 @@ export default function FeedbackWidget() {
         {hintVisible && (
           
           <div
-            className="relative mb-2 mr-16 bg-white dark:bg-gray-800 shadow-lg
+            className="relative mb-1 mr-8 bg-white dark:bg-gray-800 shadow-lg
                       border border-gray-200 dark:border-gray-700 px-3 py-1 rounded-xl
                       text-sm text-gray-700 dark:text-gray-200 animate-bounce
                       transition-opacity duration-500 opacity-100"
