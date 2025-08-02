@@ -22,35 +22,37 @@ export default function Button({
 
   const variantStyles = {
     primary: `
-      bg-gradient-to-r from-blue-500 to-purple-500
-      text-white shadow-md
-      hover:shadow-lg hover:scale-[1.02]
-      active:scale-95
-      disabled:opacity-50 disabled:cursor-not-allowed
+        bg-gradient-to-r from-blue-500 to-purple-500
+        text-white shadow-md
+        hover:shadow-lg hover:scale-[1.02]
+        active:scale-95
+        disabled:opacity-50 disabled:cursor-not-allowed
     `,
     secondary: `
-      bg-white/40 dark:bg-gray-800/40
-      border border-white/20 dark:border-gray-600/40
-      backdrop-blur-md text-gray-800 dark:text-gray-200
-      hover:bg-white/60 dark:hover:bg-gray-800/60
-      hover:shadow-md hover:scale-[1.02]
-      active:scale-95
-      disabled:opacity-50 disabled:cursor-not-allowed
+        bg-gray-200/40 dark:bg-gray-700/40
+        text-gray-800 dark:text-gray-200
+        border border-gray-300/50 dark:border-gray-600/50
+        backdrop-blur-xl
+        hover:bg-gray-300/60 dark:hover:bg-gray-600/60
+        hover:shadow-lg hover:scale-[1.02]
+        active:scale-95
+        transition-colors
+        disabled:opacity-50 disabled:cursor-not-allowed
     `,
     danger: `
-      bg-red-500/90 text-white
-      hover:bg-red-500 hover:shadow-lg
-      active:scale-95
-      disabled:opacity-50 disabled:cursor-not-allowed
+        bg-red-500/90 text-white
+        hover:bg-red-500 hover:shadow-lg
+        active:scale-95
+        disabled:opacity-50 disabled:cursor-not-allowed
     `,
     ghost: `
-      bg-transparent text-gray-600 dark:text-gray-300
-      hover:text-blue-500 dark:hover:text-blue-400
-      hover:bg-gray-100/50 dark:hover:bg-gray-700/50
-      active:scale-95
-      disabled:opacity-50 disabled:cursor-not-allowed
+        bg-transparent text-gray-600 dark:text-gray-300
+        hover:text-blue-500 dark:hover:text-blue-400
+        hover:bg-gray-100/50 dark:hover:bg-gray-700/50
+        active:scale-95
+        disabled:opacity-50 disabled:cursor-not-allowed
     `,
-  };
+    };
 
   return (
     <button
