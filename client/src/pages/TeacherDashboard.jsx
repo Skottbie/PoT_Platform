@@ -78,7 +78,7 @@ const TeacherDashboard = () => {
       <div className="max-w-2xl mx-auto space-y-10">
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 transition-colors duration-300">
           <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-4">
-            👩‍🏫 欢迎回来，{user.email}
+             欢迎回来，{user.email}
           </h1>
 
           <div className="flex gap-3 mb-6">
