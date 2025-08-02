@@ -39,7 +39,7 @@ const StudentDashboard = () => {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-10 px-4">
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-semibold mb-6 text-gray-800 dark:text-gray-100">
+        <h1 className="text-2xl font-semibold mb-6 text-gray-800 dark:text-gray-100">
           欢迎回来，
           <span className="text-blue-600 dark:text-blue-400">{user.email}</span>
         </h1>
@@ -47,11 +47,15 @@ const StudentDashboard = () => {
         <div className="flex justify-end mb-6">
           <button
             onClick={() => navigate('/join-class')}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl shadow transition-all
-                       dark:bg-blue-700 dark:hover:bg-blue-800"
+            className="px-4 py-2 rounded-xl
+                      bg-gradient-to-r from-blue-500/80 to-purple-500/80
+                      text-white shadow-md backdrop-blur-md
+                      hover:from-blue-500 hover:to-purple-500 hover:shadow-lg hover:scale-[1.02]
+                      active:scale-95 transition-all duration-200"
           >
             ➕ 加入班级
           </button>
+
         </div>
 
         <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-200 mb-4">
@@ -65,9 +69,13 @@ const StudentDashboard = () => {
             tasks.map((task) => (
               <div
                 key={task._id}
-                className="p-6 rounded-2xl bg-white shadow hover:shadow-md transition-all
-                           dark:bg-gray-800 dark:hover:shadow-lg"
+                className="p-6 rounded-2xl
+                          bg-white/70 dark:bg-gray-800/60
+                          border border-gray-200/50 dark:border-gray-700/50
+                          shadow-md backdrop-blur-md
+                          hover:shadow-xl hover:scale-[1.01] transition-all duration-200"
               >
+
                 <h3 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-1">
                   {task.title}
                 </h3>
@@ -99,11 +107,15 @@ const StudentDashboard = () => {
                 {!task.submitted && (
                   <button
                     onClick={() => navigate(`/submit/${task._id}`)}
-                    className="mt-4 px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow
-                               dark:bg-blue-700 dark:hover:bg-blue-800 transition-all"
+                    className="mt-4 px-5 py-2 rounded-xl
+                              bg-gradient-to-r from-blue-500/80 to-purple-500/80
+                              text-white shadow-md backdrop-blur-md
+                              hover:from-blue-500 hover:to-purple-500 hover:shadow-lg hover:scale-[1.02]
+                              active:scale-95 transition-all duration-200"
                   >
                     提交作业
                   </button>
+
                 )}
               </div>
             ))
