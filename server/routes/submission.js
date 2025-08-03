@@ -6,11 +6,13 @@ const verifyToken = require('../middleware/auth');
 const Submission = require('../models/Submission');
 const Task = require('../models/Task');
 const multer = require('multer');
+const fs = require('fs');
 const path = require('path');
-const { GridFsStorage } = require('multer-gridfs-storage');
+const { MongoClient, ObjectId, GridFSBucket } = require('mongodb');
 const mongoose = require('mongoose');
 
-const mongoURI = process.env.MONGO_URI;
+const upload = multer({ dest: 'tmp/' }); 
+
 
 // 上传设置
 /* 前multer存储方案
@@ -37,22 +39,30 @@ const storage = multer.diskStorage({
   }
 });
 */
-// 使用 GridFS 存储
-const storage = new GridFsStorage({
-  url: mongoURI,
-  file: (req, file) => {
-    return {
-      filename: `${Date.now()}-${file.originalname}`,
-      bucketName: 'uploads', // bucket 名称
-    };
-  },
-});
+// 创建 GridFSBucket（复用 mongoose 连接）
+function getGridFSBucket() {
+  return new GridFSBucket(mongoose.connection.db, {
+    bucketName: 'uploads' // GridFS 集合名：uploads.files / uploads.chunks
+  });
+}
+// 上传文件并返回 GridFS 文件 ID
+async function uploadToGridFS(file) {
+  const bucket = getGridFSBucket();
+  const stream = fs.createReadStream(file.path);
 
+  return new Promise((resolve, reject) => {
+    const uploadStream = bucket.openUploadStream(file.originalname, {
+      contentType: file.mimetype
+    });
 
-
-
-
-const upload = multer({ storage });
+    stream.pipe(uploadStream)
+      .on('error', reject)
+      .on('finish', () => {
+        fs.unlinkSync(file.path); // 删除临时文件
+        resolve(uploadStream.id.toString()); // 返回文件ID
+      });
+  });
+}
 //const host = process.env.RENDER_EXTERNAL_URL || `http://localhost:${process.env.PORT || 5000}`;
 
 // ✅ 学生提交作业（含文件上传）
@@ -94,38 +104,39 @@ router.post('/:taskId', verifyToken, upload.fields([
 });
 */
 
-router.post(
-  '/:taskId',
-  verifyToken,
-  upload.fields([
-    { name: 'file', maxCount: 1 },
-    { name: 'aigcLog', maxCount: 1 },
-  ]),
-  async (req, res) => {
-    try {
-      const task = await Task.findById(req.params.taskId);
-      if (!task) return res.status(404).json({ message: '任务不存在' });
+// ✅ 学生提交作业（含文件上传）
+router.post('/:taskId', verifyToken, upload.fields([
+  { name: 'file', maxCount: 1 },
+  { name: 'aigcLog', maxCount: 1 }
+]), async (req, res) => {
+  try {
+    const task = await Task.findById(req.params.taskId);
+    if (!task) return res.status(404).json({ message: '任务不存在' });
 
-      const fileId = req.files?.file?.[0]?.id;
-      if (!fileId) return res.status(400).json({ message: '缺少作业文件' });
+    const file = req.files?.file?.[0];
+    if (!file) return res.status(400).json({ message: '缺少作业文件' });
 
-      const aigcLogId = req.files?.aigcLog?.[0]?.id || null;
+    // 上传文件到 GridFS
+    const fileId = await uploadToGridFS(file);
+    let aigcLogId = null;
 
-      // 存 fileId，而不是 URL
-      const submission = new Submission({
-        task: req.params.taskId,
-        student: req.user.id,
-        fileUrl: fileId, 
-        aigcLogUrl: aigcLogId,
-      });
-
-      await submission.save();
-      res.json({ message: '提交成功', fileId });
-    } catch (err) {
-      console.error('提交失败:', err);
-      res.status(500).json({ message: '服务器错误' });
+    if (req.files?.aigcLog?.[0]) {
+      aigcLogId = await uploadToGridFS(req.files.aigcLog[0]);
     }
+
+    const submission = new Submission({
+      task: req.params.taskId,
+      student: req.user.id,
+      fileUrl: `/api/files/${fileId}`,
+      aigcLogUrl: aigcLogId ? `/api/files/${aigcLogId}` : null,
+    });
+
+    await submission.save();
+    res.json({ message: '提交成功' });
+  } catch (err) {
+    console.error('提交失败:', err);
+    res.status(500).json({ message: '服务器错误' });
   }
-);
+});
 
 module.exports = router;

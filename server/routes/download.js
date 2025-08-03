@@ -17,31 +17,30 @@ router.get('/:filename', (req, res) => {
 module.exports = router;
 */
 // server/routes/download.js
-const express = require('express');
-const mongoose = require('mongoose');
-const Grid = require('gridfs-stream');
+function getGridFSBucket() {
+  return new GridFSBucket(mongoose.connection.db, {
+    bucketName: 'uploads'
+  });
+}
 
-const router = express.Router();
-
-let gfs;
-mongoose.connection.once('open', () => {
-  gfs = Grid(mongoose.connection.db, mongoose.mongo);
-  gfs.collection('uploads'); // bucketName
-});
-
-// 通过 fileId 下载文件
+// ✅ 下载文件
 router.get('/:id', async (req, res) => {
   try {
-    const file = await gfs.files.findOne({ _id: new mongoose.Types.ObjectId(req.params.id) });
-    if (!file) return res.status(404).json({ message: '文件不存在' });
+    const bucket = getGridFSBucket();
+    const fileId = new ObjectId(req.params.id);
 
-    const readStream = gfs.createReadStream({ _id: file._id });
-    res.set('Content-Type', file.contentType || 'application/octet-stream');
-    res.set('Content-Disposition', `attachment; filename="${file.filename}"`);
-    readStream.pipe(res);
+    const files = await bucket.find({ _id: fileId }).toArray();
+    if (!files || files.length === 0) {
+      return res.status(404).send('文件不存在');
+    }
+
+    res.set('Content-Type', files[0].contentType || 'application/octet-stream');
+    res.set('Content-Disposition', `attachment; filename="${encodeURIComponent(files[0].filename)}"`);
+
+    bucket.openDownloadStream(fileId).pipe(res);
   } catch (err) {
     console.error('下载出错:', err);
-    res.status(500).json({ message: '服务器错误' });
+    res.status(500).send('服务器错误');
   }
 });
 
