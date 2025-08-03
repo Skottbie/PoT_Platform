@@ -38,6 +38,7 @@ const storage = multer.diskStorage({
 
 
 const upload = multer({ storage });
+//const host = process.env.RENDER_EXTERNAL_URL || `http://localhost:${process.env.PORT || 5000}`;
 
 // ✅ 学生提交作业（含文件上传）
 router.post('/:taskId', verifyToken, upload.fields([
@@ -48,8 +49,16 @@ router.post('/:taskId', verifyToken, upload.fields([
     const task = await Task.findById(req.params.taskId);
     if (!task) return res.status(404).json({ message: '任务不存在' });
 
-    const fileUrl = req.files?.file?.[0]?.path;
-    const aigcLogUrl = req.files?.aigcLog?.[0]?.path || null;
+    //const fileUrl = req.files?.file?.[0]?.path;
+    //const aigcLogUrl = req.files?.aigcLog?.[0]?.path || null;
+    const host = process.env.RENDER_EXTERNAL_URL || `http://localhost:${process.env.PORT || 5000}`;
+    const fileUrl = req.files?.file?.[0] 
+      ? `${host}/uploads/${req.files.file[0].filename}`
+      : null;
+
+    const aigcLogUrl = req.files?.aigcLog?.[0] 
+      ? `${host}/uploads/${req.files.aigcLog[0].filename}`
+      : null;
 
     if (!fileUrl) return res.status(400).json({ message: '缺少作业文件' });
 
