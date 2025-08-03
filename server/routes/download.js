@@ -17,10 +17,12 @@ router.get('/:filename', (req, res) => {
 module.exports = router;
 */
 // server/routes/download.js
+// server/routes/download.js
 const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
 const { GridFSBucket, ObjectId } = require('mongodb');
+const verifyToken = require('../middleware/auth');
 
 // 创建 GridFSBucket（复用 mongoose 连接）
 function getGridFSBucket() {
@@ -29,7 +31,7 @@ function getGridFSBucket() {
   });
 }
 
-router.get('/:id', async (req, res) => {
+router.get('/:id', verifyToken, async (req, res) => {
   try {
     const bucket = getGridFSBucket();
     const fileId = new ObjectId(req.params.id);
@@ -42,8 +44,6 @@ router.get('/:id', async (req, res) => {
     const file = files[0];
     const filename = file.filename;
     
-    // 📌 核心修改：使用 UTF-8 编码来处理文件名，解决乱码问题
-    // 采用 RFC 5987 推荐的 filename* 参数格式
     const encodedFilename = encodeURIComponent(filename);
     const contentDisposition = `attachment; filename*=UTF-8''${encodedFilename}`;
 

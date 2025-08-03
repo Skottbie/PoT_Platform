@@ -33,42 +33,66 @@ const TeacherTaskSubmissions = () => {
     fetchSubmissions();
   }, [taskId, navigate]);
 
-  const renderFileLinks = (fileId, fileName) => {
-    // ⚠️ 正确使用：在函数内部使用 DOWNLOAD_BASE_URL 拼接完整的下载链接
-    const url = `${DOWNLOAD_BASE_URL}/download/${fileId}`;
-    const isPreviewable = /\.(pdf|jpg|jpeg|png|gif)$/i.test(fileName);
+    // 📌 新增：处理下载的函数
+    const handleDownload = async (fileId, fileName) => {
+      try {
+        // 使用 axios 发起带 token 的请求
+        const res = await api.get(`/download/${fileId}`, {
+          responseType: 'blob', // ⚠️ 关键：告诉 axios 响应是一个二进制文件
+        });
 
-    return (
-      <div className="space-y-2 text-sm mt-1">
-        <div className="flex flex-wrap gap-2">
-          {isPreviewable && (
-            <Button
-              as="a"
-              href={url}
-              target="_blank"
-              rel="noreferrer"
-              size="sm"
-              variant="primary"
-            >
-              🔍 预览文件
-            </Button>
-          )}
-          <Button
-            as="a"
-            href={url}
-            size="sm"
-            variant="primary"
-            download={fileName}
-          >
-            ⬇️ 下载作业文件 ({fileName})
-          </Button>
-        </div>
-        <p className="text-xs text-gray-500 dark:text-gray-400">
-          文件ID：{fileId}
-        </p>
-      </div>
-    );
-  };
+        // 创建一个 URL 来指向这个 Blob 对象
+        const blob = new Blob([res.data], { type: res.headers['content-type'] });
+        const blobUrl = window.URL.createObjectURL(blob);
+
+        // 创建一个临时的<a>标签来触发下载
+        const a = document.createElement('a');
+        a.href = blobUrl;
+        a.download = fileName; // 使用正确的文件名
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(blobUrl);
+      } catch (error) {
+        console.error('下载失败:', error);
+        alert('文件下载失败，请重试。');
+      }
+    };
+
+    const renderFileLinks = (fileId, fileName) => {
+      const url = `${DOWNLOAD_BASE_URL}/download/${fileId}`;
+      const isPreviewable = /\.(pdf|jpg|jpeg|png|gif)$/i.test(fileName);
+
+      return (
+        <div className="space-y-2 text-sm mt-1">
+          <div className="flex flex-wrap gap-2">
+            {isPreviewable && (
+              // 预览仍然可以使用<a>标签，因为 GridFS 的 mimetype 会让浏览器正确渲染
+              <Button
+                as="a"
+                href={url}
+                target="_blank"
+                rel="noreferrer"
+                size="sm"
+                variant="primary"
+              >
+                🔍 预览文件
+              </Button>
+            )}
+            <Button
+              size="sm"
+              variant="primary"
+              onClick={() => handleDownload(fileId, fileName)} // ⚠️ 修改：改为 onClick
+            >
+              ⬇️ 下载作业文件 ({fileName})
+            </Button>
+          </div>
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            文件ID：{fileId}
+          </p>
+        </div>
+      );
+    };
 
   const renderAIGCLog = (aigcLogId) => {
     // ⚠️ 正确使用：在函数内部使用 DOWNLOAD_BASE_URL 拼接完整的下载链接
@@ -94,10 +118,14 @@ const TeacherTaskSubmissions = () => {
 
     return (
       <div className="mt-2 space-y-2">
-        <div className="flex flex-wrap gap-2">
-          <Button as="a" href={url} size="sm" variant="primary" download="aigc_log.json">
-            ⬇️ 下载 AIGC记录
-          </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            size="sm"
+            variant="primary"
+            onClick={() => handleDownload(aigcLogId, "aigc_log.json")} 
+          >
+            ⬇️ 下载 AIGC记录
+          </Button>
           <Button
             size="sm"
             variant="secondary"
