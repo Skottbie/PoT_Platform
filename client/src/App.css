@@ -73,3 +73,15 @@
   }
 }
 
+@keyframes gradient-slide {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+.animate-gradient-slide {
+  background-size: 200% 200%;
+  animation: gradient-slide 6s ease infinite;
+}
+.animate-pulse-slow {
+  animation: pulse 2.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
