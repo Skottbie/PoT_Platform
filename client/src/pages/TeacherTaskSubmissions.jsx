@@ -3,6 +3,8 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../api/axiosInstance';
 import { API_BASE_URL } from '../config';
+import Button from '../components/Button';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const TeacherTaskSubmissions = () => {
   const { taskId } = useParams();
@@ -45,23 +47,25 @@ const TeacherTaskSubmissions = () => {
       <div className="space-y-2 text-sm mt-1">
         <div className="flex flex-wrap gap-2">
           {isPreviewable && (
-            <a
+            <Button
+              as="a"
               href={`${API_BASE_URL}/${url}`}
               target="_blank"
               rel="noreferrer"
-              className="px-3 py-1 rounded-lg bg-blue-600 text-white hover:bg-blue-700 
-                        dark:bg-blue-700 dark:hover:bg-blue-800 text-xs shadow"
+              size="sm"
+              variant="primary"
             >
               🔍 预览文件
-            </a>
+            </Button>
           )}
-          <a
+          <Button
+            as="a"
             href={`${API_BASE_URL}/${url}`}
-            className="px-3 py-1 rounded-lg bg-blue-600 text-white hover:bg-blue-700 
-                      dark:bg-blue-700 dark:hover:bg-blue-800 text-xs shadow"
+            size="sm"
+            variant="primary"
           >
             ⬇️ 下载作业文件
-          </a>
+          </Button>
         </div>
         <p className="text-xs text-gray-500 dark:text-gray-400">
           文件名：{decodeFilename(url)}
@@ -69,7 +73,6 @@ const TeacherTaskSubmissions = () => {
       </div>
     );
   };
-
 
   const renderAIGCLog = (url) => {
     const isExpanded = expandedJsons[url];
@@ -94,46 +97,54 @@ const TeacherTaskSubmissions = () => {
     return (
       <div className="mt-2 space-y-2">
         <div className="flex flex-wrap gap-2">
-          <a
+          <Button
+            as="a"
             href={`${API_BASE_URL}/${url}`}
-            className="px-3 py-1 rounded-lg bg-blue-600 text-white hover:bg-blue-700 
-                      dark:bg-blue-700 dark:hover:bg-blue-800 text-xs shadow"
+            size="sm"
+            variant="primary"
           >
             ⬇️ 下载 AIGC记录
-          </a>
-          <button
+          </Button>
+          <Button
+            size="sm"
+            variant="secondary"
             onClick={toggleJson}
-            className="px-3 py-1 rounded-lg bg-gray-200 hover:bg-gray-300 
-                      dark:bg-gray-700 dark:hover:bg-gray-600 
-                      text-gray-800 dark:text-gray-200 text-xs shadow"
           >
             {isExpanded ? '🔽 收起内容' : '📖 展开查看内容'}
-          </button>
+          </Button>
         </div>
 
-        {Array.isArray(isExpanded) && (
-          <div className="mt-3 border rounded-xl p-4 bg-gray-50 dark:bg-gray-900 
-                          max-h-96 overflow-y-auto space-y-3">
-            {isExpanded.map((entry, idx) => (
-              <div
-                key={idx}
-                className={`max-w-[75%] px-4 py-2 rounded-xl shadow-sm text-sm whitespace-pre-wrap 
-                          ${entry.role === 'user'
-                              ? 'bg-blue-100 dark:bg-blue-900/40 self-start text-left ml-2'
-                              : 'bg-green-100 dark:bg-green-900/40 self-end text-right mr-2'}`}
-              >
-                <div className="text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">
-                  {entry.role === 'user' ? '🧑 学生提问' : '🤖 AI 回复'}
-                </div>
-                {entry.content}
-              </div>
-            ))}
-          </div>
-        )}
+        <AnimatePresence>
+          {Array.isArray(isExpanded) && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="mt-3 border rounded-xl p-4 bg-gray-50/70 dark:bg-gray-900/50 
+                         max-h-96 overflow-y-auto space-y-3 backdrop-blur-sm"
+            >
+              {isExpanded.map((entry, idx) => (
+                <motion.div
+                  key={idx}
+                  initial={{ opacity: 0, x: entry.role === 'user' ? -20 : 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className={`max-w-[75%] px-4 py-2 rounded-xl shadow-sm text-sm whitespace-pre-wrap 
+                    ${entry.role === 'user'
+                        ? 'bg-blue-100/80 dark:bg-blue-900/40 self-start text-left ml-2'
+                        : 'bg-green-100/80 dark:bg-green-900/40 self-end text-right mr-2'}`}
+                >
+                  <div className="text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">
+                    {entry.role === 'user' ? '🧑 学生提问' : '🤖 AI 回复'}
+                  </div>
+                  {entry.content}
+                </motion.div>
+              ))}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     );
   };
-
 
   if (loading) {
     return <p className="text-center mt-10 text-gray-500">加载中...</p>;
@@ -142,32 +153,42 @@ const TeacherTaskSubmissions = () => {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 px-4 py-8">
       <div className="max-w-4xl mx-auto relative">
-        <button
+
+        <Button
+          variant="secondary"
+          size="sm"
+          className="absolute top-0 right-0"
           onClick={() => navigate('/teacher')}
-          className="absolute top-0 right-0 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200
-                    py-2 px-4 rounded-xl shadow hover:bg-gray-300 dark:hover:bg-gray-600 transition"
         >
           👈 返回教师首页
-        </button>
+        </Button>
 
         <h1 className="text-2xl font-bold mb-6 text-gray-800 dark:text-gray-100">
           📄 提交记录
         </h1>
 
         {submissions.length === 0 ? (
-          <p className="text-gray-600 dark:text-gray-400">暂无学生提交。</p>
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="text-gray-600 dark:text-gray-400 text-center py-10"
+          >
+            暂无学生提交。
+          </motion.p>
         ) : (
           <ul className="space-y-6">
             {submissions.map((s) => {
               const isMissingFile = !s.fileUrl;
               return (
-                <li
+                <motion.li
                   key={s._id}
+                  initial={{ opacity: 0, y: 15 }}
+                  animate={{ opacity: 1, y: 0 }}
                   className={`p-5 rounded-2xl shadow-md space-y-3 border 
-                              transition 
-                              ${isMissingFile 
-                                  ? "bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-700 hover:bg-red-100 dark:hover:bg-red-900/30" 
-                                  : "bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:shadow-lg"}`}
+                    transition hover:shadow-lg backdrop-blur-sm
+                    ${isMissingFile 
+                        ? "bg-red-50/70 dark:bg-red-900/20 border-red-200 dark:border-red-700" 
+                        : "bg-white/80 dark:bg-gray-800/80 border-gray-200 dark:border-gray-700"}`}
                 >
                   <p className="text-sm text-gray-800 dark:text-gray-200">
                     <strong>👤 学生:</strong> {s.student?.email || '未知'}
@@ -183,7 +204,9 @@ const TeacherTaskSubmissions = () => {
                       {renderFileLinks(s.fileUrl)}
                     </div>
                   ) : (
-                    <p className="text-red-600 dark:text-red-400 font-medium">❌ 学生未提交作业文件</p>
+                    <p className="text-red-600 dark:text-red-400 font-medium flex items-center gap-1">
+                      ❌ 学生未提交作业文件
+                    </p>
                   )}
 
                   {s.aigcLogUrl && (
@@ -194,14 +217,13 @@ const TeacherTaskSubmissions = () => {
                       {renderAIGCLog(s.aigcLogUrl)}
                     </div>
                   )}
-                </li>
+                </motion.li>
               );
             })}
           </ul>
         )}
       </div>
     </div>
-
   );
 };
 
