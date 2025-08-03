@@ -52,7 +52,7 @@ const submissionRoutes = require('./routes/submission');
 app.use('/api/submission', submissionRoutes);
 
 
-app.use('/download', require('./routes/download'));
+app.use('/api/download', require('./routes/download'));
 
 app.use('/api/submission', require('./routes/submit'));
 

@@ -1,15 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../api/axiosInstance';
-import { API_BASE_URL } from '../config';
+import { API_BASE_URL } from '../config'; // 保留以供参考
 import Button from '../components/Button';
 import { motion, AnimatePresence } from 'framer-motion';
 
-// 📌 核心修改：在组件外部定义一个正确的下载基础URL
-// 它将移除 API_BASE_URL 中的 '/api' 前缀，以匹配后端的下载路由
-const DOWNLOAD_BASE_URL = API_BASE_URL.endsWith('/api')
-  ? API_BASE_URL.slice(0, -4)
-  : API_BASE_URL;
+// ⚠️ 关键修改：移除 DOWNLOAD_BASE_URL。既然后端已经统一使用 /api 前缀，
+// 我们直接依赖于 axiosInstance 实例即可。
 
 const TeacherTaskSubmissions = () => {
   const { taskId } = useParams();
@@ -33,81 +30,76 @@ const TeacherTaskSubmissions = () => {
     fetchSubmissions();
   }, [taskId, navigate]);
 
-    // 📌 新增：处理下载的函数
-    const handleDownload = async (fileId, fileName) => {
-      try {
-        // 使用 axios 发起带 token 的请求
-        const res = await api.get(`/download/${fileId}`, {
-          responseType: 'blob', // ⚠️ 关键：告诉 axios 响应是一个二进制文件
-        });
+  // 📌 核心修改：处理下载的函数，使用 axios 发起带 token 的请求。
+  const handleDownload = async (fileId, fileName) => {
+    try {
+      const res = await api.get(`/download/${fileId}`, {
+        responseType: 'blob', // 告诉 axios 响应是一个二进制文件
+      });
 
-        // 创建一个 URL 来指向这个 Blob 对象
-        const blob = new Blob([res.data], { type: res.headers['content-type'] });
-        const blobUrl = window.URL.createObjectURL(blob);
+      const blob = new Blob([res.data], { type: res.headers['content-type'] });
+      const blobUrl = window.URL.createObjectURL(blob);
 
-        // 创建一个临时的<a>标签来触发下载
-        const a = document.createElement('a');
-        a.href = blobUrl;
-        a.download = fileName; // 使用正确的文件名
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        window.URL.revokeObjectURL(blobUrl);
-      } catch (error) {
-        console.error('下载失败:', error);
-        alert('文件下载失败，请重试。');
-      }
-    };
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = fileName; // 使用正确的文件名
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (error) {
+      console.error('下载失败:', error);
+      alert('文件下载失败，请重试。');
+    }
+  };
 
-    const renderFileLinks = (fileId, fileName) => {
-      const url = `${DOWNLOAD_BASE_URL}/download/${fileId}`;
-      const isPreviewable = /\.(pdf|jpg|jpeg|png|gif)$/i.test(fileName);
-
-      return (
-        <div className="space-y-2 text-sm mt-1">
-          <div className="flex flex-wrap gap-2">
-            {isPreviewable && (
-              // 预览仍然可以使用<a>标签，因为 GridFS 的 mimetype 会让浏览器正确渲染
-              <Button
-                as="a"
-                href={url}
-                target="_blank"
-                rel="noreferrer"
-                size="sm"
-                variant="primary"
-              >
-                🔍 预览文件
-              </Button>
-            )}
-            <Button
-              size="sm"
-              variant="primary"
-              onClick={() => handleDownload(fileId, fileName)} // ⚠️ 修改：改为 onClick
-            >
-              ⬇️ 下载作业文件 ({fileName})
-            </Button>
-          </div>
-          <p className="text-xs text-gray-500 dark:text-gray-400">
-            文件ID：{fileId}
-          </p>
-        </div>
-      );
-    };
-
+  const renderFileLinks = (fileId, fileName) => {
+    const isPreviewable = /\.(pdf|jpg|jpeg|png|gif)$/i.test(fileName);
+  
+    return (
+      <div className="space-y-2 text-sm mt-1">
+        <div className="flex flex-wrap gap-2">
+          {isPreviewable && (
+            // 📌 关键修改：预览现在也需要通过 onClick 发起，因为直接的 href 无法携带 token
+            <Button
+              size="sm"
+              variant="primary"
+              onClick={() => {
+                const url = `${API_BASE_URL}/download/${fileId}`;
+                window.open(url, '_blank');
+              }}
+            >
+              🔍 预览文件
+            </Button>
+          )}
+          <Button
+            size="sm"
+            variant="primary"
+            onClick={() => handleDownload(fileId, fileName)}
+          >
+            ⬇️ 下载作业文件 ({fileName})
+          </Button>
+        </div>
+        <p className="text-xs text-gray-500 dark:text-gray-400">
+          文件ID：{fileId}
+        </p>
+      </div>
+    );
+  };
+  
   const renderAIGCLog = (aigcLogId) => {
-    // ⚠️ 正确使用：在函数内部使用 DOWNLOAD_BASE_URL 拼接完整的下载链接
-    const url = `${DOWNLOAD_BASE_URL}/download/${aigcLogId}`;
     const isExpanded = expandedJsons[aigcLogId];
-
+  
     const toggleJson = async () => {
       if (isExpanded) {
         setExpandedJsons((prev) => ({ ...prev, [aigcLogId]: null }));
       } else {
         try {
-          const res = await fetch(url);
-          const json = await res.json();
-          setExpandedJsons((prev) => ({ ...prev, [aigcLogId]: json }));
-        } catch {
+          // 📌 关键修改：统一使用 `api` 实例来请求 AIGC log
+          const res = await api.get(`/download/${aigcLogId}`);
+          setExpandedJsons((prev) => ({ ...prev, [aigcLogId]: res.data }));
+        } catch (error) {
+          console.error('AIGC 记录加载失败:', error);
           setExpandedJsons((prev) => ({
             ...prev,
             [aigcLogId]: [{ role: 'system', content: '❌ 加载失败' }],
@@ -115,17 +107,17 @@ const TeacherTaskSubmissions = () => {
         }
       }
     };
-
+  
     return (
       <div className="mt-2 space-y-2">
-        <div className="flex flex-wrap gap-2">
-          <Button
-            size="sm"
-            variant="primary"
-            onClick={() => handleDownload(aigcLogId, "aigc_log.json")} 
-          >
-            ⬇️ 下载 AIGC记录
-          </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            size="sm"
+            variant="primary"
+            onClick={() => handleDownload(aigcLogId, 'aigc_log.json')}
+          >
+            ⬇️ 下载 AIGC记录
+          </Button>
           <Button
             size="sm"
             variant="secondary"
@@ -161,11 +153,11 @@ const TeacherTaskSubmissions = () => {
       </div>
     );
   };
-
+  
   if (loading) {
     return <p className="text-center mt-10 text-gray-500">加载中...</p>;
   }
-
+  
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 px-4 py-8">
       <div className="max-w-4xl mx-auto relative">
