@@ -38,10 +38,9 @@ const TeacherTaskSubmissions = () => {
     }
   };
 
-  const renderFileLinks = (url) => {
-    const filename = url.split('/').pop();
-    const decoded = decodeURIComponent(filename);
-    const isPreviewable = /\.(pdf|jpg|jpeg|png|gif)$/i.test(decoded);
+  const renderFileLinks = (fileId) => {
+    const url = `${API_BASE_URL}/download/${fileId}`;
+    const isPreviewable = /\.(pdf|jpg|jpeg|png|gif)$/i.test(fileId); // 这里可能直接用扩展名判断
 
     return (
       <div className="space-y-2 text-sm mt-1">
@@ -49,7 +48,7 @@ const TeacherTaskSubmissions = () => {
           {isPreviewable && (
             <Button
               as="a"
-              href={`${API_BASE_URL}/${url}`}
+              href={url}
               target="_blank"
               rel="noreferrer"
               size="sm"
@@ -60,7 +59,7 @@ const TeacherTaskSubmissions = () => {
           )}
           <Button
             as="a"
-            href={`${API_BASE_URL}/${url}`}
+            href={url}
             size="sm"
             variant="primary"
           >
@@ -68,27 +67,29 @@ const TeacherTaskSubmissions = () => {
           </Button>
         </div>
         <p className="text-xs text-gray-500 dark:text-gray-400">
-          文件名：{decodeFilename(url)}
+          文件ID：{fileId}
         </p>
       </div>
     );
   };
 
-  const renderAIGCLog = (url) => {
-    const isExpanded = expandedJsons[url];
+
+  const renderAIGCLog = (fileId) => {
+    const url = `${API_BASE_URL}/download/${fileId}`;
+    const isExpanded = expandedJsons[fileId];
 
     const toggleJson = async () => {
       if (isExpanded) {
-        setExpandedJsons((prev) => ({ ...prev, [url]: null }));
+        setExpandedJsons((prev) => ({ ...prev, [fileId]: null }));
       } else {
         try {
-          const res = await fetch(`${API_BASE_URL}/${url}`);
+          const res = await fetch(url);
           const json = await res.json();
-          setExpandedJsons((prev) => ({ ...prev, [url]: json }));
+          setExpandedJsons((prev) => ({ ...prev, [fileId]: json }));
         } catch {
           setExpandedJsons((prev) => ({
             ...prev,
-            [url]: [{ role: 'system', content: '❌ 加载失败' }],
+            [fileId]: [{ role: 'system', content: '❌ 加载失败' }],
           }));
         }
       }
@@ -97,12 +98,7 @@ const TeacherTaskSubmissions = () => {
     return (
       <div className="mt-2 space-y-2">
         <div className="flex flex-wrap gap-2">
-          <Button
-            as="a"
-            href={`${API_BASE_URL}/${url}`}
-            size="sm"
-            variant="primary"
-          >
+          <Button as="a" href={url} size="sm" variant="primary">
             ⬇️ 下载 AIGC记录
           </Button>
           <Button

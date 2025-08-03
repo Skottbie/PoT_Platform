@@ -110,9 +110,12 @@ const SubmitTask = () => {
         formData.append('aigcLog', logBlob, 'aigcLog.json');
       }
 
-      await api.post(`/submission/${taskId}`, formData, {
+      const res = await api.post(`/submission/${taskId}`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
+
+      // ✅ GridFS 返回 fileId
+      console.log('上传成功，fileId = ', res.data.fileId);
 
       setMessage('✅ 提交成功！');
       setFile(null);
@@ -126,6 +129,7 @@ const SubmitTask = () => {
       setMessage('❌ 提交失败，请重试');
     }
   };
+
 
   if (!task)
     return <p className="text-center mt-10 text-gray-500 dark:text-gray-400">加载任务中...</p>;
