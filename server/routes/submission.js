@@ -55,13 +55,17 @@ async function uploadToGridFS(file) {
       contentType: file.mimetype
     });
 
-    stream.pipe(uploadStream)
-      .on('error', reject)
-      .on('finish', () => {
-        fs.unlinkSync(file.path); // 删除临时文件
-        resolve(uploadStream.id.toString()); // 返回文件ID
-      });
-  });
+    stream.pipe(uploadStream)
+      .on('error', reject)
+      .on('finish', () => {
+        fs.unlinkSync(file.path); // 删除临时文件
+        resolve({
+          fileId: uploadStream.id.toString(),
+          filename: file.originalname,
+          contentType: file.mimetype,
+        });
+      });
+  });
 }
 //const host = process.env.RENDER_EXTERNAL_URL || `http://localhost:${process.env.PORT || 5000}`;
 
@@ -106,37 +110,39 @@ router.post('/:taskId', verifyToken, upload.fields([
 
 // ✅ 学生提交作业（含文件上传）
 router.post('/:taskId', verifyToken, upload.fields([
-  { name: 'file', maxCount: 1 },
-  { name: 'aigcLog', maxCount: 1 }
+  { name: 'file', maxCount: 1 },
+  { name: 'aigcLog', maxCount: 1 }
 ]), async (req, res) => {
-  try {
-    const task = await Task.findById(req.params.taskId);
-    if (!task) return res.status(404).json({ message: '任务不存在' });
+  try {
+    const task = await Task.findById(req.params.taskId);
+    if (!task) return res.status(404).json({ message: '任务不存在' });
 
-    const file = req.files?.file?.[0];
-    if (!file) return res.status(400).json({ message: '缺少作业文件' });
+    const file = req.files?.file?.[0];
+    if (!file) return res.status(400).json({ message: '缺少作业文件' });
 
-    // 上传文件到 GridFS
-    const fileId = await uploadToGridFS(file);
-    let aigcLogId = null;
+    // 上传文件到 GridFS 并获取文件名和文件ID
+    const { fileId, filename, contentType } = await uploadToGridFS(file);
+    let aigcLogId = null;
 
-    if (req.files?.aigcLog?.[0]) {
-      aigcLogId = await uploadToGridFS(req.files.aigcLog[0]);
-    }
+    if (req.files?.aigcLog?.[0]) {
+      const logResult = await uploadToGridFS(req.files.aigcLog[0]);
+      aigcLogId = logResult.fileId;
+    }
 
-    const submission = new Submission({
-      task: req.params.taskId,
-      student: req.user.id,
-      fileUrl: `/api/files/${fileId}`,
-      aigcLogUrl: aigcLogId ? `/api/files/${aigcLogId}` : null,
-    });
+    const submission = new Submission({
+      task: req.params.taskId,
+      student: req.user.id,
+      fileId: fileId, // ⚠️ 直接保存文件ID
+      fileName: filename, // ⚠️ 保存原始文件名
+      aigcLogId: aigcLogId, // ⚠️ 直接保存 AIGC log 的文件ID
+    });
 
-    await submission.save();
-    res.json({ message: '提交成功' });
-  } catch (err) {
-    console.error('提交失败:', err);
-    res.status(500).json({ message: '服务器错误' });
-  }
+    await submission.save();
+    res.json({ message: '提交成功', fileId }); // 返回文件ID供前端确认
+  } catch (err) {
+    console.error('提交失败:', err);
+    res.status(500).json({ message: '服务器错误' });
+  }
 });
 
 module.exports = router;

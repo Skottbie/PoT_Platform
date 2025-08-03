@@ -14,18 +14,19 @@ const TeacherTaskSubmissions = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchSubmissions = async () => {
-      try {
-        const res = await api.get(`/submit/by-task/${taskId}`);
-        setSubmissions(res.data);
-      } catch (err) {
-        console.error('获取提交失败', err);
-        navigate('/');
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchSubmissions();
+    const fetchSubmissions = async () => {
+      try {
+        const res = await api.get(`/submit/by-task/${taskId}`);
+        // 后端返回的数据格式为 { _id, student, submittedAt, fileId, fileName, aigcLogId }
+        setSubmissions(res.data);
+      } catch (err) {
+        console.error('获取提交失败', err);
+        navigate('/');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchSubmissions();
   }, [taskId, navigate]);
 
   const decodeFilename = (url) => {
@@ -38,62 +39,70 @@ const TeacherTaskSubmissions = () => {
     }
   };
 
-  const renderFileLinks = (fileId) => {
-    const url = `${API_BASE_URL}/download/${fileId}`;
-    const isPreviewable = /\.(pdf|jpg|jpeg|png|gif)$/i.test(fileId); // 这里可能直接用扩展名判断
+  // 📌 修改：renderFileLinks 函数
+  // 现在函数接受文件ID和文件名作为参数
+  const renderFileLinks = (fileId, fileName) => {
+    // 根据后端路由修改 API_BASE_URL
+    const url = `${API_BASE_URL}/download/${fileId}`;
+    // 使用文件名来判断是否可预览，这才是正确的做法
+    const isPreviewable = /\.(pdf|jpg|jpeg|png|gif)$/i.test(fileName);
 
-    return (
-      <div className="space-y-2 text-sm mt-1">
-        <div className="flex flex-wrap gap-2">
-          {isPreviewable && (
-            <Button
-              as="a"
-              href={url}
-              target="_blank"
-              rel="noreferrer"
-              size="sm"
-              variant="primary"
-            >
-              🔍 预览文件
-            </Button>
-          )}
-          <Button
-            as="a"
-            href={url}
-            size="sm"
-            variant="primary"
-          >
-            ⬇️ 下载作业文件
-          </Button>
-        </div>
-        <p className="text-xs text-gray-500 dark:text-gray-400">
-          文件ID：{fileId}
-        </p>
-      </div>
-    );
+    return (
+      <div className="space-y-2 text-sm mt-1">
+        <div className="flex flex-wrap gap-2">
+          {isPreviewable && (
+            <Button
+              as="a"
+              href={url}
+              target="_blank"
+              rel="noreferrer"
+              size="sm"
+              variant="primary"
+            >
+              🔍 预览文件
+            </Button>
+          )}
+          <Button
+            as="a"
+            href={url}
+            size="sm"
+            variant="primary"
+            // 建议：使用 download 属性，浏览器会以指定的文件名保存
+            download={fileName}
+          >
+            ⬇️ 下载作业文件 ({fileName})
+          </Button>
+        </div>
+        <p className="text-xs text-gray-500 dark:text-gray-400">
+          文件ID：{fileId}
+        </p>
+      </div>
+    );
   };
 
 
-  const renderAIGCLog = (fileId) => {
-    const url = `${API_BASE_URL}/download/${fileId}`;
-    const isExpanded = expandedJsons[fileId];
+  // 📌 修改：renderAIGCLog 函数
+  const renderAIGCLog = (aigcLogId) => {
+    const url = `${API_BASE_URL}/download/${aigcLogId}`;
+    const isExpanded = expandedJsons[aigcLogId];
 
-    const toggleJson = async () => {
-      if (isExpanded) {
-        setExpandedJsons((prev) => ({ ...prev, [fileId]: null }));
-      } else {
-        try {
-          const res = await fetch(url);
-          const json = await res.json();
-          setExpandedJsons((prev) => ({ ...prev, [fileId]: json }));
-        } catch {
-          setExpandedJsons((prev) => ({
-            ...prev,
-            [fileId]: [{ role: 'system', content: '❌ 加载失败' }],
-          }));
-        }
-      }
-    };
+    const toggleJson = async () => {
+      if (isExpanded) {
+        setExpandedJsons((prev) => ({ ...prev, [aigcLogId]: null }));
+      } else {
+        try {
+          // fetch 请求 AIGC log
+          const res = await fetch(url);
+          const json = await res.json();
+          setExpandedJsons((prev) => ({ ...prev, [aigcLogId]: json }));
+        } catch {
+          setExpandedJsons((prev) => ({
+            ...prev,
+            [aigcLogId]: [{ role: 'system', content: '❌ 加载失败' }],
+          }));
+        }
+      }
+    };
 
     return (
       <div className="mt-2 space-y-2">
@@ -174,7 +183,7 @@ const TeacherTaskSubmissions = () => {
         ) : (
           <ul className="space-y-6">
             {submissions.map((s) => {
-              const isMissingFile = !s.fileUrl;
+              const isMissingFile = !s.fileId;
               return (
                 <motion.li
                   key={s._id}
@@ -194,26 +203,28 @@ const TeacherTaskSubmissions = () => {
                     {new Date(s.submittedAt).toLocaleString()}
                   </p>
 
-                  {s.fileUrl ? (
-                    <div>
-                      <p className="font-semibold text-gray-700 dark:text-gray-300 mb-1">📎 作业文件:</p>
-                      {renderFileLinks(s.fileUrl)}
-                    </div>
-                  ) : (
-                    <p className="text-red-600 dark:text-red-400 font-medium flex items-center gap-1">
-                      ❌ 学生未提交作业文件
-                    </p>
-                  )}
+                  {s.fileId ? ( // 检查 fileId
+                    <div>
+                      <p className="font-semibold text-gray-700 dark:text-gray-300 mb-1">📎 作业文件:</p>
+                      {/* ⚠️ 这里传入文件ID和文件名 */}
+                      {renderFileLinks(s.fileId, s.fileName)}
+                    </div>
+                  ) : (
+                    <p className="text-red-600 dark:text-red-400 font-medium flex items-center gap-1">
+                      ❌ 学生未提交作业文件
+                    </p>
+                  )}
 
-                  {s.aigcLogUrl && (
-                    <div>
-                      <p className="font-semibold text-gray-700 dark:text-gray-300 mt-4 mb-1">
-                        🤖 AIGC 原始记录:
-                      </p>
-                      {renderAIGCLog(s.aigcLogUrl)}
-                    </div>
-                  )}
-                </motion.li>
+                  {s.aigcLogId && ( // 检查 aigcLogId
+                    <div>
+                      <p className="font-semibold text-gray-700 dark:text-gray-300 mt-4 mb-1">
+                        🤖 AIGC 原始记录:
+                      </p>
+                      {/* ⚠️ 这里传入 AIGC Log 的文件ID */}
+                      {renderAIGCLog(s.aigcLogId)}
+                    </div>
+                  )}
+                </motion.li>
               );
             })}
           </ul>
