@@ -17,6 +17,11 @@ router.get('/:filename', (req, res) => {
 module.exports = router;
 */
 // server/routes/download.js
+const express = require('express');
+const { GridFSBucket, ObjectId } = require('mongodb');
+const mongoose = require('mongoose');
+const router = express.Router();
+
 function getGridFSBucket() {
   return new GridFSBucket(mongoose.connection.db, {
     bucketName: 'uploads'
