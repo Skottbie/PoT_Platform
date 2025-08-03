@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import api from '../api/axiosInstance';
 import logo from '../assets/logo.png';
+import Button from './Button';
 
 export default function FeedbackWidget() {
   const [open, setOpen] = useState(false);
@@ -14,7 +15,7 @@ export default function FeedbackWidget() {
 
   const toggleOpen = () => {
     setOpen(!open);
-    setHintVisible(false); // 用户点击后提示消失
+    setHintVisible(false);
   };
 
   const handleSubmit = async (e) => {
@@ -24,17 +25,17 @@ export default function FeedbackWidget() {
     setSending(true);
     setMessage('');
     try {
-      await api.post('/feedback', { content: feedback }); 
+      await api.post('/feedback', { content: feedback });
       setMessage('✅ 感谢你的反馈！');
       setFeedback('');
-    } catch (error) {
+    } catch {
       setMessage('❌ 提交失败，请稍后再试');
     } finally {
       setSending(false);
     }
   };
 
-  /** 模拟用户遇到问题时提示 **/
+  /** 用户行为提示逻辑 */
   useEffect(() => {
     let clickCount = 0;
     const handleClick = () => {
@@ -42,8 +43,6 @@ export default function FeedbackWidget() {
       if (clickCount >= 5 && !open) {
         setHintVisible(true);
         clickCount = 0;
-
-        // 3 秒后自动隐藏
         if (hintTimer) clearTimeout(hintTimer);
         const timer = setTimeout(() => setHintVisible(false), 3000);
         setHintTimer(timer);
@@ -53,7 +52,6 @@ export default function FeedbackWidget() {
     const idleTimer = setTimeout(() => {
       if (!open) {
         setHintVisible(true);
-        // 3 秒后自动隐藏
         if (hintTimer) clearTimeout(hintTimer);
         const timer = setTimeout(() => setHintVisible(false), 3000);
         setHintTimer(timer);
@@ -69,82 +67,89 @@ export default function FeedbackWidget() {
     };
   }, [open]);
 
-
   return (
     <>
-      {/* 悬浮按钮及气泡 */}
+      {/* 悬浮按钮及提示气泡 */}
       <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end">
-        {/* 气泡：按钮左上角 */}
         {hintVisible && (
-          
           <div
-            className="relative mb-1 mr-8 bg-white dark:bg-gray-800 shadow-lg
-                      border border-gray-200 dark:border-gray-700 px-3 py-1 rounded-xl
-                      text-sm text-gray-700 dark:text-gray-200 animate-bounce
-                      transition-opacity duration-500 opacity-100"
+            className="relative mb-1 mr-8 text-sm text-gray-700 dark:text-gray-200
+                       animate-bounce select-none
+                       bg-gradient-to-r from-blue-50 to-purple-50 dark:from-gray-800 dark:to-gray-700
+                       border border-gray-200 dark:border-gray-700
+                       px-3 py-1 rounded-xl shadow-lg backdrop-blur-md"
           >
-            有任何问题可以点击我反馈哦(`v´)
-            {/* 右下角箭头指向按钮 */}
-            <div className="absolute -bottom-2 right-2 w-0 h-0
-                            border-l-6 border-l-transparent
-                            border-r-6 border-r-transparent
-                            border-t-8 border-t-white dark:border-t-gray-800">
-            </div>
+            有任何问题可以点击我反馈哦 (`v´)
+            <div
+              className="absolute -bottom-2 right-2 w-0 h-0
+                          border-l-6 border-l-transparent
+                          border-r-6 border-r-transparent
+                          border-t-8 border-t-white dark:border-t-gray-800"
+            />
           </div>
         )}
 
-        {/* 按钮本身 */}
+        {/* 悬浮按钮 */}
         <button
           onClick={toggleOpen}
-          className="w-14 h-14 rounded-full shadow-lg bg-white flex items-center justify-center
-                    cursor-pointer hover:scale-110 transition-transform"
+          className={`w-14 h-14 rounded-full shadow-lg flex items-center justify-center
+                      bg-white dark:bg-gray-900
+                      hover:scale-110 active:scale-95 transition-transform backdrop-blur-md`}
           title="点击反馈"
         >
           <img src={logo} alt="Feedback" className="w-10 h-10" />
         </button>
       </div>
 
-
-
-
       {/* 弹出反馈表单 */}
       <div
         className={`fixed bottom-24 right-6 z-50 w-80 
           transform transition-all duration-300 origin-bottom-right
-          ${open ? 'scale-100 opacity-100 translate-y-0' : 'scale-95 opacity-0 translate-y-4 pointer-events-none'}
+          ${open ? 'scale-100 opacity-100 translate-y-0' : 'scale-90 opacity-0 translate-y-4 pointer-events-none'}
         `}
       >
-        <div className="bg-white dark:bg-gray-900 p-4 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
+        <div className="bg-white/80 dark:bg-gray-900/80 p-4 rounded-2xl shadow-2xl border border-gray-200/50 dark:border-gray-700/50 backdrop-blur-xl transition-all duration-300">
           <form onSubmit={handleSubmit} className="flex flex-col gap-2">
             <textarea
               rows="4"
               placeholder="请输入你的反馈..."
-              className="w-full border rounded-md p-2 resize-none bg-white dark:bg-gray-800 dark:text-gray-200 border-gray-300 dark:border-gray-600"
+              className="w-full border rounded-lg p-2 resize-none
+                         bg-white/60 dark:bg-gray-800/60 
+                         text-gray-800 dark:text-gray-200
+                         border-gray-300/50 dark:border-gray-600/50
+                         focus:ring-2 focus:ring-blue-400 focus:outline-none
+                         backdrop-blur-sm"
               value={feedback}
               onChange={(e) => setFeedback(e.target.value)}
               disabled={sending}
               required
             />
-            <div className="flex justify-between items-center">
-              <button
+
+            <div className="flex justify-between items-center mt-2">
+              <Button
                 type="submit"
-                disabled={sending}
-                className="bg-blue-600 text-white px-4 py-1 rounded-lg hover:bg-blue-700 disabled:opacity-50 transition active:scale-95"
+                variant="primary"
+                size="sm"
+                loading={sending}
               >
                 {sending ? '提交中...' : '提交反馈'}
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
+                variant="ghost"
+                size="sm"
                 onClick={toggleOpen}
-                className="text-gray-500 dark:text-gray-400 hover:underline text-sm"
               >
                 关闭
-              </button>
+              </Button>
             </div>
+
             {message && (
               <p
-                className={`text-sm mt-2 ${
-                  message.startsWith('✅') ? 'text-green-600' : 'text-red-600'
+                className={`mt-2 text-sm px-3 py-1 rounded-lg backdrop-blur-sm transition-all duration-300 ${
+                  message.startsWith('✅')
+                    ? 'bg-green-500/10 text-green-600 dark:text-green-400'
+                    : 'bg-red-500/10 text-red-600 dark:text-red-400'
                 }`}
               >
                 {message}
@@ -156,4 +161,3 @@ export default function FeedbackWidget() {
     </>
   );
 }
-
