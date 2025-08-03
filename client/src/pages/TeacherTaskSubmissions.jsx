@@ -56,36 +56,46 @@ const TeacherTaskSubmissions = () => {
   const renderFileLinks = (fileId, fileName) => {
     const isPreviewable = /\.(pdf|jpg|jpeg|png|gif)$/i.test(fileName);
   
+    const handlePreview = async (fileId) => {
+        try {
+            const res = await api.get(`/download/${fileId}`, {
+                responseType: 'blob',
+            });
+            const blob = new Blob([res.data], { type: res.headers['content-type'] });
+            const blobUrl = window.URL.createObjectURL(blob);
+            window.open(blobUrl, '_blank');
+        } catch (error) {
+            console.error('预览失败:', error);
+            alert('文件预览失败，请重试。');
+        }
+    };
+  
     return (
-      <div className="space-y-2 text-sm mt-1">
-        <div className="flex flex-wrap gap-2">
-          {isPreviewable && (
-            // 📌 关键修改：预览现在也需要通过 onClick 发起，因为直接的 href 无法携带 token
-            <Button
-              size="sm"
-              variant="primary"
-              onClick={() => {
-                const url = `${API_BASE_URL}/download/${fileId}`;
-                window.open(url, '_blank');
-              }}
-            >
-              🔍 预览文件
-            </Button>
-          )}
-          <Button
-            size="sm"
-            variant="primary"
-            onClick={() => handleDownload(fileId, fileName)}
-          >
-            ⬇️ 下载作业文件 ({fileName})
-          </Button>
+        <div className="space-y-2 text-sm mt-1">
+            <div className="flex flex-wrap gap-2">
+                {isPreviewable && (
+                    <Button
+                        size="sm"
+                        variant="primary"
+                        onClick={() => handlePreview(fileId)} // ⚠️ 修改：调用新函数
+                    >
+                        🔍 预览文件
+                    </Button>
+                )}
+                <Button
+                    size="sm"
+                    variant="primary"
+                    onClick={() => handleDownload(fileId, fileName)}
+                >
+                    ⬇️ 下载作业文件 ({fileName})
+                </Button>
+            </div>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+                文件ID：{fileId}
+            </p>
         </div>
-        <p className="text-xs text-gray-500 dark:text-gray-400">
-          文件ID：{fileId}
-        </p>
-      </div>
     );
-  };
+};
   
   const renderAIGCLog = (aigcLogId) => {
     const isExpanded = expandedJsons[aigcLogId];
