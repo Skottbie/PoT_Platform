@@ -7,6 +7,7 @@ import ReactMarkdown from 'react-markdown';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { duotoneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { motion, AnimatePresence } from 'framer-motion';
+import Button from '../components/Button';
 
 const SubmitTask = () => {
   const { taskId } = useParams();
@@ -153,14 +154,15 @@ const SubmitTask = () => {
       <div className="max-w-2xl mx-auto bg-white dark:bg-gray-800 rounded-2xl shadow p-8 relative transition-colors duration-300">
 
         {/* 返回仪表盘按钮（卡片右上角） */}
-        <button
+        <Button
+          variant="secondary"
+          size="sm"
+          className="absolute top-2 right-4"
           onClick={() => navigate('/student')}
-          className="absolute top-2 right-4 px-3 py-1 text-sm rounded-lg
-                     bg-gray-200 hover:bg-gray-300 text-gray-700 shadow
-                     dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 transition"
         >
           👈 返回仪表盘
-        </button>
+        </Button>
+
 
         <h1 className="text-2xl font-bold mb-4 text-gray-800 dark:text-gray-100">
           提交任务：{task.title}
@@ -210,26 +212,29 @@ const SubmitTask = () => {
                   <label className="font-semibold text-gray-700 dark:text-gray-200">💬 AIGC 对话区</label>
 
                   {!isFullscreen && (
-                    <button
+                    <Button
                       type="button"
+                      size="sm"
+                      variant="secondary"
                       onClick={() => setIsFullscreen(true)}
-                      className="px-3 py-1 text-xs rounded-lg bg-gray-200 hover:bg-gray-300 text-gray-700 
-                                dark:bg-gray-600 dark:text-gray-200 dark:hover:bg-gray-500 transition"
                     >
                       全屏
-                    </button>
+                    </Button>
+
                   )}
                 </div>
 
                 {isFullscreen && (
-                  <button
+                  <Button
                     type="button"
+                    size="sm"
+                    variant="secondary"
+                    className="absolute top-4 right-4"
                     onClick={() => setIsFullscreen(false)}
-                    className="absolute top-4 right-4 px-3 py-1 text-xs rounded-lg bg-gray-200 hover:bg-gray-300 text-gray-700 
-                              dark:bg-gray-600 dark:text-gray-200 dark:hover:bg-gray-500 transition"
                   >
                     退出全屏
-                  </button>
+                  </Button>
+
                 )}
 
 
@@ -243,8 +248,8 @@ const SubmitTask = () => {
                   onChange={(e) => setModel(e.target.value)}
                   className="border p-2 rounded-lg w-full bg-white dark:bg-gray-600 dark:text-gray-100"
                 >
-                  <option value="openai">🌍 ChatGPT (OpenAI)</option>
-                  <option value="qwen">🇨🇳 通义千问 (Alibaba)</option>
+                  <option value="openai">ChatGPT*(维护中)</option>
+                  <option value="qwen">通义千问</option>
                 </select>
               </div>
 
@@ -316,33 +321,31 @@ const SubmitTask = () => {
                   placeholder="输入你的问题..."
                   className="flex-1 border rounded-lg p-2 dark:bg-gray-800 dark:text-gray-100"
                 />
-                <button
-                  type="button"
-                  onClick={handleAIGCSubmit}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 whitespace-nowrap transition"
-                >
+                <Button type="button" onClick={handleAIGCSubmit} variant="primary">
                   发送
-                </button>
+                </Button>
+
               </div>
               </motion.div>
             </AnimatePresence>
           )}
 
-          <button
-            type="submit"
-            className="w-full bg-blue-600 text-white py-2 rounded-xl shadow hover:bg-blue-700 transition-all"
-          >
+          <Button type="submit" variant="primary" fullWidth>
             📤 提交作业
-          </button>
+          </Button>
+
 
           {message && (
             <p
-              className={`text-sm mt-2 ${
-                message.startsWith('✅') ? 'text-green-600' : 'text-red-500'
+              className={`mt-2 text-sm px-3 py-1.5 rounded-lg backdrop-blur-sm transition-all duration-300 ${
+                message.startsWith('✅')
+                  ? 'bg-green-500/10 text-green-600 dark:text-green-400'
+                  : 'bg-red-500/10 text-red-600 dark:text-red-400'
               }`}
             >
               {message}
             </p>
+
           )}
         </form>
       </div>
