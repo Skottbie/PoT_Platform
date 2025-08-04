@@ -39,6 +39,16 @@ const submissionSchema = new mongoose.Schema({
     type: Date, 
     default: Date.now 
   },
+  // 📌 新增：是否为逾期提交
+  isLateSubmission: {
+    type: Boolean,
+    default: false
+  },
+  // 📌 新增：逾期时长（分钟数）
+  lateMinutes: {
+    type: Number,
+    default: 0
+  }
 }, { 
   timestamps: true 
 });

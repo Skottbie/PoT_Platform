@@ -7,11 +7,9 @@ import Button from '../components/Button';
 import { motion, AnimatePresence } from 'framer-motion';
 import Modal from 'react-modal';
 
-// 为 react-modal 设置根元素，这对于无障碍访问是必需的
 Modal.setAppElement('#root');
 
-// 📌 修复：一个处理异步加载图片的组件
-// 移除了在组件卸载时销毁 URL 的代码，交由浏览器自动处理。
+// 图片加载组件（保持原有实现）
 const ImageWithLoading = ({ imageId, fetchImage }) => {
   const [src, setSrc] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -27,8 +25,6 @@ const ImageWithLoading = ({ imageId, fetchImage }) => {
         }
       } catch (e) {
         if (isMounted) {
-          // 加载失败时显示裂开的图片占位符
-          // 使用 inline SVG 作为占位符，避免再次发起 HTTP 请求
           setSrc('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-image"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>');
         }
       } finally {
@@ -54,13 +50,11 @@ const ImageWithLoading = ({ imageId, fetchImage }) => {
     );
   }
 
-  // 如果加载失败，src会被设置为SVG占位符，也会被正常渲染
   return (
     <img
       src={src}
       alt="学生提交的图片"
       className="w-full h-full object-cover"
-      // 加载失败时，不显示alt文本，因为它已经被SVG替代
       onError={(e) => {
         if (!e.target.src.startsWith('data:')) {
           e.target.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-image"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>';
@@ -70,60 +64,85 @@ const ImageWithLoading = ({ imageId, fetchImage }) => {
   );
 };
 
-
 const TeacherTaskSubmissions = () => {
   const { taskId } = useParams();
   const [submissions, setSubmissions] = useState([]);
+  const [task, setTask] = useState(null); // 📌 新增：存储任务信息
   const [loading, setLoading] = useState(true);
   const [expandedJsons, setExpandedJsons] = useState({});
   const navigate = useNavigate();
 
-  // 管理模态框状态和当前图片 URL
   const [modalIsOpen, setModalIsOpen] = useState(false);
   const [currentImageUrl, setCurrentImageUrl] = useState('');
-
-  // 存储图片 URL 映射，避免重复加载
   const [imageUrls, setImageUrls] = useState({});
 
-  // 图片加载函数，处理授权请求
+  // 图片加载函数
   const fetchAndCacheImage = async (imageId) => {
-    // 如果URL已缓存，直接返回
     if (imageUrls[imageId]) {
       return imageUrls[imageId];
     }
     try {
-      // 使用 axiosInstance 发起带 Token 的请求
       const res = await api.get(`/download/${imageId}`, {
         responseType: 'blob',
       });
       const blob = new Blob([res.data], { type: res.headers['content-type'] });
       const url = URL.createObjectURL(blob);
-      // 缓存生成的 URL
       setImageUrls(prev => ({ ...prev, [imageId]: url }));
       return url;
     } catch (error) {
       console.error('图片加载失败:', error);
-      // 返回一个占位符
       throw new Error("图片加载失败");
     }
   };
 
   useEffect(() => {
-    const fetchSubmissions = async () => {
+    const fetchTaskAndSubmissions = async () => {
       try {
+        // 📌 获取任务信息
+        const taskRes = await api.get(`/task/${taskId}`);
+        setTask(taskRes.data);
+
+        // 获取提交记录
         const res = await api.get(`/submission/by-task/${taskId}`);
         setSubmissions(res.data);
       } catch (err) {
-        console.error('获取提交失败', err);
+        console.error('获取数据失败', err);
         navigate('/');
       } finally {
         setLoading(false);
       }
     };
-    fetchSubmissions();
+    fetchTaskAndSubmissions();
   }, [taskId, navigate]);
 
-  // 下载文件函数（保持不变）
+  // 📌 新增：格式化截止时间
+  const formatDeadline = (deadline) => {
+    const date = new Date(deadline);
+    return date.toLocaleString('zh-CN', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
+
+  // 📌 新增：格式化逾期时间
+  const formatLateTime = (lateMinutes) => {
+    if (lateMinutes < 60) {
+      return `逾期 ${lateMinutes} 分钟`;
+    } else if (lateMinutes < 1440) {
+      const hours = Math.floor(lateMinutes / 60);
+      const minutes = lateMinutes % 60;
+      return `逾期 ${hours} 小时${minutes > 0 ? ` ${minutes} 分钟` : ''}`;
+    } else {
+      const days = Math.floor(lateMinutes / 1440);
+      const hours = Math.floor((lateMinutes % 1440) / 60);
+      return `逾期 ${days} 天${hours > 0 ? ` ${hours} 小时` : ''}`;
+    }
+  };
+
+  // 下载文件函数
   const handleDownload = async (fileId, fileName) => {
     try {
       const res = await api.get(`/download/${fileId}`, {
@@ -188,18 +207,16 @@ const TeacherTaskSubmissions = () => {
     );
   };
 
-  // 渲染图片缩略图，点击后打开模态框
+  // 渲染图片缩略图
   const renderImageLinks = (imageIds) => {
     if (!imageIds || imageIds.length === 0) return null;
     
     const openModal = async (imageId) => {
-      // 在打开模态框时，也使用加载函数获取 URL
       try {
           const imageUrl = await fetchAndCacheImage(imageId);
           setCurrentImageUrl(imageUrl);
           setModalIsOpen(true);
       } catch (e) {
-          // 捕获加载失败，并显示提示
           alert('图片加载失败，请重试。');
       }
     };
@@ -224,7 +241,7 @@ const TeacherTaskSubmissions = () => {
     );
   };
   
-  // 渲染 AIGC 日志（保持不变）
+  // 渲染 AIGC 日志
   const renderAIGCLog = (aigcLogId) => {
     const isExpanded = expandedJsons[aigcLogId];
     const toggleJson = async () => {
@@ -297,17 +314,40 @@ const TeacherTaskSubmissions = () => {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 px-4 py-8">
       <div className="max-w-4xl mx-auto relative">
-        <Button
-          variant="secondary"
-          size="sm"
-          className="absolute top-0 right-0"
-          onClick={() => navigate('/teacher')}
-        >
-          👈 返回教师首页
-        </Button>
-        <h1 className="text-2xl font-bold mb-6 text-gray-800 dark:text-gray-100">
-          📄 提交记录
-        </h1>
+        <div className="flex justify-between items-start mb-6">
+          <div>
+            <h1 className="text-2xl font-bold mb-2 text-gray-800 dark:text-gray-100">
+              📄 提交记录
+            </h1>
+            {/* 📌 新增：显示任务信息 */}
+            {task && (
+              <div className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
+                <p><strong>任务：</strong>{task.title}</p>
+                <p><strong>截止时间：</strong>{formatDeadline(task.deadline)}</p>
+                <p><strong>逾期提交：</strong>{task.allowLateSubmission ? '允许' : '不允许'}</p>
+              </div>
+            )}
+          </div>
+          
+          <div className="flex gap-2">
+            {/* 📌 新增：班级提交情况按钮 */}
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => navigate(`/task/${taskId}/class-status`)}
+            >
+              📊 班级提交情况
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => navigate('/teacher')}
+            >
+              👈 返回教师首页
+            </Button>
+          </div>
+        </div>
+
         {submissions.length === 0 ? (
           <motion.p
             initial={{ opacity: 0 }}
@@ -325,15 +365,37 @@ const TeacherTaskSubmissions = () => {
                   key={s._id}
                   initial={{ opacity: 0, y: 15 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className={`p-5 rounded-2xl shadow-md space-y-3 border transition hover:shadow-lg backdrop-blur-sm ${isMissingFile ? "bg-red-50/70 dark:bg-red-900/20 border-red-200 dark:border-red-700" : "bg-white/80 dark:bg-gray-800/80 border-gray-200 dark:border-gray-700"}`}
+                  className={`p-5 rounded-2xl shadow-md space-y-3 border transition hover:shadow-lg backdrop-blur-sm ${
+                    s.isLateSubmission
+                      ? "bg-orange-50/70 dark:bg-orange-900/20 border-orange-200 dark:border-orange-700"
+                      : isMissingFile 
+                      ? "bg-red-50/70 dark:bg-red-900/20 border-red-200 dark:border-red-700" 
+                      : "bg-white/80 dark:bg-gray-800/80 border-gray-200 dark:border-gray-700"
+                  }`}
                 >
-                  <p className="text-sm text-gray-800 dark:text-gray-200">
-                    <strong>👤 学生:</strong> {s.student?.email || '未知'}
-                  </p>
-                  <p className="text-sm text-gray-800 dark:text-gray-200">
-                    <strong>📅 提交时间:</strong>{' '}
-                    {new Date(s.submittedAt).toLocaleString()}
-                  </p>
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <p className="text-sm text-gray-800 dark:text-gray-200">
+                        <strong>👤 学生:</strong> {s.student?.email || '未知'}
+                      </p>
+                      <p className="text-sm text-gray-800 dark:text-gray-200">
+                        <strong>📅 提交时间:</strong>{' '}
+                        {new Date(s.submittedAt).toLocaleString()}
+                      </p>
+                    </div>
+                    
+                    {/* 📌 新增：逾期提交标识 */}
+                    {s.isLateSubmission && (
+                      <div className="flex flex-col items-end">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800 dark:bg-orange-900/50 dark:text-orange-300">
+                          ⚠️ 逾期提交
+                        </span>
+                        <span className="text-xs text-orange-600 dark:text-orange-400 mt-1">
+                          {formatLateTime(s.lateMinutes)}
+                        </span>
+                      </div>
+                    )}
+                  </div>
                   
                   {s.content && (
                     <div className="mt-4">

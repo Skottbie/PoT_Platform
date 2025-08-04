@@ -13,6 +13,7 @@ import JoinClass from './pages/JoinClass';
 import ProtectedLayout from './components/ProtectedLayout';
 import { useState, useEffect } from 'react';
 import FeedbackWidget from './components/FeedbackWidget';
+import ClassSubmissionStatus from './pages/ClassSubmissionStatus';
 
 
 import Test from './Test'; // 导入测试组件
@@ -43,6 +44,7 @@ function App() {
         <Route path="/my-classes" element={<MyClasses />} />
         <Route path="/class/:classId/students" element={<ClassStudents />} />
         <Route path="/join-class" element={<JoinClass />} />
+        <Route path="/task/:taskId/class-status" element={<ClassSubmissionStatus />} />
 
 
         <Route path="/test" element={<Test />} />

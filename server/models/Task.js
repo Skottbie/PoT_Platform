@@ -1,5 +1,4 @@
 //server/models/Task.js
-
 const mongoose = require('mongoose');
 
 const taskSchema = new mongoose.Schema({
@@ -10,7 +9,16 @@ const taskSchema = new mongoose.Schema({
   needsFile: { type: Boolean, default: false },
   allowAIGC: { type: Boolean, default: true },
   requireAIGCLog: { type: Boolean, default: false },
-  deadline: {type: Date},
+  // 📌 升级：deadline 改为必填，并精确到分钟
+  deadline: { 
+    type: Date, 
+    required: true 
+  },
+  // 📌 新增：是否允许逾期提交
+  allowLateSubmission: { 
+    type: Boolean, 
+    default: false 
+  },
   createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   createdAt: { type: Date, default: Date.now },
   classIds: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Class' }],

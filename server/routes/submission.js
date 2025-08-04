@@ -44,34 +44,51 @@ async function uploadToGridFS(file, decodedFilename) {
   });
 }
 
-// ✅ 学生提交作业（支持多种类型）
+// ✅ 学生提交作业（支持多种类型 + 截止时间检查）
 router.post('/:taskId', verifyToken, upload.fields([
   { name: 'file', maxCount: 1 },
-  { name: 'images', maxCount: 5 }, // 📌 新增：支持最多5张图片
+  { name: 'images', maxCount: 5 },
   { name: 'aigcLog', maxCount: 1 }
 ]), async (req, res) => {
   try {
     const task = await Task.findById(req.params.taskId);
     if (!task) return res.status(404).json({ message: '任务不存在' });
 
-    // 📌 新增：获取提交的文本内容
-    const { content } = req.body;
+    // 📌 新增：检查是否已提交
+    const existingSubmission = await Submission.findOne({
+      task: req.params.taskId,
+      student: req.user.id
+    });
+    
+    if (existingSubmission) {
+      return res.status(400).json({ message: '你已提交过该任务，无法重复提交' });
+    }
+
+    // 📌 新增：截止时间检查
+    const now = new Date();
+    const deadline = new Date(task.deadline);
+    const isLate = now > deadline;
+    
+    // 如果逾期且不允许逾期提交，则拒绝
+    if (isLate && !task.allowLateSubmission) {
+      return res.status(400).json({ message: '任务已截止，不允许逾期提交' });
+    }
+
+    // 获取提交的文本内容和逾期信息
+    const { content, isLateSubmission, lateMinutes } = req.body;
     const file = req.files?.file?.[0];
     const images = req.files?.images;
     const aigcLogFile = req.files?.aigcLog?.[0];
 
     // 📌 验证提交逻辑
-    // 1. 如果教师要求文件必交，但学生未上传，则返回错误
     if (task.needsFile && !file) {
       return res.status(400).json({ message: '本任务要求上传作业文件。' });
     }
 
-    // 2. 如果教师要求AIGC日志必交，但学生未上传，则返回错误
     if (task.requireAIGCLog && !aigcLogFile) {
       return res.status(400).json({ message: '本任务要求上传 AIGC 原始记录。' });
     }
 
-    // 3. 如果没有任何提交（文件、图片、文本），则返回错误
     if (!file && (!images || images.length === 0) && !content) {
       return res.status(400).json({ message: '请提交作业内容（文件、图片或文本）。' });
     }
@@ -106,34 +123,58 @@ router.post('/:taskId', verifyToken, upload.fields([
       aigcLogId = logResult.fileId;
     }
 
+    // 📌 新增：计算逾期时间
+    let actualLateMinutes = 0;
+    if (isLate) {
+      actualLateMinutes = Math.floor((now - deadline) / (1000 * 60));
+    }
+
     const submission = new Submission({
       task: req.params.taskId,
       student: req.user.id,
-      content: content || '', // 📌 保存文本内容
-      imageIds: imageIds, // 📌 保存图片ID数组
+      content: content || '',
+      imageIds: imageIds,
       fileId: fileId,
       fileName: fileName,
       aigcLogId: aigcLogId,
+      // 📌 新增：逾期信息
+      isLateSubmission: isLate,
+      lateMinutes: actualLateMinutes
     });
 
     await submission.save();
-    res.json({ message: '提交成功' });
+    
+    if (isLate) {
+      res.json({ 
+        message: '逾期提交成功，该作业将被标注为逾期提交',
+        isLateSubmission: true,
+        lateMinutes: actualLateMinutes
+      });
+    } else {
+      res.json({ message: '提交成功' });
+    }
   } catch (err) {
     console.error('提交失败:', err);
     res.status(500).json({ message: '服务器错误' });
   }
 });
 
-// ✅ 获取某任务的所有提交记录
+// ✅ 获取某任务的所有提交记录（教师查看）
 router.get('/by-task/:taskId', verifyToken, async (req, res) => {
   try {
-    const submissions = await Submission.find({ task: req.params.taskId }).populate('student', 'email');
+    if (req.user.role !== 'teacher') {
+      return res.status(403).json({ message: '无权限查看提交记录' });
+    }
+
+    const submissions = await Submission.find({ task: req.params.taskId })
+      .populate('student', 'email')
+      .sort({ submittedAt: -1 });
+    
     res.json(submissions);
   } catch (err) {
     res.status(500).json({ message: '获取提交失败', error: err.message });
   }
 });
-
 
 // ✅ 获取某个学生的提交记录
 router.get('/by-student/:studentId', verifyToken, async (req, res) => {
@@ -145,5 +186,24 @@ router.get('/by-student/:studentId', verifyToken, async (req, res) => {
   }
 });
 
+// ✅ 检查学生是否已提交指定任务
+router.get('/check/:taskId', verifyToken, async (req, res) => {
+  try {
+    const taskId = req.params.taskId;
+    const studentId = req.user.id;
+
+    const existing = await Submission.findOne({ task: taskId, student: studentId });
+    res.json({ 
+      submitted: !!existing,
+      submission: existing ? {
+        submittedAt: existing.submittedAt,
+        isLateSubmission: existing.isLateSubmission,
+        lateMinutes: existing.lateMinutes
+      } : null
+    });
+  } catch (err) {
+    res.status(500).json({ message: '服务器错误' });
+  }
+});
 
 module.exports = router;
