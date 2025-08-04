@@ -489,13 +489,17 @@ const SubmitTask = () => {
               </AnimatePresence>
             )}
 
-            <Button 
-              type="submit" 
-              variant={taskStatus?.isLate ? "warning" : "primary"} 
-              fullWidth
-            >
-              {taskStatus?.isLate ? '⚠️ 逾期提交作业' : '📤 提交作业'}
-            </Button>
+            <button
+                type="submit"
+                className={`w-full px-5 py-3 rounded-xl text-white font-medium shadow-md backdrop-blur-md
+                            hover:shadow-lg hover:scale-[1.02] active:scale-95 transition-all duration-200 ${
+                    taskStatus?.isLate 
+                    ? 'bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700'
+                    : 'bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600'
+                }`}
+                >
+                {taskStatus?.isLate ? '⚠️ 逾期提交作业' : '📤 提交作业'}
+                </button>
 
             {message && (
               <p
