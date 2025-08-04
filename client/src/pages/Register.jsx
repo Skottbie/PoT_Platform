@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import axios from '../api/axiosInstance';
 import { useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 
 const Register = () => {
   const [email, setEmail] = useState('');
@@ -23,10 +24,14 @@ const Register = () => {
         role,
         inviteCode, // 将邀请码发送到后端
       });
-      alert('注册成功，请登录');
+      
+      toast.success('注册成功，请登录'); 
       navigate('/');
     } catch (err) {
-      setError(err.response?.data?.message || '注册失败');
+     
+      const errorMessage = err.response?.data?.message || '注册失败';
+      toast.error(errorMessage); 
+      setError(errorMessage);
     }
   };
 
