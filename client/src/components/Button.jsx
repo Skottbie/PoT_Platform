@@ -64,6 +64,17 @@ const variantStyles = {
     active:scale-95
     disabled:opacity-50 disabled:cursor-not-allowed
   `,
+  warning: `
+  bg-gradient-to-r from-orange-500 to-amber-600
+  text-white
+  shadow-md shadow-orange-500/25
+  ring-1 ring-white/20
+  backdrop-blur-lg
+  hover:brightness-110 hover:shadow-lg hover:shadow-orange-500/35
+  active:scale-95
+  transition-all
+  disabled:opacity-50 disabled:cursor-not-allowed
+`,
 };
 
 
