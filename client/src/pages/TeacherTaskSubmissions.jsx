@@ -1,8 +1,14 @@
+// client/src/pages/TeacherTaskSubmissions.jsx
+
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../api/axiosInstance';
 import Button from '../components/Button';
 import { motion, AnimatePresence } from 'framer-motion';
+import Modal from 'react-modal'; // 📌 新增：引入模态框组件
+
+// 📌 新增：为 react-modal 设置根元素，这对于无障碍访问是必需的
+Modal.setAppElement('#root');
 
 const TeacherTaskSubmissions = () => {
   const { taskId } = useParams();
@@ -11,10 +17,14 @@ const TeacherTaskSubmissions = () => {
   const [expandedJsons, setExpandedJsons] = useState({});
   const navigate = useNavigate();
 
+  // 📌 新增：管理模态框状态和当前图片 URL
+  const [modalIsOpen, setModalIsOpen] = useState(false);
+  const [currentImageUrl, setCurrentImageUrl] = useState('');
+
   useEffect(() => {
     const fetchSubmissions = async () => {
       try {
-        const res = await api.get(`/submission/by-task/${taskId}`); // ⚠️ 修复：使用正确的 API 路径
+        const res = await api.get(`/submission/by-task/${taskId}`);
         setSubmissions(res.data);
       } catch (err) {
         console.error('获取提交失败', err);
@@ -26,15 +36,14 @@ const TeacherTaskSubmissions = () => {
     fetchSubmissions();
   }, [taskId, navigate]);
 
+  // 📌 保持不变：下载文件函数
   const handleDownload = async (fileId, fileName) => {
     try {
       const res = await api.get(`/download/${fileId}`, {
         responseType: 'blob',
       });
-
       const blob = new Blob([res.data], { type: res.headers['content-type'] });
       const blobUrl = window.URL.createObjectURL(blob);
-
       const a = document.createElement('a');
       a.href = blobUrl;
       a.download = fileName;
@@ -92,52 +101,49 @@ const TeacherTaskSubmissions = () => {
     );
   };
 
-  // 📌 新增函数：渲染图片链接
+  // 📌 修改：渲染图片缩略图，点击后打开模态框
   const renderImageLinks = (imageIds) => {
     if (!imageIds || imageIds.length === 0) return null;
     
-    const handleImagePreview = async (imageId) => {
-      try {
-          const res = await api.get(`/download/${imageId}`, {
-              responseType: 'blob',
-          });
-          const blob = new Blob([res.data], { type: res.headers['content-type'] });
-          const blobUrl = window.URL.createObjectURL(blob);
-          window.open(blobUrl, '_blank');
-      } catch (error) {
-          console.error('图片预览失败:', error);
-          alert('图片预览失败，请重试。');
-      }
+    // 📌 移除 handleImagePreview，使用新逻辑
+    const openModal = (imageId) => {
+        const imageUrl = `${api.defaults.baseURL}/download/${imageId}`;
+        setCurrentImageUrl(imageUrl);
+        setModalIsOpen(true);
     };
     
     return (
       <div className="mt-4">
         <p className="font-semibold text-gray-700 dark:text-gray-300 mb-2">📸 提交图片:</p>
         <div className="flex flex-wrap gap-2">
-          {imageIds.map((imageId, index) => (
-            <Button
+          {imageIds.map((imageId) => (
+            <div
               key={imageId}
-              size="sm"
-              variant="secondary"
-              onClick={() => handleImagePreview(imageId)}
+              onClick={() => openModal(imageId)}
+              className="w-24 h-24 rounded-lg overflow-hidden cursor-pointer
+                         border border-gray-200 dark:border-gray-700
+                         hover:shadow-lg transition-shadow duration-200"
             >
-              🖼️ 查看图片 {index + 1}
-            </Button>
+              <img
+                src={`${api.defaults.baseURL}/download/${imageId}`}
+                alt="学生提交的图片"
+                className="w-full h-full object-cover"
+              />
+            </div>
           ))}
         </div>
       </div>
     );
   };
   
+  // 📌 保持不变：渲染 AIGC 日志
   const renderAIGCLog = (aigcLogId) => {
     const isExpanded = expandedJsons[aigcLogId];
-  
     const toggleJson = async () => {
       if (isExpanded) {
         setExpandedJsons((prev) => ({ ...prev, [aigcLogId]: null }));
       } else {
         try {
-          // 📌 关键修改：统一使用 `api` 实例来请求 AIGC log
           const res = await api.get(`/download/${aigcLogId}`);
           setExpandedJsons((prev) => ({ ...prev, [aigcLogId]: res.data }));
         } catch (error) {
@@ -241,7 +247,6 @@ const TeacherTaskSubmissions = () => {
                     {new Date(s.submittedAt).toLocaleString()}
                   </p>
                   
-                  {/* 📌 新增：渲染文本内容 */}
                   {s.content && (
                     <div className="mt-4">
                       <p className="font-semibold text-gray-700 dark:text-gray-300 mb-1">📝 提交文本:</p>
@@ -251,7 +256,7 @@ const TeacherTaskSubmissions = () => {
                     </div>
                   )}
 
-                  {/* 📌 新增：渲染图片 */}
+                  {/* 📌 修改：调用新函数 */}
                   {renderImageLinks(s.imageIds)}
 
                   {s.fileId ? (
@@ -260,7 +265,6 @@ const TeacherTaskSubmissions = () => {
                       {renderFileLinks(s.fileId, s.fileName)}
                     </div>
                   ) : (
-                    // ⚠️ 修改：只有在没有任何文件、图片、文本时才显示“未提交”的警告
                     !s.content && (!s.imageIds || s.imageIds.length === 0) && (
                       <p className="text-red-600 dark:text-red-400 font-medium flex items-center gap-1">
                         ❌ 学生未提交作业文件
@@ -281,6 +285,44 @@ const TeacherTaskSubmissions = () => {
           </ul>
         )}
       </div>
+
+      {/* 📌 新增：模态框组件 */}
+      <Modal
+        isOpen={modalIsOpen}
+        onRequestClose={() => setModalIsOpen(false)}
+        contentLabel="Image Modal"
+        style={{
+          overlay: {
+            backgroundColor: 'rgba(0, 0, 0, 0.75)',
+            zIndex: 1000,
+          },
+          content: {
+            top: '50%',
+            left: '50%',
+            right: 'auto',
+            bottom: 'auto',
+            marginRight: '-50%',
+            transform: 'translate(-50%, -50%)',
+            border: 'none',
+            background: 'transparent',
+            padding: 0,
+            width: '90%',
+            maxWidth: '900px',
+            maxHeight: '90%',
+            overflow: 'auto',
+          },
+        }}
+      >
+        <button 
+          onClick={() => setModalIsOpen(false)}
+          className="absolute top-4 right-4 text-white text-3xl font-bold bg-black bg-opacity-50 rounded-full w-10 h-10 flex items-center justify-center z-10"
+        >
+          &times;
+        </button>
+        {currentImageUrl && (
+          <img src={currentImageUrl} alt="放大图片" className="w-full h-auto object-contain rounded-lg" />
+        )}
+      </Modal>
     </div>
   );
 };
