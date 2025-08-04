@@ -5,12 +5,13 @@ import { useParams, useNavigate } from 'react-router-dom';
 import api from '../api/axiosInstance';
 import Button from '../components/Button';
 import { motion, AnimatePresence } from 'framer-motion';
-import Modal from 'react-modal'; // 引入模态框组件
+import Modal from 'react-modal';
 
 // 为 react-modal 设置根元素，这对于无障碍访问是必需的
 Modal.setAppElement('#root');
 
-// 📌 新增：一个处理异步加载图片的组件
+// 📌 修复：一个处理异步加载图片的组件
+// 移除了在组件卸载时销毁 URL 的代码，交由浏览器自动处理。
 const ImageWithLoading = ({ imageId, fetchImage }) => {
   const [src, setSrc] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -27,7 +28,8 @@ const ImageWithLoading = ({ imageId, fetchImage }) => {
       } catch (e) {
         if (isMounted) {
           // 加载失败时显示裂开的图片占位符
-          setSrc('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 4-4v6z" fill="%236b7280"/></svg>');
+          // 使用 inline SVG 作为占位符，避免再次发起 HTTP 请求
+          setSrc('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-image"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>');
         }
       } finally {
         if (isMounted) {
@@ -39,10 +41,6 @@ const ImageWithLoading = ({ imageId, fetchImage }) => {
 
     return () => {
       isMounted = false;
-      // 在组件卸载时清理临时的URL
-      if (src) {
-        URL.revokeObjectURL(src);
-      }
     };
   }, [imageId, fetchImage]);
 
@@ -56,15 +54,18 @@ const ImageWithLoading = ({ imageId, fetchImage }) => {
     );
   }
 
-  if (!src) {
-    return null; // 加载失败后不显示任何内容
-  }
-
+  // 如果加载失败，src会被设置为SVG占位符，也会被正常渲染
   return (
     <img
       src={src}
       alt="学生提交的图片"
       className="w-full h-full object-cover"
+      // 加载失败时，不显示alt文本，因为它已经被SVG替代
+      onError={(e) => {
+        if (!e.target.src.startsWith('data:')) {
+          e.target.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-image"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>';
+        }
+      }}
     />
   );
 };
@@ -81,10 +82,10 @@ const TeacherTaskSubmissions = () => {
   const [modalIsOpen, setModalIsOpen] = useState(false);
   const [currentImageUrl, setCurrentImageUrl] = useState('');
 
-  // 📌 新增：存储图片 URL 映射，避免重复加载
+  // 存储图片 URL 映射，避免重复加载
   const [imageUrls, setImageUrls] = useState({});
 
-  // 📌 新增：图片加载函数，处理授权请求
+  // 图片加载函数，处理授权请求
   const fetchAndCacheImage = async (imageId) => {
     // 如果URL已缓存，直接返回
     if (imageUrls[imageId]) {
@@ -102,7 +103,7 @@ const TeacherTaskSubmissions = () => {
       return url;
     } catch (error) {
       console.error('图片加载失败:', error);
-      // 返回一个占位符，例如一个裂开图片的 Base64
+      // 返回一个占位符
       throw new Error("图片加载失败");
     }
   };
@@ -193,9 +194,14 @@ const TeacherTaskSubmissions = () => {
     
     const openModal = async (imageId) => {
       // 在打开模态框时，也使用加载函数获取 URL
-      const imageUrl = await fetchAndCacheImage(imageId);
-      setCurrentImageUrl(imageUrl);
-      setModalIsOpen(true);
+      try {
+          const imageUrl = await fetchAndCacheImage(imageId);
+          setCurrentImageUrl(imageUrl);
+          setModalIsOpen(true);
+      } catch (e) {
+          // 捕获加载失败，并显示提示
+          alert('图片加载失败，请重试。');
+      }
     };
     
     return (
