@@ -5,10 +5,70 @@ import { useParams, useNavigate } from 'react-router-dom';
 import api from '../api/axiosInstance';
 import Button from '../components/Button';
 import { motion, AnimatePresence } from 'framer-motion';
-import Modal from 'react-modal'; // 📌 新增：引入模态框组件
+import Modal from 'react-modal'; // 引入模态框组件
 
-// 📌 新增：为 react-modal 设置根元素，这对于无障碍访问是必需的
+// 为 react-modal 设置根元素，这对于无障碍访问是必需的
 Modal.setAppElement('#root');
+
+// 📌 新增：一个处理异步加载图片的组件
+const ImageWithLoading = ({ imageId, fetchImage }) => {
+  const [src, setSrc] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+    const loadImg = async () => {
+      setIsLoading(true);
+      try {
+        const url = await fetchImage(imageId);
+        if (isMounted) {
+          setSrc(url);
+        }
+      } catch (e) {
+        if (isMounted) {
+          // 加载失败时显示裂开的图片占位符
+          setSrc('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 4-4v6z" fill="%236b7280"/></svg>');
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+    loadImg();
+
+    return () => {
+      isMounted = false;
+      // 在组件卸载时清理临时的URL
+      if (src) {
+        URL.revokeObjectURL(src);
+      }
+    };
+  }, [imageId, fetchImage]);
+
+  if (isLoading) {
+    return (
+      <div className="w-full h-full flex items-center justify-center bg-gray-200 dark:bg-gray-700 animate-pulse">
+        <svg className="w-6 h-6 text-gray-400 dark:text-gray-500" fill="currentColor" viewBox="0 0 20 20">
+          <path d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 4-4v6z" />
+        </svg>
+      </div>
+    );
+  }
+
+  if (!src) {
+    return null; // 加载失败后不显示任何内容
+  }
+
+  return (
+    <img
+      src={src}
+      alt="学生提交的图片"
+      className="w-full h-full object-cover"
+    />
+  );
+};
+
 
 const TeacherTaskSubmissions = () => {
   const { taskId } = useParams();
@@ -17,9 +77,35 @@ const TeacherTaskSubmissions = () => {
   const [expandedJsons, setExpandedJsons] = useState({});
   const navigate = useNavigate();
 
-  // 📌 新增：管理模态框状态和当前图片 URL
+  // 管理模态框状态和当前图片 URL
   const [modalIsOpen, setModalIsOpen] = useState(false);
   const [currentImageUrl, setCurrentImageUrl] = useState('');
+
+  // 📌 新增：存储图片 URL 映射，避免重复加载
+  const [imageUrls, setImageUrls] = useState({});
+
+  // 📌 新增：图片加载函数，处理授权请求
+  const fetchAndCacheImage = async (imageId) => {
+    // 如果URL已缓存，直接返回
+    if (imageUrls[imageId]) {
+      return imageUrls[imageId];
+    }
+    try {
+      // 使用 axiosInstance 发起带 Token 的请求
+      const res = await api.get(`/download/${imageId}`, {
+        responseType: 'blob',
+      });
+      const blob = new Blob([res.data], { type: res.headers['content-type'] });
+      const url = URL.createObjectURL(blob);
+      // 缓存生成的 URL
+      setImageUrls(prev => ({ ...prev, [imageId]: url }));
+      return url;
+    } catch (error) {
+      console.error('图片加载失败:', error);
+      // 返回一个占位符，例如一个裂开图片的 Base64
+      throw new Error("图片加载失败");
+    }
+  };
 
   useEffect(() => {
     const fetchSubmissions = async () => {
@@ -36,7 +122,7 @@ const TeacherTaskSubmissions = () => {
     fetchSubmissions();
   }, [taskId, navigate]);
 
-  // 📌 保持不变：下载文件函数
+  // 下载文件函数（保持不变）
   const handleDownload = async (fileId, fileName) => {
     try {
       const res = await api.get(`/download/${fileId}`, {
@@ -101,15 +187,15 @@ const TeacherTaskSubmissions = () => {
     );
   };
 
-  // 📌 修改：渲染图片缩略图，点击后打开模态框
+  // 渲染图片缩略图，点击后打开模态框
   const renderImageLinks = (imageIds) => {
     if (!imageIds || imageIds.length === 0) return null;
     
-    // 📌 移除 handleImagePreview，使用新逻辑
-    const openModal = (imageId) => {
-        const imageUrl = `${api.defaults.baseURL}/download/${imageId}`;
-        setCurrentImageUrl(imageUrl);
-        setModalIsOpen(true);
+    const openModal = async (imageId) => {
+      // 在打开模态框时，也使用加载函数获取 URL
+      const imageUrl = await fetchAndCacheImage(imageId);
+      setCurrentImageUrl(imageUrl);
+      setModalIsOpen(true);
     };
     
     return (
@@ -124,11 +210,7 @@ const TeacherTaskSubmissions = () => {
                          border border-gray-200 dark:border-gray-700
                          hover:shadow-lg transition-shadow duration-200"
             >
-              <img
-                src={`${api.defaults.baseURL}/download/${imageId}`}
-                alt="学生提交的图片"
-                className="w-full h-full object-cover"
-              />
+              <ImageWithLoading imageId={imageId} fetchImage={fetchAndCacheImage} />
             </div>
           ))}
         </div>
@@ -136,7 +218,7 @@ const TeacherTaskSubmissions = () => {
     );
   };
   
-  // 📌 保持不变：渲染 AIGC 日志
+  // 渲染 AIGC 日志（保持不变）
   const renderAIGCLog = (aigcLogId) => {
     const isExpanded = expandedJsons[aigcLogId];
     const toggleJson = async () => {
@@ -206,99 +288,90 @@ const TeacherTaskSubmissions = () => {
     return <p className="text-center mt-10 text-gray-500">加载中...</p>;
   }
   
-return (
-  <div className="min-h-screen bg-gray-50 dark:bg-gray-900 px-4 py-8">
-    <div className="max-w-4xl mx-auto relative">
-      <Button
-        variant="secondary"
-        size="sm"
-        className="absolute top-0 right-0"
-        onClick={() => navigate('/teacher')}
-      >
-        👈 返回教师首页
-      </Button>
-      <h1 className="text-2xl font-bold mb-6 text-gray-800 dark:text-gray-100">
-        📄 提交记录
-      </h1>
-      {submissions.length === 0 ? (
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="text-gray-600 dark:text-gray-400 text-center py-10"
+  return (
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 px-4 py-8">
+      <div className="max-w-4xl mx-auto relative">
+        <Button
+          variant="secondary"
+          size="sm"
+          className="absolute top-0 right-0"
+          onClick={() => navigate('/teacher')}
         >
-          暂无学生提交。
-        </motion.p>
-      ) : (
-        <ul className="space-y-6">
-          {submissions.map((s) => {
-            // 📌 修改：isMissingFile 的判断逻辑
-            const isMissingFile = !s.fileId && !s.content && (!s.imageIds || s.imageIds.length === 0);
-            return (
-              <motion.li
-                key={s._id}
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                className={`p-5 rounded-2xl shadow-md space-y-3 border transition hover:shadow-lg backdrop-blur-sm ${isMissingFile ? "bg-red-50/70 dark:bg-red-900/20 border-red-200 dark:border-red-700" : "bg-white/80 dark:bg-gray-800/80 border-gray-200 dark:border-gray-700"}`}
-              >
-                <p className="text-sm text-gray-800 dark:text-gray-200">
-                  <strong>👤 学生:</strong> {s.student?.email || '未知'}
-                </p>
-                <p className="text-sm text-gray-800 dark:text-gray-200">
-                  <strong>📅 提交时间:</strong>{' '}
-                  {new Date(s.submittedAt).toLocaleString()}
-                </p>
-                
-                {/* 📌 修改：将所有提交类型（文本、图片、文件、AIGC）的渲染逻辑改为独立的 if 语句 */}
-
-                {/* 如果存在文本内容，则渲染 */}
-                {s.content && (
-                  <div className="mt-4">
-                    <p className="font-semibold text-gray-700 dark:text-gray-300 mb-1">📝 提交文本:</p>
-                    <div className="bg-gray-100/70 dark:bg-gray-900/50 p-3 rounded-lg text-sm text-gray-800 dark:text-gray-200 whitespace-pre-wrap">
-                      {s.content}
-                    </div>
-                  </div>
-                )}
-
-                {/* 如果存在图片内容，则渲染 */}
-                {s.imageIds && s.imageIds.length > 0 && (
-                  <div>
-                    {renderImageLinks(s.imageIds)}
-                  </div>
-                )}
-
-                {/* 如果存在文件，则渲染 */}
-                {s.fileId && (
-                  <div>
-                    <p className="font-semibold text-gray-700 dark:text-gray-300 mt-4 mb-1">📎 作业文件:</p>
-                    {renderFileLinks(s.fileId, s.fileName)}
-                  </div>
-                )}
-
-                {/* 如果只提交了AIGC日志，没有其他内容，则显示“未提交作业文件” */}
-                {!s.fileId && !s.content && (!s.imageIds || s.imageIds.length === 0) && (
-                  <p className="text-red-600 dark:text-red-400 font-medium flex items-center gap-1">
-                    ❌ 学生未提交作业文件或图片
+          👈 返回教师首页
+        </Button>
+        <h1 className="text-2xl font-bold mb-6 text-gray-800 dark:text-gray-100">
+          📄 提交记录
+        </h1>
+        {submissions.length === 0 ? (
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="text-gray-600 dark:text-gray-400 text-center py-10"
+          >
+            暂无学生提交。
+          </motion.p>
+        ) : (
+          <ul className="space-y-6">
+            {submissions.map((s) => {
+              const isMissingFile = !s.fileId && !s.content && (!s.imageIds || s.imageIds.length === 0);
+              return (
+                <motion.li
+                  key={s._id}
+                  initial={{ opacity: 0, y: 15 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className={`p-5 rounded-2xl shadow-md space-y-3 border transition hover:shadow-lg backdrop-blur-sm ${isMissingFile ? "bg-red-50/70 dark:bg-red-900/20 border-red-200 dark:border-red-700" : "bg-white/80 dark:bg-gray-800/80 border-gray-200 dark:border-gray-700"}`}
+                >
+                  <p className="text-sm text-gray-800 dark:text-gray-200">
+                    <strong>👤 学生:</strong> {s.student?.email || '未知'}
                   </p>
-                )}
+                  <p className="text-sm text-gray-800 dark:text-gray-200">
+                    <strong>📅 提交时间:</strong>{' '}
+                    {new Date(s.submittedAt).toLocaleString()}
+                  </p>
+                  
+                  {s.content && (
+                    <div className="mt-4">
+                      <p className="font-semibold text-gray-700 dark:text-gray-300 mb-1">📝 提交文本:</p>
+                      <div className="bg-gray-100/70 dark:bg-gray-900/50 p-3 rounded-lg text-sm text-gray-800 dark:text-gray-200 whitespace-pre-wrap">
+                        {s.content}
+                      </div>
+                    </div>
+                  )}
 
-                {/* 如果存在AIGC日志，则渲染 */}
-                {s.aigcLogId && (
-                  <div>
-                    <p className="font-semibold text-gray-700 dark:text-gray-300 mt-4 mb-1">
-                      🤖 AIGC 原始记录:
+                  {s.imageIds && s.imageIds.length > 0 && (
+                    <div>
+                      {renderImageLinks(s.imageIds)}
+                    </div>
+                  )}
+
+                  {s.fileId && (
+                    <div>
+                      <p className="font-semibold text-gray-700 dark:text-gray-300 mt-4 mb-1">📎 作业文件:</p>
+                      {renderFileLinks(s.fileId, s.fileName)}
+                    </div>
+                  )}
+
+                  {!s.fileId && !s.content && (!s.imageIds || s.imageIds.length === 0) && (
+                    <p className="text-red-600 dark:text-red-400 font-medium flex items-center gap-1">
+                      ❌ 学生未提交作业文件或图片
                     </p>
-                    {renderAIGCLog(s.aigcLogId)}
-                  </div>
-                )}
-              </motion.li>
-            );
-          })}
-        </ul>
-      )}
-    </div>
+                  )}
 
-      {/* 📌 新增：模态框组件 */}
+                  {s.aigcLogId && (
+                    <div>
+                      <p className="font-semibold text-gray-700 dark:text-gray-300 mt-4 mb-1">
+                        🤖 AIGC 原始记录:
+                      </p>
+                      {renderAIGCLog(s.aigcLogId)}
+                    </div>
+                  )}
+                </motion.li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
+
       <Modal
         isOpen={modalIsOpen}
         onRequestClose={() => setModalIsOpen(false)}
