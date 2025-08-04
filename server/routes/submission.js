@@ -102,7 +102,7 @@ router.post('/:taskId', verifyToken, upload.fields([
 
     // 处理 AIGC 日志
     if (aigcLogFile) {
-      const logResult = await uploadToGridFS(aigcLogFile, logFile.originalname);
+      const logResult = await uploadToGridFS(aigcLogFile, aigcLogFile.originalname);
       aigcLogId = logResult.fileId;
     }
 

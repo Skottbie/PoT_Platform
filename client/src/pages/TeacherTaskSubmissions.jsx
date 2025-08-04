@@ -1,12 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../api/axiosInstance';
-import { API_BASE_URL } from '../config'; // 保留以供参考
 import Button from '../components/Button';
 import { motion, AnimatePresence } from 'framer-motion';
-
-// ⚠️ 关键修改：移除 DOWNLOAD_BASE_URL。既然后端已经统一使用 /api 前缀，
-// 我们直接依赖于 axiosInstance 实例即可。
 
 const TeacherTaskSubmissions = () => {
   const { taskId } = useParams();
@@ -18,7 +14,7 @@ const TeacherTaskSubmissions = () => {
   useEffect(() => {
     const fetchSubmissions = async () => {
       try {
-        const res = await api.get(`/submit/by-task/${taskId}`);
+        const res = await api.get(`/submission/by-task/${taskId}`); // ⚠️ 修复：使用正确的 API 路径
         setSubmissions(res.data);
       } catch (err) {
         console.error('获取提交失败', err);
@@ -30,11 +26,10 @@ const TeacherTaskSubmissions = () => {
     fetchSubmissions();
   }, [taskId, navigate]);
 
-  // 📌 核心修改：处理下载的函数，使用 axios 发起带 token 的请求。
   const handleDownload = async (fileId, fileName) => {
     try {
       const res = await api.get(`/download/${fileId}`, {
-        responseType: 'blob', // 告诉 axios 响应是一个二进制文件
+        responseType: 'blob',
       });
 
       const blob = new Blob([res.data], { type: res.headers['content-type'] });
@@ -42,7 +37,7 @@ const TeacherTaskSubmissions = () => {
 
       const a = document.createElement('a');
       a.href = blobUrl;
-      a.download = fileName; // 使用正确的文件名
+      a.download = fileName;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -77,7 +72,7 @@ const TeacherTaskSubmissions = () => {
                     <Button
                         size="sm"
                         variant="primary"
-                        onClick={() => handlePreview(fileId)} // ⚠️ 修改：调用新函数
+                        onClick={() => handlePreview(fileId)}
                     >
                         🔍 预览文件
                     </Button>
@@ -95,7 +90,44 @@ const TeacherTaskSubmissions = () => {
             </p>
         </div>
     );
-};
+  };
+
+  // 📌 新增函数：渲染图片链接
+  const renderImageLinks = (imageIds) => {
+    if (!imageIds || imageIds.length === 0) return null;
+    
+    const handleImagePreview = async (imageId) => {
+      try {
+          const res = await api.get(`/download/${imageId}`, {
+              responseType: 'blob',
+          });
+          const blob = new Blob([res.data], { type: res.headers['content-type'] });
+          const blobUrl = window.URL.createObjectURL(blob);
+          window.open(blobUrl, '_blank');
+      } catch (error) {
+          console.error('图片预览失败:', error);
+          alert('图片预览失败，请重试。');
+      }
+    };
+    
+    return (
+      <div className="mt-4">
+        <p className="font-semibold text-gray-700 dark:text-gray-300 mb-2">📸 提交图片:</p>
+        <div className="flex flex-wrap gap-2">
+          {imageIds.map((imageId, index) => (
+            <Button
+              key={imageId}
+              size="sm"
+              variant="secondary"
+              onClick={() => handleImagePreview(imageId)}
+            >
+              🖼️ 查看图片 {index + 1}
+            </Button>
+          ))}
+        </div>
+      </div>
+    );
+  };
   
   const renderAIGCLog = (aigcLogId) => {
     const isExpanded = expandedJsons[aigcLogId];
@@ -193,7 +225,7 @@ const TeacherTaskSubmissions = () => {
         ) : (
           <ul className="space-y-6">
             {submissions.map((s) => {
-              const isMissingFile = !s.fileId;
+              const isMissingFile = !s.fileId && !s.content && (!s.imageIds || s.imageIds.length === 0);
               return (
                 <motion.li
                   key={s._id}
@@ -208,15 +240,32 @@ const TeacherTaskSubmissions = () => {
                     <strong>📅 提交时间:</strong>{' '}
                     {new Date(s.submittedAt).toLocaleString()}
                   </p>
+                  
+                  {/* 📌 新增：渲染文本内容 */}
+                  {s.content && (
+                    <div className="mt-4">
+                      <p className="font-semibold text-gray-700 dark:text-gray-300 mb-1">📝 提交文本:</p>
+                      <div className="bg-gray-100/70 dark:bg-gray-900/50 p-3 rounded-lg text-sm text-gray-800 dark:text-gray-200 whitespace-pre-wrap">
+                        {s.content}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 📌 新增：渲染图片 */}
+                  {renderImageLinks(s.imageIds)}
+
                   {s.fileId ? (
                     <div>
-                      <p className="font-semibold text-gray-700 dark:text-gray-300 mb-1">📎 作业文件:</p>
+                      <p className="font-semibold text-gray-700 dark:text-gray-300 mt-4 mb-1">📎 作业文件:</p>
                       {renderFileLinks(s.fileId, s.fileName)}
                     </div>
                   ) : (
-                    <p className="text-red-600 dark:text-red-400 font-medium flex items-center gap-1">
-                      ❌ 学生未提交作业文件
-                    </p>
+                    // ⚠️ 修改：只有在没有任何文件、图片、文本时才显示“未提交”的警告
+                    !s.content && (!s.imageIds || s.imageIds.length === 0) && (
+                      <p className="text-red-600 dark:text-red-400 font-medium flex items-center gap-1">
+                        ❌ 学生未提交作业文件
+                      </p>
+                    )
                   )}
                   {s.aigcLogId && (
                     <div>
