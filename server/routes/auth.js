@@ -1,19 +1,27 @@
+//server/routes/auth.js
+
 const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 
-// 内测白名单（你可以改成读数据库或 .env 中配置）
-const whitelist = ['tayossx@gmail.com', 'stu@test.com', 'tst1@tst.com'];
-
 // 注册接口
 router.post('/register', async (req, res) => {
-  const { email, password, role } = req.body;
+  // 📌 修改：从请求体中解构 inviteCode
+  const { email, password, role, inviteCode } = req.body;
 
-  // 白名单验证
-  if (!whitelist.includes(email)) {
-    return res.status(403).json({ message: '你不在内测白名单中' });
+  // 📌 新增：邀请码验证逻辑
+  const teacherInviteCode = process.env.TEACHER_INVITE_CODE;
+  const studentInviteCode = process.env.STUDENT_INVITE_CODE;
+
+  // 根据角色验证邀请码
+  if (role === 'teacher' && inviteCode !== teacherInviteCode) {
+    return res.status(400).json({ message: '教师邀请码不正确' });
+  }
+
+  if (role === 'student' && inviteCode !== studentInviteCode) {
+    return res.status(400).json({ message: '学生邀请码不正确' });
   }
 
   // 重复用户检查
@@ -56,12 +64,8 @@ router.post('/login', async (req, res) => {
   res.json({ token, role: user.role });
 });
 
-module.exports = router;
-
-
 const verifyToken = require('../middleware/auth');
 //const { verifyToken } = require('../middleware/auth');
-
 
 router.get('/me', verifyToken, (req, res) => {
   res.json({
@@ -69,3 +73,5 @@ router.get('/me', verifyToken, (req, res) => {
     user: req.user  // token 解码信息：id, role
   });
 });
+
+module.exports = router;

@@ -8,6 +8,7 @@ const Register = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState('student'); // 默认学生
+  const [inviteCode, setInviteCode] = useState(''); // 📌 新增：邀请码状态
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
@@ -15,10 +16,12 @@ const Register = () => {
     e.preventDefault();
     setError('');
     try {
+      // 📌 修改：在请求中包含邀请码
       await axios.post('/auth/register', {
         email,
         password,
         role,
+        inviteCode, // 将邀请码发送到后端
       });
       alert('注册成功，请登录');
       navigate('/');
@@ -34,7 +37,7 @@ const Register = () => {
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
               邮箱
             </label>
             <input
@@ -53,7 +56,7 @@ const Register = () => {
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
               密码
             </label>
             <input
@@ -70,9 +73,29 @@ const Register = () => {
                         hover:shadow-md hover:scale-[1.01] transition-all duration-200"
             />
           </div>
+          
+          {/* 📌 新增：邀请码输入框 */}
+          <div>
+            <label htmlFor="inviteCode" className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+              邀请码
+            </label>
+            <input
+              id="inviteCode"
+              type="text"
+              placeholder="请输入邀请码"
+              value={inviteCode}
+              onChange={(e) => setInviteCode(e.target.value)}
+              required
+              className="w-full px-4 py-2 rounded-xl border border-gray-300 dark:border-gray-600
+                        bg-white/70 dark:bg-gray-700/60 backdrop-blur-md
+                        text-gray-900 dark:text-gray-100 shadow-sm
+                        focus:outline-none focus:ring-2 focus:ring-blue-500
+                        hover:shadow-md hover:scale-[1.01] transition-all duration-200"
+            />
+          </div>
 
           <div>
-            <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="role" className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
               身份
             </label>
             <select
@@ -102,8 +125,6 @@ const Register = () => {
           >
             注册
           </button>
-
-
         </form>
 
         <p className="text-center text-sm text-gray-500 dark:text-gray-400 mt-6">
@@ -118,3 +139,4 @@ const Register = () => {
 };
 
 export default Register;
+
