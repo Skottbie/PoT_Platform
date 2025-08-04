@@ -1,3 +1,4 @@
+//client/src/pages/StudentDashboard.jsx
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/axiosInstance';
@@ -90,8 +91,13 @@ const StudentDashboard = () => {
                 </p>
 
                 <div className="text-sm text-gray-600 dark:text-gray-300 mt-3 space-y-1">
+                  {/* 📌 新增：显示作业文件要求 */}
+                  <p>{task.needsFile ? '📝 作业文件：必交' : '📝 作业文件：可选'}</p>
                   <p>{task.allowAIGC ? '✅ 允许使用 AIGC' : '❌ 不允许使用 AIGC'}</p>
-                  <p>{task.requireAIGCLog ? '✅ 需上传原始记录' : '❌ 无需上传原始记录'}</p>
+                  {/* 📌 修改：当 allowAIGC 为 true 时才显示 AIGC 日志要求 */}
+                  {task.allowAIGC && (
+                    <p>{task.requireAIGCLog ? '✅ 需上传原始记录' : '❌ 无需上传原始记录'}</p>
+                  )}
                   <p className="text-sm text-gray-500 dark:text-gray-400">
                     所属班级：
                     {task.classIds && task.classIds.length > 0

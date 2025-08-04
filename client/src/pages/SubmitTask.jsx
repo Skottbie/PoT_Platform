@@ -14,6 +14,8 @@ const SubmitTask = () => {
   const navigate = useNavigate();
   const [task, setTask] = useState(null);
   const [file, setFile] = useState(null);
+  const [images, setImages] = useState([]); // 📌 新增：存储图片文件
+  const [content, setContent] = useState(''); // 📌 新增：存储文本内容
   const [message, setMessage] = useState('');
   const [model, setModel] = useState('qwen'); // 默认模型
 
@@ -26,14 +28,13 @@ const SubmitTask = () => {
 
   const chatBoxRef = useRef(null);
 
-  // 监听全屏状态，隐藏底部反馈
+  // ... (useEffects for fullscreen and chatbox scrolling remain the same) ...
   useEffect(() => {
     localStorage.setItem('hideFeedback', isFullscreen ? '1' : '0');
     const event = new Event('toggleFeedback');
     window.dispatchEvent(event);
   }, [isFullscreen]);
 
-  // 全屏时禁用背景滚动
   useEffect(() => {
     if (isFullscreen) {
       document.body.style.overflow = 'hidden';
@@ -64,6 +65,7 @@ const SubmitTask = () => {
     }
   }, [aigcLog, loading]);
 
+
   const handleAIGCSubmit = async () => {
     if (!input.trim()) return;
 
@@ -89,20 +91,44 @@ const SubmitTask = () => {
     }
   };
 
+  const handleImageChange = (e) => {
+    setImages(Array.from(e.target.files));
+  };
+
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMessage('');
 
-    if (!file) return setMessage('❌ 请上传作业文件');
-
-    if (task.requireAIGCLog && aigcLog.length === 0) {
-      return setMessage('❌ 本任务要求上传 AIGC 原始记录，请先进行 AIGC 对话');
+    // 📌 新增：根据任务设置进行前端验证
+    if (task.needsFile && !file) {
+      return setMessage('❌ 本任务要求上传作业文件。');
+    }
+    if (task.requireAIGCLog && (!aigcLog || aigcLog.length === 0)) {
+      return setMessage('❌ 本任务要求上传 AIGC 原始记录，请先进行 AIGC 对话。');
+    }
+    // 如果没有文件、没有图片、也没有文本，则不能提交
+    if (!task.needsFile && (!images || images.length === 0) && !content.trim()) {
+      return setMessage('❌ 请提交作业内容（文件、图片或文本）。');
     }
 
     try {
       const formData = new FormData();
-      formData.append('file', file);
+      
+      // 📌 文本和图片是新功能，即使不需要文件，也可能提交
+      if (content.trim()) {
+        formData.append('content', content);
+      }
+      if (images && images.length > 0) {
+        images.forEach((image) => {
+          formData.append('images', image);
+        });
+      }
 
+      // 📌 根据任务设置，决定是否上传文件和AIGC日志
+      if (file) {
+        formData.append('file', file);
+      }
       if (task.requireAIGCLog && aigcLog.length > 0) {
         const logBlob = new Blob([JSON.stringify(aigcLog)], {
           type: 'application/json',
@@ -114,11 +140,12 @@ const SubmitTask = () => {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
 
-      // ✅ GridFS 返回 fileId
-      console.log('上传成功，fileId = ', res.data.fileId);
+      console.log('提交成功', res.data);
 
       setMessage('✅ 提交成功！');
       setFile(null);
+      setImages([]);
+      setContent('');
       setAigcLog([]);
 
       setTimeout(() => {
@@ -126,7 +153,7 @@ const SubmitTask = () => {
       }, 2000);
     } catch (err) {
       console.error(err);
-      setMessage('❌ 提交失败，请重试');
+      setMessage(`❌ 提交失败：${err.response?.data?.message || err.message}`);
     }
   };
 
@@ -180,25 +207,60 @@ const SubmitTask = () => {
               ? new Date(task.deadline).toLocaleDateString()
               : '未设置'}
           </p>
+          {/* 📌 新增：显示任务要求 */}
+          <p>📝 作业文件：{task.needsFile ? '必交' : '可选'}</p>
           <p>🤖 AIGC 使用：{task.allowAIGC ? '允许' : '禁止'}</p>
-          <p>📝 AIGC 日志：{task.requireAIGCLog ? '需要上传原始记录' : '不需要'}</p>
+          {task.allowAIGC && (
+            <p>📝 AIGC 日志：{task.requireAIGCLog ? '必交' : '可选'}</p>
+          )}
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5">
+          {/* 📌 新增：文本提交框 */}
           <div>
             <label className="block mb-1 font-medium text-gray-700 dark:text-gray-200">
-              作业文件（必传）
+              提交文本内容（可选）
             </label>
-            <input
-              type="file"
-              onChange={(e) => setFile(e.target.files[0])}
-              className="w-full p-2 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:text-gray-100"
-              required
+            <textarea
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              placeholder="请输入你的文字作业..."
+              className="w-full p-2 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:text-gray-100 h-28"
             />
           </div>
 
+          {/* 📌 新增：图片上传功能 */}
+          <div>
+            <label className="block mb-1 font-medium text-gray-700 dark:text-gray-200">
+              上传图片（可选，可多选）
+            </label>
+            <input
+              type="file"
+              multiple
+              accept="image/*"
+              onChange={handleImageChange}
+              className="w-full p-2 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:text-gray-100"
+            />
+          </div>
+
+          {/* 📌 修改：根据 task.needsFile 决定是否显示文件上传框 */}
+          {task.needsFile && (
+            <div>
+              <label className="block mb-1 font-medium text-gray-700 dark:text-gray-200">
+                作业文件（必传）
+              </label>
+              <input
+                type="file"
+                onChange={(e) => setFile(e.target.files[0])}
+                className="w-full p-2 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:text-gray-100"
+                required={task.needsFile}
+              />
+            </div>
+          )}
+
           {task.allowAIGC && (
             <AnimatePresence mode="wait">
+              {/* ... (AIGC 对话框代码保持不变) ... */}
               <motion.div
                 layout
                 initial={{ opacity: 0, scale: 0.95 }}
@@ -213,7 +275,12 @@ const SubmitTask = () => {
                 `}
               >
                 <div className="flex justify-between items-center mb-2">
-                  <label className="font-semibold text-gray-700 dark:text-gray-200">💬 AIGC 对话区</label>
+                  <label className="font-semibold text-gray-700 dark:text-gray-200">
+                    💬 AIGC 对话区
+                    {task.requireAIGCLog && (
+                       <span className="ml-2 text-red-500 text-sm font-normal">（必交）</span>
+                    )}
+                  </label>
 
                   {!isFullscreen && (
                     <Button
@@ -224,7 +291,6 @@ const SubmitTask = () => {
                     >
                       全屏
                     </Button>
-
                   )}
                 </div>
 
@@ -238,98 +304,95 @@ const SubmitTask = () => {
                   >
                     退出全屏
                   </Button>
-
                 )}
 
+                {/* 模型选择 */}
+                <div className="mb-2">
+                  <label className="text-sm font-medium block mb-1 text-gray-600 dark:text-gray-300">
+                    选择 AI 模型
+                  </label>
+                  <select
+                    value={model}
+                    onChange={(e) => setModel(e.target.value)}
+                    className="border p-2 rounded-lg w-full bg-white dark:bg-gray-600 dark:text-gray-100"
+                  >
+                    <option value="openai">ChatGPT*(维护中)</option>
+                    <option value="qwen">通义千问</option>
+                  </select>
+                </div>
 
-              {/* 模型选择 */}
-              <div className="mb-2">
-                <label className="text-sm font-medium block mb-1 text-gray-600 dark:text-gray-300">
-                  选择 AI 模型
-                </label>
-                <select
-                  value={model}
-                  onChange={(e) => setModel(e.target.value)}
-                  className="border p-2 rounded-lg w-full bg-white dark:bg-gray-600 dark:text-gray-100"
-                >
-                  <option value="openai">ChatGPT*(维护中)</option>
-                  <option value="qwen">通义千问</option>
-                </select>
-              </div>
-
-              {/* 对话内容 */}
-              <div
-                ref={chatBoxRef}
-                className={`bg-white dark:bg-gray-600 border dark:border-gray-500 flex-1 p-3 rounded-lg overflow-y-auto space-y-2
-                  ${isFullscreen 
-                    ? `flex-1 pb-24 text-lg leading-relaxed px-2 sm:px-4 space-y-3 
+                {/* 对话内容 */}
+                <div
+                  ref={chatBoxRef}
+                  className={`bg-white dark:bg-gray-600 border dark:border-gray-500 flex-1 p-3 rounded-lg overflow-y-auto space-y-2
+                    ${isFullscreen
+                      ? `flex-1 pb-24 text-lg leading-relaxed px-2 sm:px-4 space-y-3 
                       md:max-w-3xl md:w-full md:mx-auto`
-                    : 'h-40 sm:h-52 md:h-64 text-sm leading-snug'
-                  }
-                `}
-              >
-                {aigcLog.map((msg, idx) => (
-                  <div key={idx}>
-                    <strong
-                      className={`${msg.role === 'user' ? 'text-blue-600' : 'text-green-600'}
-                        ${isFullscreen ? 'text-xl block mb-1' : 'text-base'}
-                      `}
-                    >
-                      {msg.role === 'user' ? '我：' : 'AI：'}
-                    </strong>{' '}
-                    <ReactMarkdown
-                      className="inline"
-                      components={{
-                        code({ inline, className, children, ...props }) {
-                          const match = /language-(\w+)/.exec(className || '');
-                          return !inline ? (
-                            <SyntaxHighlighter
-                              style={duotoneLight}
-                              language={match ? match[1] : 'text'}
-                              PreTag="div"
-                              className={`rounded-lg my-1 overflow-x-auto ${isFullscreen ? 'text-base leading-relaxed' : 'text-sm'}`}
-                              {...props}
-                            >
-                              {String(children).replace(/\n$/, '')}
-                            </SyntaxHighlighter>
-                          ) : (
-                            <code className="bg-gray-200 dark:bg-gray-800 px-1 rounded">{children}</code>
-                          );
-                        },
-                      }}
-                    >
-                      {msg.content}
-                    </ReactMarkdown>
-                  </div>
-                ))}
+                      : 'h-40 sm:h-52 md:h-64 text-sm leading-snug'
+                    }
+                  `}
+                >
+                  {aigcLog.map((msg, idx) => (
+                    <div key={idx}>
+                      <strong
+                        className={`${msg.role === 'user' ? 'text-blue-600' : 'text-green-600'}
+                          ${isFullscreen ? 'text-xl block mb-1' : 'text-base'}
+                        `}
+                      >
+                        {msg.role === 'user' ? '我：' : 'AI：'}
+                      </strong>{' '}
+                      <ReactMarkdown
+                        className="inline"
+                        components={{
+                          code({ inline, className, children, ...props }) {
+                            const match = /language-(\w+)/.exec(className || '');
+                            return !inline ? (
+                              <SyntaxHighlighter
+                                style={duotoneLight}
+                                language={match ? match[1] : 'text'}
+                                PreTag="div"
+                                className={`rounded-lg my-1 overflow-x-auto ${isFullscreen ? 'text-base leading-relaxed' : 'text-sm'}`}
+                                {...props}
+                              >
+                                {String(children).replace(/\n$/, '')}
+                              </SyntaxHighlighter>
+                            ) : (
+                              <code className="bg-gray-200 dark:bg-gray-800 px-1 rounded">{children}</code>
+                            );
+                          },
+                        }}
+                      >
+                        {msg.content}
+                      </ReactMarkdown>
+                    </div>
+                  ))}
 
-                {loading && (
-                  <p className={`mt-1 text-gray-400 ${isFullscreen ? 'text-base' : 'text-xs'}`}>
-                    AI 生成中...
-                  </p>
-                )}
-              </div>
+                  {loading && (
+                    <p className={`mt-1 text-gray-400 ${isFullscreen ? 'text-base' : 'text-xs'}`}>
+                      AI 生成中...
+                    </p>
+                  )}
+                </div>
 
-              {/* 输入区 */}
-              <div
-                className={`flex gap-2 mt-2 ${
-                  isFullscreen
-                    ? 'md:max-w-3xl md:mx-auto w-full pb-10'
-                    : ''
-                }`}
-              >
-                <input
-                  type="text"
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  placeholder="输入你的问题..."
-                  className="flex-1 border rounded-lg p-2 dark:bg-gray-800 dark:text-gray-100"
-                />
-                <Button type="button" onClick={handleAIGCSubmit} variant="primary">
-                  发送
-                </Button>
-
-              </div>
+                {/* 输入区 */}
+                <div
+                  className={`flex gap-2 mt-2 ${
+                    isFullscreen
+                      ? 'md:max-w-3xl md:mx-auto w-full pb-10'
+                      : ''
+                  }`}
+                >
+                  <input
+                    type="text"
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    placeholder="输入你的问题..."
+                    className="flex-1 border rounded-lg p-2 dark:bg-gray-800 dark:text-gray-100"
+                  />
+                  <Button type="button" onClick={handleAIGCSubmit} variant="primary">
+                    发送
+                  </Button>
+                </div>
               </motion.div>
             </AnimatePresence>
           )}
@@ -337,7 +400,6 @@ const SubmitTask = () => {
           <Button type="submit" variant="primary" fullWidth>
             📤 提交作业
           </Button>
-
 
           {message && (
             <p
@@ -349,7 +411,6 @@ const SubmitTask = () => {
             >
               {message}
             </p>
-
           )}
         </form>
       </div>

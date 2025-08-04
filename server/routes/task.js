@@ -1,9 +1,9 @@
+//server/routes/task.js
 const express = require('express');
 const router = express.Router();
 const Task = require('../models/Task');
 const verifyToken = require('../middleware/auth');
 const Class = require('../models/Class');
-
 
 
 // ✅ 发布任务（仅限教师）
@@ -13,7 +13,8 @@ router.post('/', verifyToken, async (req, res) => {
       return res.status(403).json({ message: '无权限发布任务' });
     }
 
-    const { title, description, category, allowAIGC, requireAIGCLog, deadline, classIds } = req.body;
+    // 📌 修改：从 req.body 中解构出 needsFile
+    const { title, description, category, allowAIGC, requireAIGCLog, needsFile, deadline, classIds } = req.body;
 
     const task = new Task({
       title,
@@ -21,6 +22,7 @@ router.post('/', verifyToken, async (req, res) => {
       category,
       allowAIGC,
       requireAIGCLog,
+      needsFile, // 📌 新增：保存 needsFile
       deadline,
       createdBy: req.user.id,
       classIds,
@@ -47,37 +49,18 @@ router.get('/mine', verifyToken, async (req, res) => {
   }
 });
 
-
-
-/* ✅ 所有任务（学生可见）
 router.get('/all', verifyToken, async (req, res) => {
   try {
     if (req.user.role !== 'student') {
       return res.status(403).json({ message: '仅限学生访问任务列表' });
     }
 
-    const tasks = await Task.find().sort({ createdAt: -1 }).populate('createdBy', 'email');
-    res.json(tasks);
-  } catch (err) {
-    res.status(500).json({ message: '服务器错误' });
-  }
-});
-*/
-
-router.get('/all', verifyToken, async (req, res) => {
-  try {
-    if (req.user.role !== 'student') {
-      return res.status(403).json({ message: '仅限学生访问任务列表' });
-    }
-
-    // 查询该学生加入了哪些班级（studentList 中 userId 匹配）
     const myClasses = await Class.find({
       'studentList.userId': req.user.id
     });
 
     const joinedClassIds = myClasses.map(cls => cls._id);
 
-    // 查询只属于这些班级的任务
     const tasks = await Task.find({
       classIds: { $in: joinedClassIds }
     }).sort({ createdAt: -1 })
@@ -90,8 +73,6 @@ router.get('/all', verifyToken, async (req, res) => {
     res.status(500).json({ message: '服务器错误' });
   }
 });
-
-
 
 // ✅ 获取单个任务详情（学生提交作业页）
 router.get('/:id', verifyToken, async (req, res) => {

@@ -44,43 +44,80 @@ async function uploadToGridFS(file, decodedFilename) {
   });
 }
 
-// ✅ 学生提交作业（含文件上传）
+// ✅ 学生提交作业（支持多种类型）
 router.post('/:taskId', verifyToken, upload.fields([
   { name: 'file', maxCount: 1 },
+  { name: 'images', maxCount: 5 }, // 📌 新增：支持最多5张图片
   { name: 'aigcLog', maxCount: 1 }
 ]), async (req, res) => {
   try {
     const task = await Task.findById(req.params.taskId);
     if (!task) return res.status(404).json({ message: '任务不存在' });
 
+    // 📌 新增：获取提交的文本内容
+    const { content } = req.body;
     const file = req.files?.file?.[0];
-    if (!file) return res.status(400).json({ message: '缺少作业文件' });
-    
-    // 📌 核心修改：对文件名进行显式解码
-    const fileNameBuffer = Buffer.from(file.originalname, 'latin1');
-    const decodedFileName = fileNameBuffer.toString('utf8');
+    const images = req.files?.images;
+    const aigcLogFile = req.files?.aigcLog?.[0];
 
-    // 上传文件到 GridFS 并获取文件名和文件ID
-    const { fileId } = await uploadToGridFS(file, decodedFileName);
+    // 📌 验证提交逻辑
+    // 1. 如果教师要求文件必交，但学生未上传，则返回错误
+    if (task.needsFile && !file) {
+      return res.status(400).json({ message: '本任务要求上传作业文件。' });
+    }
 
+    // 2. 如果教师要求AIGC日志必交，但学生未上传，则返回错误
+    if (task.requireAIGCLog && !aigcLogFile) {
+      return res.status(400).json({ message: '本任务要求上传 AIGC 原始记录。' });
+    }
+
+    // 3. 如果没有任何提交（文件、图片、文本），则返回错误
+    if (!file && (!images || images.length === 0) && !content) {
+      return res.status(400).json({ message: '请提交作业内容（文件、图片或文本）。' });
+    }
+
+    let fileId = null;
+    let fileName = null;
     let aigcLogId = null;
-    if (req.files?.aigcLog?.[0]) {
-      const logFile = req.files.aigcLog[0];
-      // ⚠️ AIGC 日志文件是纯英文名，无需特殊解码
-      const logResult = await uploadToGridFS(logFile, logFile.originalname);
+    const imageIds = [];
+
+    // 处理作业文件
+    if (file) {
+      const fileNameBuffer = Buffer.from(file.originalname, 'latin1');
+      const decodedFileName = fileNameBuffer.toString('utf8');
+      const fileResult = await uploadToGridFS(file, decodedFileName);
+      fileId = fileResult.fileId;
+      fileName = fileResult.filename;
+    }
+
+    // 处理图片文件
+    if (images && images.length > 0) {
+      for (const image of images) {
+        const imageNameBuffer = Buffer.from(image.originalname, 'latin1');
+        const decodedImageName = imageNameBuffer.toString('utf8');
+        const imageResult = await uploadToGridFS(image, decodedImageName);
+        imageIds.push(imageResult.fileId);
+      }
+    }
+
+    // 处理 AIGC 日志
+    if (aigcLogFile) {
+      const logResult = await uploadToGridFS(aigcLogFile, logFile.originalname);
       aigcLogId = logResult.fileId;
     }
 
     const submission = new Submission({
       task: req.params.taskId,
       student: req.user.id,
+      content: content || '', // 📌 保存文本内容
+      imageIds: imageIds, // 📌 保存图片ID数组
       fileId: fileId,
-      fileName: decodedFileName, // ⚠️ 保存解码后的文件名
+      fileName: fileName,
       aigcLogId: aigcLogId,
     });
 
     await submission.save();
-    res.json({ message: '提交成功', fileId });
+    res.json({ message: '提交成功' });
   } catch (err) {
     console.error('提交失败:', err);
     res.status(500).json({ message: '服务器错误' });

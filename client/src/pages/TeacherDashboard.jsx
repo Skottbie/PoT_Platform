@@ -1,3 +1,5 @@
+//client/src/pages/TeacherDashboard.jsx
+
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/axiosInstance';
@@ -52,12 +54,18 @@ const TeacherDashboard = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMessage('');
+    // 如果要求AIGC记录但未允许AIGC，则阻止提交
+    if (form.requireAIGCLog && !form.allowAIGC) {
+      return setMessage('❌ 必须先允许使用AIGC，才能要求上传AIGC记录。');
+    }
+
     try {
       await api.post('/task', form);
       setMessage('✅ 任务发布成功！');
       setForm({
         title: '',
         category: '课堂练习',
+        needsFile: false, // 📌 恢复默认值
         allowAIGC: false,
         requireAIGCLog: false,
         deadline: '',
@@ -79,7 +87,7 @@ const TeacherDashboard = () => {
       <div className="max-w-2xl mx-auto space-y-10">
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 transition-colors duration-300">
           <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-4">
-             欢迎回来，{user.email}
+            欢迎回来，{user.email}
           </h1>
 
           <div className="flex gap-3 mb-6">
@@ -104,25 +112,25 @@ const TeacherDashboard = () => {
               onChange={handleChange}
               required
               className="w-full border border-gray-300 dark:border-gray-600 
-                        rounded-lg bg-white dark:bg-gray-700 
-                        text-gray-900 dark:text-gray-100 
-                        transition-colors duration-300 p-2"
+                             rounded-lg bg-white dark:bg-gray-700 
+                             text-gray-900 dark:text-gray-100 
+                             transition-colors duration-300 p-2"
             />
+            <p className="text-sm font-semibold text-gray-700 dark:text-gray-200">
+              任务提交要求
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 mb-4">
+              {/* 📌 新增：作业文件必交选项 */}
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  name="needsFile"
+                  checked={form.needsFile}
+                  onChange={handleChange}
+                />
+                要求提交作业文件
+              </label>
 
-            <select
-              name="category"
-              value={form.category}
-              onChange={handleChange}
-              className="w-full border border-gray-300 dark:border-gray-600 
-                        rounded-lg bg-white dark:bg-gray-700 
-                        text-gray-900 dark:text-gray-100 
-                        transition-colors duration-300 p-2"
-            >
-              <option value="课堂练习">课堂练习</option>
-              <option value="课程任务">课程任务</option>
-            </select>
-
-            <div className="flex flex-col sm:flex-row gap-4">
               <label className="flex items-center gap-2 text-sm">
                 <input
                   type="checkbox"
@@ -132,16 +140,32 @@ const TeacherDashboard = () => {
                 />
                 允许使用 AIGC
               </label>
-              <label className="flex items-center gap-2 text-sm">
+
+              {/* 📌 修改：当 allowAIGC 为 false 时禁用 */}
+              <label className={`flex items-center gap-2 text-sm ${!form.allowAIGC ? 'text-gray-400' : ''}`}>
                 <input
                   type="checkbox"
                   name="requireAIGCLog"
                   checked={form.requireAIGCLog}
                   onChange={handleChange}
+                  disabled={!form.allowAIGC}
                 />
                 要求上传 AIGC 原始记录
               </label>
             </div>
+            
+            <select
+              name="category"
+              value={form.category}
+              onChange={handleChange}
+              className="w-full border border-gray-300 dark:border-gray-600 
+                             rounded-lg bg-white dark:bg-gray-700 
+                             text-gray-900 dark:text-gray-100 
+                             transition-colors duration-300 p-2"
+            >
+              <option value="课堂练习">课堂练习</option>
+              <option value="课程任务">课程任务</option>
+            </select>
 
             <div>
               <p className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1">📌 选择关联班级</p>
@@ -176,9 +200,9 @@ const TeacherDashboard = () => {
               value={form.deadline}
               onChange={handleChange}
               className="w-full border border-gray-300 dark:border-gray-600 
-                        rounded-lg bg-white dark:bg-gray-700 
-                        text-gray-900 dark:text-gray-100 
-                        transition-colors duration-300 p-2"
+                             rounded-lg bg-white dark:bg-gray-700 
+                             text-gray-900 dark:text-gray-100 
+                             transition-colors duration-300 p-2"
             />
 
             <Button variant="primary" size="md" fullWidth>
@@ -208,8 +232,8 @@ const TeacherDashboard = () => {
                 <div
                   key={task._id}
                   className="border border-gray-200 dark:border-gray-700 
-                            rounded-2xl p-4 bg-white dark:bg-gray-800 
-                            shadow transition-colors duration-300"
+                               rounded-2xl p-4 bg-white dark:bg-gray-800 
+                               shadow transition-colors duration-300"
                 >
                   <p className="font-semibold text-lg text-gray-800 dark:text-gray-100">
                     {task.title}
@@ -217,9 +241,10 @@ const TeacherDashboard = () => {
                   <p className="text-sm text-gray-600 dark:text-gray-400">
                     分类：{task.category}
                   </p>
-
-
-
+                  {/* 📌 新增：显示 needsFile 状态 */}
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    作业文件：{task.needsFile ? '必交' : '可选'}
+                  </p>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
                     截止时间：{' '}
                     {task.deadline
@@ -246,3 +271,5 @@ const TeacherDashboard = () => {
 };
 
 export default TeacherDashboard;
+
+
