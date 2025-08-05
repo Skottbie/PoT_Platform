@@ -18,13 +18,14 @@ const SubmitTask = () => {
   const [content, setContent] = useState('');
   const [message, setMessage] = useState('');
   const [model, setModel] = useState('qwen');
-
+  
   const [aigcLog, setAigcLog] = useState([]);
   const [input, setInput] = useState('');
   const [alreadySubmitted, setAlreadySubmitted] = useState(false);
 
   const [loading, setLoading] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [shouldUploadAIGC, setShouldUploadAIGC] = useState(false);
 
   const chatBoxRef = useRef(null);
 
@@ -193,6 +194,13 @@ const SubmitTask = () => {
         });
         formData.append('aigcLog', logBlob, 'aigcLog.json');
       }
+
+      if ((task.requireAIGCLog || shouldUploadAIGC) && aigcLog.length > 0) {
+        const logBlob = new Blob([JSON.stringify(aigcLog)], {
+          type: 'application/json',
+        });
+        formData.append('aigcLog', logBlob, 'aigcLog.json');
+      }
       
       // 📌 新增：传递逾期信息
       if (taskStatus.isLate) {
@@ -311,7 +319,7 @@ const SubmitTask = () => {
             {/* 文本提交框 */}
             <div>
               <label className="block mb-1 font-medium text-gray-700 dark:text-gray-200">
-                提交文本内容（可选）
+                提交文本内容
               </label>
               <textarea
                 value={content}
@@ -487,6 +495,20 @@ const SubmitTask = () => {
                   </div>
                 </motion.div>
               </AnimatePresence>
+            )}
+
+            {task.allowAIGC && !task.requireAIGCLog && aigcLog.length > 0 && (
+              <div className="mt-4">
+                <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-200">
+                  <input
+                    type="checkbox"
+                    checked={shouldUploadAIGC}
+                    onChange={(e) => setShouldUploadAIGC(e.target.checked)}
+                    className="rounded"
+                  />
+                  同时上传我的AIGC对话记录（可选）
+                </label>
+              </div>
             )}
 
             <Button 

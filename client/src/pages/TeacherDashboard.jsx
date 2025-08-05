@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import api from '../api/axiosInstance';
 import Button from '../components/Button';
 import { motion, AnimatePresence } from 'framer-motion';
+import toast from 'react-hot-toast';
 
 const TeacherDashboard = () => {
   const [user, setUser] = useState(null);
@@ -172,10 +173,14 @@ const TeacherDashboard = () => {
       
       // 刷新当前分类的任务列表
       await fetchTasks(currentCategory);
-      setMessage(`✅ 操作成功`);
+      toast.success('✅ 操作成功', {
+        position: 'top-center',
+      });
     } catch (err) {
       console.error('操作失败:', err);
-      setMessage(`❌ 操作失败：${err.response?.data?.message || err.message}`);
+      toast.error(`❌ 操作失败：${err.response?.data?.message || err.message}`, {
+        position: 'top-center',
+      });
     } finally {
       setLoading(false);
     }
@@ -598,15 +603,24 @@ const TeacherDashboard = () => {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => handleTaskOperation(task._id, 'archive')}
+                                onClick={() => {
+                                  if (window.confirm(`确定要归档任务"${task.title}"吗？归档后学生将无法提交作业。`)) {
+                                    handleTaskOperation(task._id, 'archive');
+                                  }
+                                }}
                                 disabled={loading}
                               >
                                 📦 归档
                               </Button>
+
                               <Button
                                 variant="danger"
                                 size="sm"
-                                onClick={() => handleTaskOperation(task._id, 'soft_delete')}
+                                onClick={() => {
+                                  if (window.confirm(`确定要删除任务"${task.title}"吗？删除后30天内可恢复。`)) {
+                                    handleTaskOperation(task._id, 'soft_delete');
+                                  }
+                                }}
                                 disabled={loading}
                               >
                                 🗑️ 删除
@@ -627,9 +641,17 @@ const TeacherDashboard = () => {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => handleTaskOperation(task._id, 'updatePermission', {
-                                  allowStudentViewWhenArchived: !task.allowStudentViewWhenArchived
-                                })}
+                                onClick={async () => {
+                                  try {
+                                    await api.put(`/task/${task._id}/student-permission`, {
+                                      allowStudentViewWhenArchived: !task.allowStudentViewWhenArchived
+                                    });
+                                    setMessage('✅ 权限设置成功');
+                                    await fetchTasks(currentCategory);
+                                  } catch (err) {
+                                    setMessage(`❌ 权限设置失败：${err.response?.data?.message || err.message}`);
+                                  }
+                                }}
                                 disabled={loading}
                               >
                                 {task.allowStudentViewWhenArchived ? '🔒 限制学生查看' : '🔓 开放学生查看'}
@@ -659,9 +681,35 @@ const TeacherDashboard = () => {
                                 variant="danger"
                                 size="sm"
                                 onClick={() => {
-                                  if (window.confirm(`确定要永久删除任务"${task.title}"吗？此操作不可恢复！`)) {
-                                    handleTaskOperation(task._id, 'hard_delete');
-                                  }
+                                  // 使用toast确认
+                                  toast((t) => (
+                                    <div className="flex flex-col gap-2">
+                                      <p className="font-medium">确认永久删除</p>
+                                      <p className="text-sm text-gray-600">
+                                        确定要永久删除任务"{task.title}"吗？此操作不可恢复！
+                                      </p>
+                                      <div className="flex gap-2 justify-end">
+                                        <button
+                                          className="px-3 py-1 text-sm bg-gray-200 rounded hover:bg-gray-300"
+                                          onClick={() => toast.dismiss(t.id)}
+                                        >
+                                          取消
+                                        </button>
+                                        <button
+                                          className="px-3 py-1 text-sm bg-red-500 text-white rounded hover:bg-red-600"
+                                          onClick={() => {
+                                            toast.dismiss(t.id);
+                                            handleTaskOperation(task._id, 'hard_delete');
+                                          }}
+                                        >
+                                          确认删除
+                                        </button>
+                                      </div>
+                                    </div>
+                                  ), {
+                                    duration: Infinity, // 不自动消失
+                                    position: 'top-center',
+                                  });
                                 }}
                                 disabled={loading}
                               >
