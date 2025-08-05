@@ -1,4 +1,4 @@
-// src/utils/filterUtils.js
+// src/utils/filterUtils.js (第4步更新版本)
 
 // 时间筛选工具函数
 export const timeFilters = {
@@ -132,6 +132,46 @@ export const statusFilters = {
   }
 };
 
+// 📌 新增：高级筛选工具函数
+export const advancedFilters = {
+  // 日期范围筛选
+  dateRange: (date, range) => {
+    if (!range || !range.startDate || !range.endDate) return true;
+    
+    const dateTime = new Date(date).getTime();
+    const startTime = range.startDate.getTime();
+    const endTime = range.endDate.getTime();
+    
+    return dateTime >= startTime && dateTime <= endTime;
+  },
+
+  // 布尔值筛选
+  booleanFilter: (value, filterValue) => {
+    if (filterValue === 'all') return true;
+    return value === (filterValue === 'true');
+  },
+
+  // 多重条件组合筛选
+  combineFilters: (task, conditions) => {
+    return Object.entries(conditions).every(([key, value]) => {
+      if (!value || value === 'all') return true;
+      
+      switch (key) {
+        case 'allowAIGC':
+        case 'needsFile':
+        case 'allowLateSubmission':
+          return advancedFilters.booleanFilter(task[key], value);
+        case 'deadlineRange':
+          return advancedFilters.dateRange(task.deadline, value);
+        case 'createdDateRange':
+          return advancedFilters.dateRange(task.createdAt, value);
+        default:
+          return true;
+      }
+    });
+  }
+};
+
 // 提交率筛选（教师端使用）
 export const getSubmissionRate = (task, submissions = []) => {
   if (!task.classIds || task.classIds.length === 0) return 0;
@@ -156,7 +196,7 @@ export const getSubmissionRate = (task, submissions = []) => {
   return totalStudents > 0 ? (submittedCount / totalStudents) * 100 : 0;
 };
 
-// 综合任务筛选函数
+// 📌 更新：综合任务筛选函数（支持高级筛选）
 export function filterTasks(tasks, filters, classes = [], submissions = []) {
   return tasks.filter(task => {
     // 基础分类筛选（活跃/归档/删除）
@@ -212,6 +252,19 @@ export function filterTasks(tasks, filters, classes = [], submissions = []) {
       }
     }
     
+    // 📌 新增：高级筛选逻辑
+    const advancedConditions = {
+      allowAIGC: filters.allowAIGC,
+      needsFile: filters.needsFile,
+      allowLateSubmission: filters.allowLateSubmission,
+      deadlineRange: filters.deadlineRange,
+      createdDateRange: filters.createdDateRange
+    };
+    
+    if (!advancedFilters.combineFilters(task, advancedConditions)) {
+      return false;
+    }
+    
     return true;
   });
 }
@@ -250,7 +303,7 @@ export function sortTasks(tasks, sortBy = 'deadline', sortOrder = 'asc') {
   return sorted;
 }
 
-// 获取筛选器显示文本
+// 📌 更新：获取筛选器显示文本（支持高级筛选）
 export function getFilterDisplayText(filters) {
   const texts = [];
   
@@ -280,9 +333,56 @@ export function getFilterDisplayText(filters) {
     texts.push(`类型: ${filters.taskType}`);
   }
   
+  // 📌 新增：高级筛选器文本
+  if (filters.allowAIGC && filters.allowAIGC !== 'all') {
+    texts.push(`AIGC: ${filters.allowAIGC === 'true' ? '允许' : '禁止'}`);
+  }
+  
+  if (filters.needsFile && filters.needsFile !== 'all') {
+    texts.push(`文件: ${filters.needsFile === 'true' ? '必需' : '可选'}`);
+  }
+  
+  if (filters.allowLateSubmission && filters.allowLateSubmission !== 'all') {
+    texts.push(`逾期: ${filters.allowLateSubmission === 'true' ? '允许' : '禁止'}`);
+  }
+  
+  if (filters.deadlineRange) {
+    const start = filters.deadlineRange.startDate.toLocaleDateString('zh-CN');
+    const end = filters.deadlineRange.endDate.toLocaleDateString('zh-CN');
+    texts.push(`截止时间: ${start} ~ ${end}`);
+  }
+  
+  if (filters.createdDateRange) {
+    const start = filters.createdDateRange.startDate.toLocaleDateString('zh-CN');
+    const end = filters.createdDateRange.endDate.toLocaleDateString('zh-CN');
+    texts.push(`创建时间: ${start} ~ ${end}`);
+  }
+  
   if (filters.search) {
     texts.push(`搜索: "${filters.search}"`);
   }
   
   return texts;
+}
+
+// 📌 新增：筛选器统计信息
+export function getFilterStats(filters) {
+  const totalFilters = Object.keys(filters).length;
+  const activeFilters = Object.entries(filters).filter(([key, value]) => {
+    if (['category', 'sortBy', 'sortOrder'].includes(key)) return false;
+    if (key === 'search') return value && value.trim();
+    if (key.includes('Range')) return !!value;
+    return value && value !== 'all' && value !== '';
+  }).length;
+  
+  return {
+    total: totalFilters,
+    active: activeFilters,
+    hasAdvanced: ['allowAIGC', 'needsFile', 'allowLateSubmission', 'deadlineRange', 'createdDateRange']
+      .some(key => {
+        const value = filters[key];
+        if (key.includes('Range')) return !!value;
+        return value && value !== 'all';
+      })
+  };
 }

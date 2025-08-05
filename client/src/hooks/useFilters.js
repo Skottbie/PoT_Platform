@@ -1,9 +1,9 @@
-// src/hooks/useFilters.js
+// src/hooks/useFilters.js (第4步更新版本)
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { filterTasks, sortTasks } from '../utils/filterUtils';
 
-// 默认筛选状态
+// 默认筛选状态（新增高级筛选字段）
 const defaultFilters = {
   category: 'active',
   classId: 'all',
@@ -12,11 +12,36 @@ const defaultFilters = {
   taskType: 'all',
   search: '',
   sortBy: 'deadline',
-  sortOrder: 'asc'
+  sortOrder: 'asc',
+  // 📌 新增：高级筛选字段
+  createdDateRange: null,
+  deadlineRange: null,
+  allowAIGC: 'all',
+  needsFile: 'all',
+  allowLateSubmission: 'all'
 };
 
-// URL同步的参数列表
-const urlSyncParams = ['category', 'classId', 'deadline', 'submitted', 'taskType', 'search'];
+// URL同步的参数列表（新增高级筛选参数）
+const urlSyncParams = ['category', 'classId', 'deadline', 'submitted', 'taskType', 'search', 'sortBy', 'sortOrder'];
+
+// 📌 新增：复杂对象的URL序列化工具
+const serializeComplexParam = (value) => {
+  if (!value) return null;
+  try {
+    return btoa(JSON.stringify(value));
+  } catch {
+    return null;
+  }
+};
+
+const deserializeComplexParam = (value) => {
+  if (!value) return null;
+  try {
+    return JSON.parse(atob(value));
+  } catch {
+    return null;
+  }
+};
 
 export function useFilters(initialFilters = {}) {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -25,12 +50,36 @@ export function useFilters(initialFilters = {}) {
   const initializeFromURL = useCallback(() => {
     const urlFilters = { ...defaultFilters, ...initialFilters };
     
+    // 处理简单参数
     urlSyncParams.forEach(param => {
       const urlValue = searchParams.get(param);
       if (urlValue) {
         urlFilters[param] = urlValue;
       }
     });
+    
+    // 📌 新增：处理复杂参数（日期范围等）
+    const deadlineRange = searchParams.get('deadlineRange');
+    if (deadlineRange) {
+      const parsed = deserializeComplexParam(deadlineRange);
+      if (parsed && parsed.startDate && parsed.endDate) {
+        urlFilters.deadlineRange = {
+          startDate: new Date(parsed.startDate),
+          endDate: new Date(parsed.endDate)
+        };
+      }
+    }
+    
+    const createdDateRange = searchParams.get('createdDateRange');
+    if (createdDateRange) {
+      const parsed = deserializeComplexParam(createdDateRange);
+      if (parsed && parsed.startDate && parsed.endDate) {
+        urlFilters.createdDateRange = {
+          startDate: new Date(parsed.startDate),
+          endDate: new Date(parsed.endDate)
+        };
+      }
+    }
     
     return urlFilters;
   }, [searchParams, initialFilters]);
@@ -45,12 +94,28 @@ export function useFilters(initialFilters = {}) {
     // 同步到URL
     const params = new URLSearchParams();
     
+    // 处理简单参数
     urlSyncParams.forEach(param => {
       const value = newFilters[param];
       if (value && value !== 'all' && value !== '') {
         params.set(param, value);
       }
     });
+    
+    // 📌 新增：处理复杂参数
+    if (newFilters.deadlineRange) {
+      const serialized = serializeComplexParam(newFilters.deadlineRange);
+      if (serialized) {
+        params.set('deadlineRange', serialized);
+      }
+    }
+    
+    if (newFilters.createdDateRange) {
+      const serialized = serializeComplexParam(newFilters.createdDateRange);
+      if (serialized) {
+        params.set('createdDateRange', serialized);
+      }
+    }
     
     setSearchParams(params, { replace: true });
   }, [setSearchParams]);
@@ -80,32 +145,80 @@ export function useFilters(initialFilters = {}) {
     setFilters(urlFilters);
   }, [initializeFromURL]);
 
+  // 📌 新增：计算高级筛选器激活状态
+  const hasAdvancedFilters = useMemo(() => {
+    return (
+      (filters.allowAIGC && filters.allowAIGC !== 'all') ||
+      (filters.needsFile && filters.needsFile !== 'all') ||
+      (filters.allowLateSubmission && filters.allowLateSubmission !== 'all') ||
+      filters.deadlineRange ||
+      filters.createdDateRange
+    );
+  }, [filters]);
+
   return {
     filters,
     updateFilters,
     resetFilters,
     applyQuickFilter,
     showAdvancedFilters,
-    toggleAdvancedFilters
+    toggleAdvancedFilters,
+    hasAdvancedFilters
   };
 }
 
-// 使用筛选和排序的Hook
+// 📌 更新：使用筛选和排序的Hook（支持高级筛选）
 export function useTaskFiltering(tasks = [], classes = [], submissions = []) {
   const {
     filters,
     updateFilters,
     resetFilters,
     showAdvancedFilters,
-    toggleAdvancedFilters
+    toggleAdvancedFilters,
+    hasAdvancedFilters
   } = useFilters();
 
   // 应用筛选和排序
   const { filteredTasks, stats } = useMemo(() => {
-    // 应用筛选
+    // 应用基础筛选
     let filtered = filterTasks(tasks, filters, classes, submissions);
     
-    // 应用搜索（在filterTasks基础上）
+    // 📌 新增：应用高级筛选
+    if (filters.allowAIGC && filters.allowAIGC !== 'all') {
+      const allowAIGC = filters.allowAIGC === 'true';
+      filtered = filtered.filter(task => task.allowAIGC === allowAIGC);
+    }
+    
+    if (filters.needsFile && filters.needsFile !== 'all') {
+      const needsFile = filters.needsFile === 'true';
+      filtered = filtered.filter(task => task.needsFile === needsFile);
+    }
+    
+    if (filters.allowLateSubmission && filters.allowLateSubmission !== 'all') {
+      const allowLateSubmission = filters.allowLateSubmission === 'true';
+      filtered = filtered.filter(task => task.allowLateSubmission === allowLateSubmission);
+    }
+    
+    // 📌 新增：日期范围筛选
+    if (filters.deadlineRange && filters.deadlineRange.startDate && filters.deadlineRange.endDate) {
+      const startTime = filters.deadlineRange.startDate.getTime();
+      const endTime = filters.deadlineRange.endDate.getTime();
+      filtered = filtered.filter(task => {
+        const taskDeadline = new Date(task.deadline).getTime();
+        return taskDeadline >= startTime && taskDeadline <= endTime;
+      });
+    }
+    
+    if (filters.createdDateRange && filters.createdDateRange.startDate && filters.createdDateRange.endDate) {
+      const startTime = filters.createdDateRange.startDate.getTime();
+      const endTime = filters.createdDateRange.endDate.getTime();
+      filtered = filtered.filter(task => {
+        const taskCreated = new Date(task.createdAt).getTime();
+        return taskCreated >= startTime && taskCreated <= endTime;
+      });
+    }
+    
+    // 应用搜索（在所有筛选基础上）
     if (filters.search && filters.search.trim()) {
       const searchTerms = filters.search.toLowerCase().split(/\s+/);
       filtered = filtered.filter(task => {
@@ -129,12 +242,14 @@ export function useTaskFiltering(tasks = [], classes = [], submissions = []) {
       filtered: sorted.length,
       hasActiveFilters: Object.entries(filters).some(([key, value]) => {
         if (key === 'category' || key === 'sortBy' || key === 'sortOrder') return false;
+        if (key === 'createdDateRange' || key === 'deadlineRange') return !!value;
         return value && value !== 'all' && value !== '';
-      })
+      }),
+      hasAdvancedFilters
     };
     
     return { filteredTasks: sorted, stats };
-  }, [tasks, filters, classes, submissions]);
+  }, [tasks, filters, classes, submissions, hasAdvancedFilters]);
 
   return {
     filters,
@@ -142,12 +257,13 @@ export function useTaskFiltering(tasks = [], classes = [], submissions = []) {
     resetFilters,
     showAdvancedFilters,
     toggleAdvancedFilters,
+    hasAdvancedFilters,
     filteredTasks,
     stats
   };
 }
 
-// 更新的筛选器配置 - 增加更多选项
+// 📌 更新：扩展的教师端快速筛选器配置
 export const teacherQuickFilters = [
   {
     id: 'today_deadline',
@@ -178,6 +294,18 @@ export const teacherQuickFilters = [
     label: '已过期',
     icon: '🔴',
     filter: { deadline: 'overdue' }
+  },
+  {
+    id: 'allow_aigc',
+    label: '允许AIGC',
+    icon: '🤖',
+    filter: { allowAIGC: 'true' }
+  },
+  {
+    id: 'require_file',
+    label: '要求文件',
+    icon: '📎',
+    filter: { needsFile: 'true' }
   }
 ];
 
@@ -211,5 +339,11 @@ export const studentQuickFilters = [
     label: '逾期可提交',
     icon: '⚠️',
     filter: { deadline: 'overdue', status: 'lateAllowed' }
+  },
+  {
+    id: 'aigc_tasks',
+    label: '可用AIGC',
+    icon: '🤖',
+    filter: { allowAIGC: 'true' }
   }
 ];
