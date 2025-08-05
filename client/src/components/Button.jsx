@@ -56,14 +56,19 @@ const variantStyles = {
     disabled:opacity-50 disabled:cursor-not-allowed
   `,
   ghost: `
-    bg-transparent
-    text-gray-600 dark:text-gray-300
-    hover:text-blue-500 dark:hover:text-blue-400
-    hover:bg-gray-500/10 dark:hover:bg-gray-500/10
-    backdrop-blur-sm
-    active:scale-95
-    disabled:opacity-50 disabled:cursor-not-allowed
-  `,
+  bg-white/5 dark:bg-white/5
+  text-gray-700 dark:text-gray-200
+  border border-gray-300/40 dark:border-gray-600/40
+  shadow-sm
+  backdrop-blur-sm
+  hover:bg-white/10 dark:hover:bg-white/10
+  hover:border-gray-400/60 dark:hover:border-gray-500/60
+  hover:text-gray-900 dark:hover:text-white
+  hover:shadow-md
+  active:scale-95
+  disabled:opacity-50 disabled:cursor-not-allowed
+  transition-all duration-200
+`,
   warning: `
   bg-gradient-to-r from-orange-500 to-amber-600
   text-white

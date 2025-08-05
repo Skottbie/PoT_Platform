@@ -284,10 +284,10 @@ const ClassHistory = () => {
                       {record.details && (
                         <div className="text-sm text-gray-600 dark:text-gray-400">
                           {record.details.modifiedCount && (
-                            <span>修改了 {record.details.modifiedCount} 名学生，</span>
+                            <span>修改了 {record.details.modifiedCount} 名学生</span>
                           )}
                           {record.details.addedCount && (
-                            <span>添加了 {record.details.addedCount} 名学生，</span>
+                            <span>添加了 {record.details.addedCount} 名学生</span>
                           )}
                           {record.details.removedCount && (
                             <span>移除了 {record.details.removedCount} 名学生</span>
