@@ -206,7 +206,7 @@ const EditClassStudents = () => {
         setMessage('✅ 学生信息更新成功！');
         setHasChanges(false);
         setTimeout(() => {
-          navigate(`/class/${classId}/students`);
+          navigate('/my-classes');
         }, 1500);
       } else {
         setMessage(`❌ 更新失败：${res.data.message}`);

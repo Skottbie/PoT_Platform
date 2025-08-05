@@ -87,9 +87,9 @@ const ClassStudents = () => {
             <Button
               variant="secondary"
               size="sm"
-              onClick={() => navigate(-1)}
+              onClick={() => navigate('/my-classes')}
             >
-              👈 返回上一级
+              👈 返回班级列表
             </Button>
           </div>
         </div>

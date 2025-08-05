@@ -31,7 +31,7 @@ const classSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },
   // 📌 新增：班级编辑历史
   editHistory: [{
-    action: { type: String, enum: ['add_student', 'remove_student', 'modify_student', 'restore_student'] },
+    action: { type: String, enum: ['add_student', 'remove_student', 'modify_student', 'restore_student', 'modify_students', 'remove_students'] },
     details: Object,
     editedAt: { type: Date, default: Date.now },
     editedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
