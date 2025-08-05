@@ -61,35 +61,39 @@ const ClassStudents = () => {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 px-4 py-6">
       <div className="max-w-6xl mx-auto">
         {/* 顶部标题 + 操作按钮 */}
-        <div className="flex justify-between items-start mb-6">
+        <div className="flex flex-col lg:flex-row lg:justify-between lg:items-start gap-4 mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-2">
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-800 dark:text-gray-100 mb-2">
               👥 班级学生
             </h1>
-            <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm text-gray-600 dark:text-gray-400">
               <span><strong>班级：</strong>{className}</span>
-              <span><strong>学生总数：</strong>{stats.total}</span>
+              <span><strong>总数：</strong>{stats.total}</span>
               <span><strong>已加入：</strong>{stats.joined}</span>
               <span><strong>加入率：</strong>{stats.joinRate}%</span>
             </div>
           </div>
           
-          <div className="flex gap-3">
+          <div className="flex gap-2 sm:gap-3 flex-shrink-0">
             {isClassOwner() && (
               <Button
                 variant="primary"
                 size="sm"
                 onClick={() => navigate(`/class/${classId}/edit-students`)}
+                className="text-xs sm:text-sm px-2 sm:px-4"
               >
-                ✏️ 编辑学生
+                <span className="hidden sm:inline">✏️ 编辑学生</span>
+                <span className="sm:hidden">✏️ 编辑</span>
               </Button>
             )}
             <Button
               variant="secondary"
               size="sm"
               onClick={() => navigate('/my-classes')}
+              className="text-xs sm:text-sm px-2 sm:px-4"
             >
-              👈 返回班级列表
+              <span className="hidden sm:inline">👈 返回班级列表</span>
+              <span className="sm:hidden">👈 返回</span>
             </Button>
           </div>
         </div>

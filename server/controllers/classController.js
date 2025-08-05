@@ -256,7 +256,6 @@ const updateClassStudents = async (req, res) => {
             // 如果学生已加入（有userId），需要同步更新相关提交记录
             if (student.userId) {
               try {
-                // 更新用户的邮箱（如果需要的话，这里暂时跳过）
                 // 更新提交记录中的学生信息引用
                 await Submission.updateMany(
                   { student: student.userId },
@@ -398,6 +397,173 @@ const removeClassStudents = async (req, res) => {
   }
 };
 
+// 📌 新增：获取班级历史记录
+const getClassHistory = async (req, res) => {
+  try {
+    const { id: classId } = req.params;
+    const teacherId = req.user?.id;
+
+    if (!teacherId) {
+      return res.status(401).json({ success: false, message: '未授权访问' });
+    }
+
+    const classDoc = await ClassModel.findById(classId);
+    if (!classDoc) {
+      return res.status(404).json({ success: false, message: '班级不存在' });
+    }
+
+    // 验证权限
+    if (classDoc.teacherId.toString() !== teacherId) {
+      return res.status(403).json({ success: false, message: '只有班级创建者可以查看历史记录' });
+    }
+
+    // 获取已移除的学生
+    const removedStudents = classDoc.studentList.filter(s => s.isRemoved);
+    
+    // 获取编辑历史
+    const editHistory = classDoc.editHistory.sort((a, b) => new Date(b.editedAt) - new Date(a.editedAt));
+
+    res.json({
+      success: true,
+      class: {
+        name: classDoc.name,
+        _id: classDoc._id
+      },
+      removedStudents,
+      editHistory
+    });
+
+  } catch (err) {
+    console.error('获取班级历史失败:', err);
+    res.status(500).json({ 
+      success: false, 
+      message: '获取历史失败：' + (err.message || '服务器错误') 
+    });
+  }
+};
+
+// 📌 新增：恢复学生
+const restoreClassStudent = async (req, res) => {
+  try {
+    const { id: classId } = req.params;
+    const { studentId } = req.body;
+    const teacherId = req.user?.id;
+
+    if (!teacherId) {
+      return res.status(401).json({ success: false, message: '未授权访问' });
+    }
+
+    const classDoc = await ClassModel.findById(classId);
+    if (!classDoc) {
+      return res.status(404).json({ success: false, message: '班级不存在' });
+    }
+
+    // 验证权限
+    if (classDoc.teacherId.toString() !== teacherId) {
+      return res.status(403).json({ success: false, message: '只有班级创建者可以恢复学生' });
+    }
+
+    const student = classDoc.studentList.find(s => 
+      s.studentId === studentId && s.isRemoved
+    );
+
+    if (!student) {
+      return res.status(404).json({ success: false, message: '未找到该学生或学生未被移除' });
+    }
+
+    // 恢复学生
+    student.isRemoved = false;
+    student.removedAt = null;
+    student.removedBy = null;
+
+    // 记录编辑历史
+    classDoc.editHistory.push({
+      action: 'restore_student',
+      details: {
+        studentName: student.name,
+        studentId: student.studentId
+      },
+      editedAt: new Date(),
+      editedBy: teacherId
+    });
+
+    await classDoc.save();
+
+    res.json({
+      success: true,
+      message: `学生 ${student.name}(${student.studentId}) 已恢复`
+    });
+
+  } catch (err) {
+    console.error('恢复学生失败:', err);
+    res.status(500).json({ 
+      success: false, 
+      message: '恢复失败：' + (err.message || '服务器错误') 
+    });
+  }
+};
+
+// 📌 新增：永久删除学生
+const permanentDeleteStudent = async (req, res) => {
+  try {
+    const { id: classId } = req.params;
+    const { studentId } = req.body;
+    const teacherId = req.user?.id;
+
+    if (!teacherId) {
+      return res.status(401).json({ success: false, message: '未授权访问' });
+    }
+
+    const classDoc = await ClassModel.findById(classId);
+    if (!classDoc) {
+      return res.status(404).json({ success: false, message: '班级不存在' });
+    }
+
+    // 验证权限
+    if (classDoc.teacherId.toString() !== teacherId) {
+      return res.status(403).json({ success: false, message: '只有班级创建者可以删除学生' });
+    }
+
+    const studentIndex = classDoc.studentList.findIndex(s => 
+      s.studentId === studentId && s.isRemoved
+    );
+
+    if (studentIndex === -1) {
+      return res.status(404).json({ success: false, message: '未找到该学生或学生未被移除' });
+    }
+
+    const student = classDoc.studentList[studentIndex];
+
+    // 永久删除学生
+    classDoc.studentList.splice(studentIndex, 1);
+
+    // 记录编辑历史
+    classDoc.editHistory.push({
+      action: 'permanent_delete_student',
+      details: {
+        studentName: student.name,
+        studentId: student.studentId
+      },
+      editedAt: new Date(),
+      editedBy: teacherId
+    });
+
+    await classDoc.save();
+
+    res.json({
+      success: true,
+      message: `学生 ${student.name}(${student.studentId}) 已永久删除`
+    });
+
+  } catch (err) {
+    console.error('永久删除学生失败:', err);
+    res.status(500).json({ 
+      success: false, 
+      message: '删除失败：' + (err.message || '服务器错误') 
+    });
+  }
+};
+
 // 📌 新增：定期清理30天前的软删除学生（硬删除）
 const cleanupRemovedStudents = async () => {
   try {
@@ -442,7 +608,10 @@ module.exports = {
   getMyClasses,
   getClassById,
   joinClass,
-  updateClassStudents,    // 📌 新增
-  removeClassStudents,    // 📌 新增
-  cleanupRemovedStudents  // 📌 新增
+  updateClassStudents,       // 📌 新增
+  removeClassStudents,       // 📌 新增
+  getClassHistory,           // 📌 新增
+  restoreClassStudent,       // 📌 新增
+  permanentDeleteStudent,    // 📌 新增
+  cleanupRemovedStudents     // 📌 新增
 };

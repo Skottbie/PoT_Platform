@@ -277,22 +277,24 @@ const EditClassStudents = () => {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-10 px-4">
       <div className="max-w-6xl mx-auto">
         {/* 页面头部 */}
-        <div className="flex justify-between items-start mb-6">
+        <div className="flex flex-col lg:flex-row lg:justify-between lg:items-start gap-4 mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-2">
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-800 dark:text-gray-100 mb-2">
               ✏️ 编辑班级学生
             </h1>
             <p className="text-sm text-gray-600 dark:text-gray-400">
               班级：{classData?.name} | 当前学生：{students.length} 人
             </p>
           </div>
-          <div className="flex gap-3">
+          <div className="flex gap-2 sm:gap-3 flex-shrink-0">
             <Button
               variant="secondary"
               onClick={() => navigate(`/class/${classId}/students`)}
               disabled={saving}
+              className="text-xs sm:text-sm px-2 sm:px-4"
             >
-              👈 取消编辑
+              <span className="hidden sm:inline">👈 取消编辑</span>
+              <span className="sm:hidden">👈 取消</span>
             </Button>
             <Button
               variant="primary"
@@ -303,8 +305,10 @@ const EditClassStudents = () => {
               })}
               disabled={!hasChanges || saving}
               loading={saving}
+              className="text-xs sm:text-sm px-2 sm:px-4"
             >
-              💾 保存修改
+              <span className="hidden sm:inline">💾 保存修改</span>
+              <span className="sm:hidden">💾 保存</span>
             </Button>
           </div>
         </div>

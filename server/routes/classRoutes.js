@@ -6,8 +6,11 @@ const {
   getMyClasses, 
   getClassById, 
   joinClass,
-  updateClassStudents,    // 📌 新增
-  removeClassStudents     // 📌 新增
+  updateClassStudents,       // 📌 新增
+  removeClassStudents,       // 📌 新增
+  getClassHistory,           // 📌 新增
+  restoreClassStudent,       // 📌 新增
+  permanentDeleteStudent     // 📌 新增
 } = require('../controllers/classController');
 const verifyToken = require('../middleware/auth');
 
@@ -32,5 +35,14 @@ router.put('/:id/students', verifyToken, updateClassStudents);
 
 // 📌 新增：移除班级学生（软删除）
 router.delete('/:id/students', verifyToken, removeClassStudents);
+
+// 📌 新增：获取班级历史记录
+router.get('/:id/history', verifyToken, getClassHistory);
+
+// 📌 新增：恢复学生
+router.post('/:id/students/restore', verifyToken, restoreClassStudent);
+
+// 📌 新增：永久删除学生
+router.delete('/:id/students/permanent', verifyToken, permanentDeleteStudent);
 
 module.exports = router;

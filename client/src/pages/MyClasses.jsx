@@ -42,30 +42,30 @@ const MyClasses = () => {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8 px-4">
       <div className="max-w-5xl mx-auto">
         {/* 顶部导航 */}
-        <div className="
-          flex justify-between items-center mb-6 
-          text-base sm:text-lg md:text-xl
-          whitespace-nowrap overflow-hidden
-        ">
-          <h1 className="font-bold text-gray-800 dark:text-gray-100 truncate">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-800 dark:text-gray-100">
             📚 我的班级
           </h1>
 
-          <div className="flex space-x-2 sm:space-x-3 shrink-0">
+          <div className="flex gap-2 sm:gap-3 flex-shrink-0">
             <Button
               variant="secondary"
               size="sm"
               onClick={() => navigate('/teacher')}
+              className="text-xs sm:text-sm px-2 sm:px-4"
             >
-              👈 返回仪表盘
+              <span className="hidden sm:inline">👈 返回仪表盘</span>
+              <span className="sm:hidden">👈 仪表盘</span>
             </Button>
 
             <Button
               variant="primary"
               size="sm"
               onClick={() => navigate('/create-class')}
+              className="text-xs sm:text-sm px-2 sm:px-4"
             >
-              ➕ 创建新班级
+              <span className="hidden sm:inline">➕ 创建新班级</span>
+              <span className="sm:hidden">➕ 创建</span>
             </Button>
           </div>
         </div>
@@ -145,21 +145,35 @@ const MyClasses = () => {
                   </div>
 
                   {/* 操作按钮 */}
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                     <Button
                       variant="secondary"
                       size="sm"
                       onClick={() => navigate(`/class/${cls._id}/students`)}
+                      className="text-xs sm:text-sm"
                     >
-                      👥 查看学生
+                      <span className="hidden sm:inline">👥 查看学生</span>
+                      <span className="sm:hidden">👥 学生</span>
                     </Button>
                     
                     <Button
                       variant="primary"
                       size="sm"
                       onClick={() => navigate(`/class/${cls._id}/edit-students`)}
+                      className="text-xs sm:text-sm"
                     >
-                      ✏️ 编辑学生
+                      <span className="hidden sm:inline">✏️ 编辑学生</span>
+                      <span className="sm:hidden">✏️ 编辑</span>
+                    </Button>
+
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => navigate(`/class/${cls._id}/history`)}
+                      className="text-xs sm:text-sm"
+                    >
+                      <span className="hidden sm:inline">📊 查看历史</span>
+                      <span className="sm:hidden">📊 历史</span>
                     </Button>
                   </div>
                 </div>

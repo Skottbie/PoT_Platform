@@ -15,6 +15,7 @@ import { useState, useEffect } from 'react';
 import FeedbackWidget from './components/FeedbackWidget';
 import ClassSubmissionStatus from './pages/ClassSubmissionStatus';
 import EditClassStudents from './pages/EditClassStudents';
+import ClassHistory from './pages/ClassHistory';
 
 import Test from './Test'; // 导入测试组件
 
@@ -46,6 +47,7 @@ function App() {
         <Route path="/join-class" element={<JoinClass />} />
         <Route path="/task/:taskId/class-status" element={<ClassSubmissionStatus />} />
         <Route path="/class/:classId/edit-students" element={<EditClassStudents />} />
+        <Route path="/class/:classId/history" element={<ClassHistory />} />
 
 
         <Route path="/test" element={<Test />} />
