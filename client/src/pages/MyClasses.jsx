@@ -172,8 +172,8 @@ const MyClasses = () => {
                       onClick={() => navigate(`/class/${cls._id}/history`)}
                       className="text-xs sm:text-sm"
                     >
-                      <span className="hidden sm:inline">📊 查看历史</span>
-                      <span className="sm:hidden">📊 历史</span>
+                      <span className="hidden sm:inline">✂️ 编辑历史</span>
+                      <span className="sm:hidden">✂️ 历史</span>
                     </Button>
                   </div>
                 </div>

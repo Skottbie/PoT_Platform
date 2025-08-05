@@ -9,6 +9,8 @@ const feedbackRouter = require('./routes/feedback');
 const allowedOrigins = [
   'http://localhost:5173',
   'https://pot-platform.vercel.app',
+  'https://potacademy.net',
+  'https://www.potacademy.net'
 ];
 
 
