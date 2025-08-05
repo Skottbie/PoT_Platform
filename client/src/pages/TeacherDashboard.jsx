@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import api from '../api/axiosInstance';
 import Button from '../components/Button';
 import { motion, AnimatePresence } from 'framer-motion';
+import ConfirmDialog from '../components/ConfirmDialog';
 import toast from 'react-hot-toast';
 
 const TeacherDashboard = () => {
@@ -21,7 +22,15 @@ const TeacherDashboard = () => {
     classIds: [],
   });
   const [message, setMessage] = useState('');
-  
+
+  const [confirmDialog, setConfirmDialog] = useState({
+  isOpen: false,
+  title: '',
+  message: '',
+  onConfirm: null,
+  confirmText: '确认',
+  confirmVariant: 'danger'
+});
   // 📌 新增：任务分类状态
   const [tasks, setTasks] = useState({
     active: [],
@@ -133,6 +142,16 @@ const TeacherDashboard = () => {
       console.error(err);
       setMessage('❌ 发布失败，请检查字段');
     }
+    <ConfirmDialog
+      isOpen={confirmDialog.isOpen}
+      onClose={() => setConfirmDialog(prev => ({ ...prev, isOpen: false }))}
+      onConfirm={confirmDialog.onConfirm}
+      title={confirmDialog.title}
+      message={confirmDialog.message}
+      confirmText={confirmDialog.confirmText}
+      confirmVariant={confirmDialog.confirmVariant}
+      loading={loading}
+    />
   };
 
   // 📌 新增：任务操作函数
@@ -173,14 +192,10 @@ const TeacherDashboard = () => {
       
       // 刷新当前分类的任务列表
       await fetchTasks(currentCategory);
-      toast.success('✅ 操作成功', {
-        position: 'top-center',
-      });
+      toast.success('✅ 操作成功');
     } catch (err) {
       console.error('操作失败:', err);
-      toast.error(`❌ 操作失败：${err.response?.data?.message || err.message}`, {
-        position: 'top-center',
-      });
+      toast.error(`❌ 操作失败：${err.response?.data?.message || err.message}`);
     } finally {
       setLoading(false);
     }
@@ -603,11 +618,17 @@ const TeacherDashboard = () => {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => {
-                                  if (window.confirm(`确定要归档任务"${task.title}"吗？归档后学生将无法提交作业。`)) {
+                                onClick={() => setConfirmDialog({
+                                  isOpen: true,
+                                  title: '确认归档任务',
+                                  message: `确定要归档任务"${task.title}"吗？归档后学生将无法提交作业。`,
+                                  onConfirm: () => {
                                     handleTaskOperation(task._id, 'archive');
-                                  }
-                                }}
+                                    setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+                                  },
+                                  confirmText: '归档',
+                                  confirmVariant: 'primary'
+                                })}
                                 disabled={loading}
                               >
                                 📦 归档
@@ -616,11 +637,17 @@ const TeacherDashboard = () => {
                               <Button
                                 variant="danger"
                                 size="sm"
-                                onClick={() => {
-                                  if (window.confirm(`确定要删除任务"${task.title}"吗？删除后30天内可恢复。`)) {
+                                onClick={() => setConfirmDialog({
+                                  isOpen: true,
+                                  title: '确认删除任务',
+                                  message: `确定要删除任务"${task.title}"吗？删除后30天内可恢复。`,
+                                  onConfirm: () => {
                                     handleTaskOperation(task._id, 'soft_delete');
-                                  }
-                                }}
+                                    setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+                                  },
+                                  confirmText: '删除',
+                                  confirmVariant: 'danger'
+                                })}
                                 disabled={loading}
                               >
                                 🗑️ 删除
@@ -680,37 +707,17 @@ const TeacherDashboard = () => {
                               <Button
                                 variant="danger"
                                 size="sm"
-                                onClick={() => {
-                                  // 使用toast确认
-                                  toast((t) => (
-                                    <div className="flex flex-col gap-2">
-                                      <p className="font-medium">确认永久删除</p>
-                                      <p className="text-sm text-gray-600">
-                                        确定要永久删除任务"{task.title}"吗？此操作不可恢复！
-                                      </p>
-                                      <div className="flex gap-2 justify-end">
-                                        <button
-                                          className="px-3 py-1 text-sm bg-gray-200 rounded hover:bg-gray-300"
-                                          onClick={() => toast.dismiss(t.id)}
-                                        >
-                                          取消
-                                        </button>
-                                        <button
-                                          className="px-3 py-1 text-sm bg-red-500 text-white rounded hover:bg-red-600"
-                                          onClick={() => {
-                                            toast.dismiss(t.id);
-                                            handleTaskOperation(task._id, 'hard_delete');
-                                          }}
-                                        >
-                                          确认删除
-                                        </button>
-                                      </div>
-                                    </div>
-                                  ), {
-                                    duration: Infinity, // 不自动消失
-                                    position: 'top-center',
-                                  });
-                                }}
+                                onClick={() => setConfirmDialog({
+                                  isOpen: true,
+                                  title: '确认永久删除',
+                                  message: `确定要永久删除任务"${task.title}"吗？此操作不可恢复！`,
+                                  onConfirm: () => {
+                                    handleTaskOperation(task._id, 'hard_delete');
+                                    setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+                                  },
+                                  confirmText: '永久删除',
+                                  confirmVariant: 'danger'
+                                })}
                                 disabled={loading}
                               >
                                 💀 永久删除
