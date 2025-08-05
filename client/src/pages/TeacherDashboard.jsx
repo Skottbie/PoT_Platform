@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/axiosInstance';
 import Button from '../components/Button';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const TeacherDashboard = () => {
   const [user, setUser] = useState(null);
@@ -14,35 +15,65 @@ const TeacherDashboard = () => {
     allowAIGC: false,
     requireAIGCLog: false,
     deadline: '',
-    deadlineTime: '', // 📌 新增：时间字段
-    allowLateSubmission: false, // 📌 新增：是否允许逾期提交
+    deadlineTime: '',
+    allowLateSubmission: false,
     classIds: [],
   });
   const [message, setMessage] = useState('');
-  const [tasks, setTasks] = useState([]);
+  
+  // 📌 新增：任务分类状态
+  const [tasks, setTasks] = useState({
+    active: [],
+    archived: [],
+    deleted: []
+  });
+  const [currentCategory, setCurrentCategory] = useState('active');
+  const [selectedTasks, setSelectedTasks] = useState(new Set());
+  const [showBatchModal, setShowBatchModal] = useState(false);
+  const [batchOperation, setBatchOperation] = useState('');
+  const [loading, setLoading] = useState(false);
+  
   const navigate = useNavigate();
   const [myClasses, setMyClasses] = useState([]);
 
   useEffect(() => {
-    const fetchUserAndTasks = async () => {
+    const fetchUserAndData = async () => {
       try {
         const res = await api.get('/user/profile');
         if (res.data.role !== 'teacher') return navigate('/');
         setUser(res.data);
 
-        const taskRes = await api.get('/task/mine');
-        setTasks(taskRes.data);
-
+        // 获取班级
         const classRes = await api.get('/class/my-classes');
         if (classRes.data.success) {
           setMyClasses(classRes.data.classes);
         }
+
+        // 获取任务
+        await fetchTasks();
       } catch {
         navigate('/');
       }
     };
-    fetchUserAndTasks();
+    fetchUserAndData();
   }, [navigate]);
+
+  // 📌 新增：获取任务函数
+  const fetchTasks = async (category = 'active') => {
+    try {
+      const res = await api.get(`/task/mine?category=${category}`);
+      setTasks(prev => ({ ...prev, [category]: res.data }));
+    } catch (err) {
+      console.error('获取任务失败:', err);
+    }
+  };
+
+  // 📌 新增：切换任务分类
+  const handleCategoryChange = async (category) => {
+    setCurrentCategory(category);
+    setSelectedTasks(new Set());
+    await fetchTasks(category);
+  };
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -56,12 +87,10 @@ const TeacherDashboard = () => {
     e.preventDefault();
     setMessage('');
     
-    // 如果要求AIGC记录但未允许AIGC，则阻止提交
     if (form.requireAIGCLog && !form.allowAIGC) {
       return setMessage('❌ 必须先允许使用AIGC，才能要求上传AIGC记录。');
     }
 
-    // 📌 新增：验证截止日期和时间
     if (!form.deadline) {
       return setMessage('❌ 请设置截止日期。');
     }
@@ -69,7 +98,6 @@ const TeacherDashboard = () => {
       return setMessage('❌ 请设置截止时间。');
     }
 
-    // 📌 合并日期和时间
     const deadlineDateTime = new Date(`${form.deadline}T${form.deadlineTime}`);
     const now = new Date();
     
@@ -80,9 +108,9 @@ const TeacherDashboard = () => {
     try {
       const submitData = {
         ...form,
-        deadline: deadlineDateTime.toISOString(), // 提交完整的日期时间
+        deadline: deadlineDateTime.toISOString(),
       };
-      delete submitData.deadlineTime; // 删除临时字段
+      delete submitData.deadlineTime;
 
       await api.post('/task', submitData);
       setMessage('✅ 任务发布成功！');
@@ -98,15 +126,110 @@ const TeacherDashboard = () => {
         classIds: [],
       });
 
-      const taskRes = await api.get('/task/mine');
-      setTasks(taskRes.data);
+      // 刷新活跃任务列表
+      await fetchTasks('active');
     } catch (err) {
       console.error(err);
       setMessage('❌ 发布失败，请检查字段');
     }
   };
 
-  // 📌 新增：格式化显示截止时间
+  // 📌 新增：任务操作函数
+  const handleTaskOperation = async (taskId, operation, options = {}) => {
+    try {
+      setLoading(true);
+      let endpoint = '';
+      let method = 'POST';
+      
+      switch (operation) {
+        case 'archive':
+          endpoint = `/task/${taskId}/archive`;
+          break;
+        case 'unarchive':
+          endpoint = `/task/${taskId}/unarchive`;
+          break;
+        case 'soft_delete':
+          endpoint = `/task/${taskId}/soft`;
+          method = 'DELETE';
+          break;
+        case 'restore':
+          endpoint = `/task/${taskId}/restore`;
+          break;
+        case 'hard_delete':
+          endpoint = `/task/${taskId}/hard`;
+          method = 'DELETE';
+          break;
+        default:
+          throw new Error('不支持的操作');
+      }
+
+      const config = { method, url: endpoint };
+      if (options && Object.keys(options).length > 0) {
+        config.data = options;
+      }
+
+      await api(config);
+      
+      // 刷新当前分类的任务列表
+      await fetchTasks(currentCategory);
+      setMessage(`✅ 操作成功`);
+    } catch (err) {
+      console.error('操作失败:', err);
+      setMessage(`❌ 操作失败：${err.response?.data?.message || err.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 📌 新增：批量操作
+  const handleBatchOperation = async () => {
+    if (selectedTasks.size === 0) {
+      setMessage('❌ 请选择要操作的任务');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const taskIds = Array.from(selectedTasks);
+      
+      await api.post('/task/batch', {
+        taskIds,
+        operation: batchOperation,
+        options: { allowStudentViewWhenArchived: true }
+      });
+
+      setMessage(`✅ 批量操作成功`);
+      setSelectedTasks(new Set());
+      setShowBatchModal(false);
+      await fetchTasks(currentCategory);
+    } catch (err) {
+      setMessage(`❌ 批量操作失败：${err.response?.data?.message || err.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 📌 新增：切换任务选择
+  const toggleTaskSelection = (taskId) => {
+    const newSelection = new Set(selectedTasks);
+    if (newSelection.has(taskId)) {
+      newSelection.delete(taskId);
+    } else {
+      newSelection.add(taskId);
+    }
+    setSelectedTasks(newSelection);
+  };
+
+  // 📌 新增：全选/取消全选
+  const toggleSelectAll = () => {
+    const currentTasks = tasks[currentCategory] || [];
+    if (selectedTasks.size === currentTasks.length) {
+      setSelectedTasks(new Set());
+    } else {
+      setSelectedTasks(new Set(currentTasks.map(task => task._id)));
+    }
+  };
+
   const formatDeadline = (deadline) => {
     const date = new Date(deadline);
     return date.toLocaleString('zh-CN', {
@@ -118,7 +241,6 @@ const TeacherDashboard = () => {
     });
   };
 
-  // 📌 新增：判断任务状态
   const getTaskStatus = (deadline) => {
     const now = new Date();
     const deadlineDate = new Date(deadline);
@@ -143,6 +265,8 @@ const TeacherDashboard = () => {
 
   if (!user)
     return <p className="text-center mt-10 text-gray-500">加载中...</p>;
+
+  const currentTasks = tasks[currentCategory] || [];
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-10 px-4 transition-colors duration-300">
@@ -252,7 +376,6 @@ const TeacherDashboard = () => {
               </div>
             </div>
 
-            {/* 📌 新增：截止时间设置 */}
             <div className="space-y-3">
               <p className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1">⏰ 设置截止时间</p>
               
@@ -288,7 +411,6 @@ const TeacherDashboard = () => {
                 </div>
               </div>
 
-              {/* 📌 新增：逾期提交设置 */}
               <label className="flex items-center gap-2 text-sm">
                 <input
                   type="checkbox"
@@ -316,60 +438,295 @@ const TeacherDashboard = () => {
           </form>
         </div>
 
+        {/* 📌 新增：任务管理区域 */}
         <div>
-          <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-3">📂 我发布的任务</h2>
-          {tasks.length === 0 ? (
-            <p className="text-sm text-gray-600 dark:text-gray-400">暂无任务</p>
+          {/* 任务分类标签 */}
+          <div className="flex flex-wrap items-center justify-between mb-6">
+            <div className="flex gap-1 bg-gray-100 dark:bg-gray-700 p-1 rounded-lg">
+              {[
+                { key: 'active', label: '📋 活跃任务', count: tasks.active.length },
+                { key: 'archived', label: '📦 已归档', count: tasks.archived.length },
+                { key: 'deleted', label: '🗑️ 回收站', count: tasks.deleted.length }
+              ].map(({ key, label, count }) => (
+                <button
+                  key={key}
+                  onClick={() => handleCategoryChange(key)}
+                  className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                    currentCategory === key
+                      ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-gray-100 shadow'
+                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'
+                  }`}
+                >
+                  {label} ({count})
+                </button>
+              ))}
+            </div>
+
+            {/* 批量操作按钮 */}
+            {selectedTasks.size > 0 && (
+              <div className="flex gap-2">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => {
+                    setBatchOperation(currentCategory === 'active' ? 'archive' : 
+                                    currentCategory === 'archived' ? 'unarchive' : 'restore');
+                    setShowBatchModal(true);
+                  }}
+                >
+                  批量{currentCategory === 'active' ? '归档' : 
+                        currentCategory === 'archived' ? '恢复' : '恢复'} ({selectedTasks.size})
+                </Button>
+                {currentCategory !== 'deleted' && (
+                  <Button
+                    variant="danger"
+                    size="sm"
+                    onClick={() => {
+                      setBatchOperation('soft_delete');
+                      setShowBatchModal(true);
+                    }}
+                  >
+                    批量删除 ({selectedTasks.size})
+                  </Button>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* 全选复选框 */}
+          {currentTasks.length > 0 && (
+            <div className="mb-4">
+              <label className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                <input
+                  type="checkbox"
+                  checked={selectedTasks.size === currentTasks.length && currentTasks.length > 0}
+                  onChange={toggleSelectAll}
+                  className="rounded"
+                />
+                全选 ({selectedTasks.size}/{currentTasks.length})
+              </label>
+            </div>
+          )}
+
+          {/* 任务列表 */}
+          {currentTasks.length === 0 ? (
+            <div className="text-center py-10">
+              <p className="text-gray-500 dark:text-gray-400">
+                {currentCategory === 'active' ? '暂无活跃任务' :
+                 currentCategory === 'archived' ? '暂无归档任务' : '回收站为空'}
+              </p>
+            </div>
           ) : (
             <div className="space-y-4">
-              {tasks.map((task) => {
+              {currentTasks.map((task) => {
                 const taskStatus = getTaskStatus(task.deadline);
                 return (
-                  <div
+                  <motion.div
                     key={task._id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
                     className="border border-gray-200 dark:border-gray-700 
                                  rounded-2xl p-4 bg-white dark:bg-gray-800 
                                  shadow transition-colors duration-300"
                   >
-                    <div className="flex justify-between items-start mb-2">
-                      <p className="font-semibold text-lg text-gray-800 dark:text-gray-100">
-                        {task.title}
-                      </p>
-                      <span className={`text-sm font-medium ${taskStatus.color}`}>
-                        {taskStatus.text}
-                      </span>
+                    <div className="flex items-start gap-3">
+                      {/* 选择框 */}
+                      <input
+                        type="checkbox"
+                        checked={selectedTasks.has(task._id)}
+                        onChange={() => toggleTaskSelection(task._id)}
+                        className="mt-1 rounded"
+                      />
+
+                      <div className="flex-1">
+                        <div className="flex justify-between items-start mb-2">
+                          <p className="font-semibold text-lg text-gray-800 dark:text-gray-100">
+                            {task.title}
+                          </p>
+                          <div className="flex items-center gap-2">
+                            {currentCategory === 'deleted' && task.daysLeft !== undefined && (
+                              <span className={`text-xs px-2 py-1 rounded-full ${
+                                task.daysLeft > 7 
+                                  ? 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300'
+                                  : task.daysLeft > 3
+                                  ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-300'
+                                  : 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300'
+                              }`}>
+                                {task.daysLeft}天后永久删除
+                              </span>
+                            )}
+                            {currentCategory !== 'deleted' && (
+                              <span className={`text-sm font-medium ${taskStatus.color}`}>
+                                {taskStatus.text}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        
+                        <div className="space-y-1 text-sm text-gray-600 dark:text-gray-400">
+                          <p>分类：{task.category}</p>
+                          <p>作业文件：{task.needsFile ? '必交' : '可选'}</p>
+                          <p>截止时间：{formatDeadline(task.deadline)}</p>
+                          <p>逾期提交：{task.allowLateSubmission ? '允许' : '不允许'}</p>
+                          {currentCategory === 'archived' && (
+                            <p>学生查看权限：{task.allowStudentViewWhenArchived ? '开放' : '限制'}</p>
+                          )}
+                        </div>
+                        
+                        <div className="flex flex-wrap gap-2 mt-3">
+                          {/* 查看提交记录按钮 */}
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => navigate(`/task/${task._id}/submissions`)}
+                          >
+                            查看提交记录
+                          </Button>
+                          
+                          {/* 班级提交情况按钮 */}
+                          <Button
+                            variant="primary"
+                            size="sm"
+                            onClick={() => navigate(`/task/${task._id}/class-status`)}
+                          >
+                            班级提交情况
+                          </Button>
+
+                          {/* 根据任务状态显示不同操作按钮 */}
+                          {currentCategory === 'active' && (
+                            <>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleTaskOperation(task._id, 'archive')}
+                                disabled={loading}
+                              >
+                                📦 归档
+                              </Button>
+                              <Button
+                                variant="danger"
+                                size="sm"
+                                onClick={() => handleTaskOperation(task._id, 'soft_delete')}
+                                disabled={loading}
+                              >
+                                🗑️ 删除
+                              </Button>
+                            </>
+                          )}
+
+                          {currentCategory === 'archived' && (
+                            <>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleTaskOperation(task._id, 'unarchive')}
+                                disabled={loading}
+                              >
+                                📤 恢复
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleTaskOperation(task._id, 'updatePermission', {
+                                  allowStudentViewWhenArchived: !task.allowStudentViewWhenArchived
+                                })}
+                                disabled={loading}
+                              >
+                                {task.allowStudentViewWhenArchived ? '🔒 限制学生查看' : '🔓 开放学生查看'}
+                              </Button>
+                              <Button
+                                variant="danger"
+                                size="sm"
+                                onClick={() => handleTaskOperation(task._id, 'soft_delete')}
+                                disabled={loading}
+                              >
+                                🗑️ 删除
+                              </Button>
+                            </>
+                          )}
+
+                          {currentCategory === 'deleted' && (
+                            <>
+                              <Button
+                                variant="secondary"
+                                size="sm"
+                                onClick={() => handleTaskOperation(task._id, 'restore')}
+                                disabled={loading}
+                              >
+                                🔄 恢复
+                              </Button>
+                              <Button
+                                variant="danger"
+                                size="sm"
+                                onClick={() => {
+                                  if (window.confirm(`确定要永久删除任务"${task.title}"吗？此操作不可恢复！`)) {
+                                    handleTaskOperation(task._id, 'hard_delete');
+                                  }
+                                }}
+                                disabled={loading}
+                              >
+                                💀 永久删除
+                              </Button>
+                            </>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                    
-                    <div className="space-y-1 text-sm text-gray-600 dark:text-gray-400">
-                      <p>分类：{task.category}</p>
-                      <p>作业文件：{task.needsFile ? '必交' : '可选'}</p>
-                      <p>截止时间：{formatDeadline(task.deadline)}</p>
-                      <p>逾期提交：{task.allowLateSubmission ? '允许' : '不允许'}</p>
-                    </div>
-                    
-                    <div className="flex gap-2 mt-3">
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => navigate(`/task/${task._id}/submissions`)}
-                      >
-                        查看提交记录
-                      </Button>
-                      {/* 📌 新增：班级提交情况按钮 */}
-                      <Button
-                        variant="primary"
-                        size="sm"
-                        onClick={() => navigate(`/task/${task._id}/class-status`)}
-                      >
-                        班级提交情况
-                      </Button>
-                    </div>
-                  </div>
+                  </motion.div>
                 );
               })}
             </div>
           )}
         </div>
+
+        {/* 📌 新增：批量操作确认模态框 */}
+        <AnimatePresence>
+          {showBatchModal && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+              onClick={(e) => e.target === e.currentTarget && setShowBatchModal(false)}
+            >
+              <motion.div
+                initial={{ scale: 0.95, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.95, opacity: 0 }}
+                className="bg-white dark:bg-gray-800 rounded-xl p-6 max-w-md w-full mx-4 shadow-xl"
+              >
+                <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4">
+                  确认批量操作
+                </h3>
+                <p className="text-gray-600 dark:text-gray-400 mb-6">
+                  确定要对选中的 {selectedTasks.size} 个任务执行
+                  {batchOperation === 'archive' ? '归档' :
+                   batchOperation === 'unarchive' ? '恢复归档' :
+                   batchOperation === 'soft_delete' ? '删除' : '恢复'}
+                  操作吗？
+                </p>
+                <div className="flex gap-3 justify-end">
+                  <Button
+                    variant="secondary"
+                    onClick={() => setShowBatchModal(false)}
+                    disabled={loading}
+                  >
+                    取消
+                  </Button>
+                  <Button
+                    variant={batchOperation === 'soft_delete' ? 'danger' : 'primary'}
+                    onClick={handleBatchOperation}
+                    loading={loading}
+                  >
+                    确认{batchOperation === 'archive' ? '归档' :
+                           batchOperation === 'unarchive' ? '恢复' :
+                           batchOperation === 'soft_delete' ? '删除' : '恢复'}
+                  </Button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );

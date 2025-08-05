@@ -5,6 +5,18 @@ const Task = require('../models/Task');
 const verifyToken = require('../middleware/auth');
 const Class = require('../models/Class');
 
+// 📌 导入任务管理控制器
+const {
+  archiveTask,
+  unarchiveTask,
+  updateArchivedTaskStudentPermission,
+  softDeleteTask,
+  restoreTask,
+  hardDeleteTask,
+  batchOperateTasks,
+  getDeletedTasks
+} = require('../controllers/taskManagementController');
+
 // ✅ 发布任务（仅限教师）
 router.post('/', verifyToken, async (req, res) => {
   try {
@@ -58,26 +70,66 @@ router.post('/', verifyToken, async (req, res) => {
   }
 });
 
-// ✅ 获取当前教师发布的任务
+// ✅ 获取当前教师发布的任务（📌 更新：支持分类获取）
 router.get('/mine', verifyToken, async (req, res) => {
   try {
     if (req.user.role !== 'teacher') {
       return res.status(403).json({ message: '无权限查看任务' });
     }
 
-    const tasks = await Task.find({ createdBy: req.user.id }).sort({ createdAt: -1 });
+    const { category = 'active' } = req.query; // active, archived, deleted
+    let filter = { createdBy: req.user.id };
+
+    switch (category) {
+      case 'active':
+        filter.isArchived = false;
+        filter.isDeleted = false;
+        break;
+      case 'archived':
+        filter.isArchived = true;
+        filter.isDeleted = false;
+        break;
+      case 'deleted':
+        filter.isDeleted = true;
+        break;
+      default:
+        // 获取所有未删除的任务（包括归档）
+        filter.isDeleted = false;
+    }
+
+    const tasks = await Task.find(filter).sort({ createdAt: -1 });
+    
+    // 📌 新增：为已删除任务计算剩余天数
+    if (category === 'deleted') {
+      const tasksWithDaysLeft = tasks.map(task => {
+        const deletedDate = new Date(task.deletedAt);
+        const now = new Date();
+        const daysPassed = Math.floor((now - deletedDate) / (1000 * 60 * 60 * 24));
+        const daysLeft = Math.max(0, 30 - daysPassed);
+        
+        return {
+          ...task.toObject(),
+          daysLeft,
+          willBeDeletedAt: new Date(deletedDate.getTime() + 30 * 24 * 60 * 60 * 1000)
+        };
+      });
+      return res.json(tasksWithDaysLeft);
+    }
+
     res.json(tasks);
   } catch (err) {
     res.status(500).json({ message: '服务器错误' });
   }
 });
 
-// ✅ 学生获取所有可用任务
+// ✅ 学生获取所有可用任务（📌 更新：支持归档任务处理）
 router.get('/all', verifyToken, async (req, res) => {
   try {
     if (req.user.role !== 'student') {
       return res.status(403).json({ message: '仅限学生访问任务列表' });
     }
+
+    const { category = 'active' } = req.query; // active, archived
 
     const myClasses = await Class.find({
       'studentList.userId': req.user.id
@@ -85,9 +137,19 @@ router.get('/all', verifyToken, async (req, res) => {
 
     const joinedClassIds = myClasses.map(cls => cls._id);
 
-    const tasks = await Task.find({
-      classIds: { $in: joinedClassIds }
-    }).sort({ createdAt: -1 })
+    let filter = {
+      classIds: { $in: joinedClassIds },
+      isDeleted: false // 学生端永远不显示已删除任务
+    };
+
+    if (category === 'active') {
+      filter.isArchived = false;
+    } else if (category === 'archived') {
+      filter.isArchived = true;
+      filter.allowStudentViewWhenArchived = true; // 只显示允许学生查看的归档任务
+    }
+
+    const tasks = await Task.find(filter).sort({ createdAt: -1 })
       .populate('createdBy', 'email')
       .populate('classIds', 'name');
 
@@ -103,6 +165,20 @@ router.get('/:id', verifyToken, async (req, res) => {
   try {
     const task = await Task.findById(req.params.id);
     if (!task) return res.status(404).json({ message: '任务不存在' });
+    
+    // 📌 新增：对学生的权限检查
+    if (req.user.role === 'student') {
+      // 检查是否已删除
+      if (task.isDeleted) {
+        return res.status(404).json({ message: '任务不存在' });
+      }
+      
+      // 检查归档权限
+      if (task.isArchived && !task.allowStudentViewWhenArchived) {
+        return res.status(403).json({ message: '无权限查看此任务' });
+      }
+    }
+    
     res.json(task);
   } catch (err) {
     res.status(500).json({ message: '服务器错误' });
@@ -190,5 +266,30 @@ router.get('/:id/class-status', verifyToken, async (req, res) => {
     res.status(500).json({ message: '服务器错误', error: err.message });
   }
 });
+
+// 📌 新增：任务管理路由
+// 归档任务
+router.post('/:taskId/archive', verifyToken, archiveTask);
+
+// 恢复归档任务
+router.post('/:taskId/unarchive', verifyToken, unarchiveTask);
+
+// 更新归档任务的学生查看权限
+router.put('/:taskId/student-permission', verifyToken, updateArchivedTaskStudentPermission);
+
+// 软删除任务
+router.delete('/:taskId/soft', verifyToken, softDeleteTask);
+
+// 恢复任务
+router.post('/:taskId/restore', verifyToken, restoreTask);
+
+// 硬删除任务
+router.delete('/:taskId/hard', verifyToken, hardDeleteTask);
+
+// 批量操作任务
+router.post('/batch', verifyToken, batchOperateTasks);
+
+// 获取回收站任务列表
+router.get('/management/deleted', verifyToken, getDeletedTasks);
 
 module.exports = router;

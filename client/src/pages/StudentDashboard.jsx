@@ -2,10 +2,16 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/axiosInstance';
+import { motion, AnimatePresence } from 'framer-motion';
+import Button from '../components/Button';
 
 const StudentDashboard = () => {
   const [user, setUser] = useState(null);
-  const [tasks, setTasks] = useState([]);
+  const [tasks, setTasks] = useState({
+    active: [],
+    archived: []
+  });
+  const [currentCategory, setCurrentCategory] = useState('active');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -15,17 +21,9 @@ const StudentDashboard = () => {
         if (res.data.role !== 'student') return navigate('/');
         setUser(res.data);
 
-        const taskRes = await api.get('/task/all');
-        const taskList = taskRes.data;
-
-        const results = await Promise.all(
-          taskList.map(async (task) => {
-            const r = await api.get(`/submission/check/${task._id}`);
-            return { ...task, submitted: r.data.submitted };
-          })
-        );
-
-        setTasks(results);
+        // 获取活跃任务和归档任务
+        await fetchTasks('active');
+        await fetchTasks('archived');
       } catch (err) {
         console.error(err);
         navigate('/');
@@ -35,7 +33,30 @@ const StudentDashboard = () => {
     fetchUserAndTasks();
   }, [navigate]);
 
-  // 📌 新增：格式化截止时间
+  // 📌 新增：获取任务函数
+  const fetchTasks = async (category = 'active') => {
+    try {
+      const taskRes = await api.get(`/task/all?category=${category}`);
+      const taskList = taskRes.data;
+
+      const results = await Promise.all(
+        taskList.map(async (task) => {
+          const r = await api.get(`/submission/check/${task._id}`);
+          return { ...task, submitted: r.data.submitted, submissionInfo: r.data.submission };
+        })
+      );
+
+      setTasks(prev => ({ ...prev, [category]: results }));
+    } catch (err) {
+      console.error('获取任务失败:', err);
+    }
+  };
+
+  // 📌 新增：切换任务分类
+  const handleCategoryChange = (category) => {
+    setCurrentCategory(category);
+  };
+
   const formatDeadline = (deadline) => {
     const date = new Date(deadline);
     return date.toLocaleString('zh-CN', {
@@ -47,10 +68,28 @@ const StudentDashboard = () => {
     });
   };
 
-  // 📌 新增：获取任务状态
   const getTaskStatus = (task) => {
     const now = new Date();
     const deadline = new Date(task.deadline);
+    
+    // 📌 新增：归档任务的特殊处理
+    if (task.isArchived) {
+      if (task.submitted) {
+        return {
+          status: 'archived_submitted',
+          text: '📦 已归档（已提交）',
+          color: 'text-gray-600 dark:text-gray-400',
+          canSubmit: false
+        };
+      } else {
+        return {
+          status: 'archived_not_submitted',
+          text: '📦 已归档（未提交）',
+          color: 'text-gray-600 dark:text-gray-400',
+          canSubmit: false
+        };
+      }
+    }
     
     if (task.submitted) {
       return {
@@ -109,7 +148,6 @@ const StudentDashboard = () => {
     }
   };
 
-  // 📌 新增：获取任务卡片样式
   const getTaskCardStyle = (taskStatus) => {
     const baseStyle = "p-6 rounded-2xl border shadow-md backdrop-blur-md hover:shadow-xl hover:scale-[1.01] transition-all duration-200";
     
@@ -124,12 +162,17 @@ const StudentDashboard = () => {
         return `${baseStyle} bg-red-50/70 dark:bg-red-900/20 border-red-200/50 dark:border-red-700/50`;
       case 'warning':
         return `${baseStyle} bg-yellow-50/70 dark:bg-yellow-900/20 border-yellow-200/50 dark:border-yellow-700/50`;
+      case 'archived_submitted':
+      case 'archived_not_submitted':
+        return `${baseStyle} bg-gray-50/70 dark:bg-gray-800/60 border-gray-200/50 dark:border-gray-700/50 opacity-75`;
       default:
         return `${baseStyle} bg-white/70 dark:bg-gray-800/60 border-gray-200/50 dark:border-gray-700/50`;
     }
   };
 
   if (!user) return <p className="text-center mt-10 text-gray-600 dark:text-gray-400">加载中...</p>;
+
+  const currentTasks = tasks[currentCategory] || [];
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-10 px-4">
@@ -140,31 +183,51 @@ const StudentDashboard = () => {
         </h1>
 
         <div className="flex justify-end mb-6">
-          <button
+          <Button
+            variant="primary"
             onClick={() => navigate('/join-class')}
-            className="px-4 py-2 rounded-xl
-                      bg-gradient-to-r from-blue-500/80 to-purple-500/80
-                      text-white shadow-md backdrop-blur-md
-                      hover:from-blue-500 hover:to-purple-500 hover:shadow-lg hover:scale-[1.02]
-                      active:scale-95 transition-all duration-200"
           >
             ➕ 加入班级
-          </button>
+          </Button>
         </div>
 
-        <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-200 mb-4">
-          📚 当前任务
-        </h2>
+        {/* 📌 新增：任务分类标签 */}
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex gap-1 bg-gray-100 dark:bg-gray-700 p-1 rounded-lg">
+            {[
+              { key: 'active', label: '📋 当前任务', count: tasks.active.length },
+              { key: 'archived', label: '📦 已归档任务', count: tasks.archived.length }
+            ].map(({ key, label, count }) => (
+              <button
+                key={key}
+                onClick={() => handleCategoryChange(key)}
+                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                  currentCategory === key
+                    ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-gray-100 shadow'
+                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'
+                }`}
+              >
+                {label} ({count})
+              </button>
+            ))}
+          </div>
+        </div>
 
         <div className="grid gap-6">
-          {tasks.length === 0 ? (
-            <p className="text-gray-500 dark:text-gray-400">暂无任务</p>
+          {currentTasks.length === 0 ? (
+            <div className="text-center py-10">
+              <p className="text-gray-500 dark:text-gray-400">
+                {currentCategory === 'active' ? '暂无当前任务' : '暂无归档任务'}
+              </p>
+            </div>
           ) : (
-            tasks.map((task) => {
+            currentTasks.map((task) => {
               const taskStatus = getTaskStatus(task);
               return (
-                <div
+                <motion.div
                   key={task._id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
                   className={getTaskCardStyle(taskStatus)}
                 >
                   <div className="flex justify-between items-start mb-3">
@@ -213,31 +276,47 @@ const StudentDashboard = () => {
                           ⚠️ 此任务已逾期，提交后将被标注为逾期作业
                         </p>
                       )}
+                      {/* 📌 新增：归档提示 */}
+                      {task.isArchived && (
+                        <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">
+                          📦 此任务已归档，仅供查看
+                        </p>
+                      )}
+                      {/* 📌 新增：提交信息显示 */}
+                      {task.submissionInfo && (
+                        <p className="text-sm text-green-600 dark:text-green-400 font-medium">
+                          ✅ 已于 {new Date(task.submissionInfo.submittedAt).toLocaleString()} 提交
+                          {task.submissionInfo.isLateSubmission && ' (逾期提交)'}
+                        </p>
+                      )}
                     </div>
                   </div>
 
-                  {taskStatus.canSubmit && (
-                    <button
-                      onClick={() => navigate(`/submit/${task._id}`)}
-                      className={`mt-4 px-5 py-2 rounded-xl text-white shadow-md backdrop-blur-md
-                                  hover:shadow-lg hover:scale-[1.02] active:scale-95 transition-all duration-200 ${
-                        taskStatus.status === 'late' 
-                          ? 'bg-gradient-to-r from-orange-500/80 to-red-500/80 hover:from-orange-500 hover:to-red-500'
-                          : taskStatus.status === 'urgent'
-                          ? 'bg-gradient-to-r from-red-500/80 to-pink-500/80 hover:from-red-500 hover:to-pink-500'
-                          : 'bg-gradient-to-r from-blue-500/80 to-purple-500/80 hover:from-blue-500 hover:to-purple-500'
-                      }`}
-                    >
-                      {taskStatus.status === 'late' ? '⚠️ 逾期提交' : '📤 提交作业'}
-                    </button>
-                  )}
+                  {/* 📌 修改：根据任务状态显示不同按钮 */}
+                  <div className="flex gap-2">
+                    {taskStatus.canSubmit && currentCategory === 'active' && (
+                      <Button
+                        variant={taskStatus.status === 'late' ? "warning" : 
+                                taskStatus.status === 'urgent' ? "danger" : "primary"}
+                        onClick={() => navigate(`/submit/${task._id}`)}
+                      >
+                        {taskStatus.status === 'late' ? '⚠️ 逾期提交' : '📤 提交作业'}
+                      </Button>
+                    )}
 
-                  {!taskStatus.canSubmit && taskStatus.status === 'expired' && (
-                    <div className="mt-4 px-5 py-2 rounded-xl bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 text-center">
-                      ❌ 已截止，无法提交
-                    </div>
-                  )}
-                </div>
+                    {!taskStatus.canSubmit && taskStatus.status === 'expired' && currentCategory === 'active' && (
+                      <div className="px-5 py-2 rounded-xl bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 text-center">
+                        ❌ 已截止，无法提交
+                      </div>
+                    )}
+
+                    {currentCategory === 'archived' && (
+                      <div className="px-5 py-2 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 text-center text-sm">
+                        📦 归档任务，仅供查看
+                      </div>
+                    )}
+                  </div>
+                </motion.div>
               );
             })
           )}
