@@ -14,7 +14,7 @@ import ProtectedLayout from './components/ProtectedLayout';
 import { useState, useEffect } from 'react';
 import FeedbackWidget from './components/FeedbackWidget';
 import ClassSubmissionStatus from './pages/ClassSubmissionStatus';
-
+import EditClassStudents from './pages/EditClassStudents';
 
 import Test from './Test'; // 导入测试组件
 
@@ -45,6 +45,7 @@ function App() {
         <Route path="/class/:classId/students" element={<ClassStudents />} />
         <Route path="/join-class" element={<JoinClass />} />
         <Route path="/task/:taskId/class-status" element={<ClassSubmissionStatus />} />
+        <Route path="/class/:classId/edit-students" element={<EditClassStudents />} />
 
 
         <Route path="/test" element={<Test />} />
