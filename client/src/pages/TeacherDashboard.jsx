@@ -142,16 +142,7 @@ const TeacherDashboard = () => {
       console.error(err);
       setMessage('❌ 发布失败，请检查字段');
     }
-    <ConfirmDialog
-      isOpen={confirmDialog.isOpen}
-      onClose={() => setConfirmDialog(prev => ({ ...prev, isOpen: false }))}
-      onConfirm={confirmDialog.onConfirm}
-      title={confirmDialog.title}
-      message={confirmDialog.message}
-      confirmText={confirmDialog.confirmText}
-      confirmVariant={confirmDialog.confirmVariant}
-      loading={loading}
-    />
+
   };
 
   // 📌 新增：任务操作函数
@@ -673,10 +664,10 @@ const TeacherDashboard = () => {
                                     await api.put(`/task/${task._id}/student-permission`, {
                                       allowStudentViewWhenArchived: !task.allowStudentViewWhenArchived
                                     });
-                                    setMessage('✅ 权限设置成功');
+                                    toast.success('✅ 权限设置成功');
                                     await fetchTasks(currentCategory);
                                   } catch (err) {
-                                    setMessage(`❌ 权限设置失败：${err.response?.data?.message || err.message}`);
+                                    toast.error(`❌ 权限设置失败：${err.response?.data?.message || err.message}`);
                                   }
                                 }}
                                 disabled={loading}
@@ -783,7 +774,18 @@ const TeacherDashboard = () => {
           )}
         </AnimatePresence>
       </div>
+          <ConfirmDialog
+            isOpen={confirmDialog.isOpen}
+            onClose={() => setConfirmDialog(prev => ({ ...prev, isOpen: false }))}
+            onConfirm={confirmDialog.onConfirm}
+            title={confirmDialog.title}
+            message={confirmDialog.message}
+            confirmText={confirmDialog.confirmText}
+            confirmVariant={confirmDialog.confirmVariant}
+            loading={loading}
+          />
     </div>
+    
   );
 };
 
