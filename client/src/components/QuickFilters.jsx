@@ -1,15 +1,40 @@
-// src/components/QuickFilters.jsx
-import { motion } from 'framer-motion';
-import { getFilterDisplayText } from '../utils/filterUtils';
+// src/components/QuickFilters.jsx (第5步增强版本)
+import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import Button from './Button';
+import CustomFilterModal from './CustomFilterModal';
+import CustomFilterManager from './CustomFilterManager';
+import { useCustomFilters } from '../hooks/useCustomFilters';
 
 export default function QuickFilters({
   filters = [],
   activeFilter,
   onFilterChange,
-  currentFilters = {}, // 当前应用的筛选器状态
+  currentFilters = {},
+  userRole = 'student',
+  classes = [],
   className = ''
 }) {
-  if (filters.length === 0) return null;
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showManager, setShowManager] = useState(false);
+  const [editingFilter, setEditingFilter] = useState(null);
+
+  // 使用自定义筛选器Hook
+  const {
+    customFilters,
+    isLoading,
+    createCustomFilter,
+    updateCustomFilter,
+    deleteCustomFilter,
+    applyCustomFilter,
+    duplicateCustomFilter,
+    renameCustomFilter,
+    exportCustomFilters,
+    importCustomFilters,
+    resetToDefault,
+    getFilterStats,
+    searchCustomFilters
+  } = useCustomFilters(userRole);
 
   // 检查筛选器是否匹配当前状态
   const isFilterActive = (filter) => {
@@ -21,6 +46,90 @@ export default function QuickFilters({
     });
   };
 
+  // 检查自定义筛选器是否匹配当前状态
+  const isCustomFilterActive = (customFilter) => {
+    return Object.entries(customFilter.filters).every(([key, value]) => {
+      if (key === 'search') return currentFilters[key] === value;
+      if (key.includes('Range')) {
+        // 日期范围比较需要特殊处理
+        const current = currentFilters[key];
+        if (!current || !value) return !current && !value;
+        return JSON.stringify(current) === JSON.stringify(value);
+      }
+      return currentFilters[key] === value;
+    });
+  };
+
+  // 应用自定义筛选器
+  const handleApplyCustomFilter = (filterId) => {
+    const filterConditions = applyCustomFilter(filterId);
+    if (filterConditions) {
+      onFilterChange('custom_' + filterId, filterConditions);
+    }
+  };
+
+  // 创建自定义筛选器
+  const handleCreateCustomFilter = async (filterData) => {
+    try {
+      const newFilter = createCustomFilter(filterData);
+      setShowCreateModal(false);
+      return newFilter;
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  // 编辑自定义筛选器
+  const handleEditCustomFilter = (filter) => {
+    setEditingFilter(filter);
+    setShowCreateModal(true);
+  };
+
+  // 更新自定义筛选器
+  const handleUpdateCustomFilter = async (filterData) => {
+    try {
+      updateCustomFilter(editingFilter.id, filterData);
+      setEditingFilter(null);
+      setShowCreateModal(false);
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  // 获取当前筛选器的颜色类
+  const getCustomFilterColorClasses = (filter) => {
+    const isActive = isCustomFilterActive(filter);
+    const colorMap = {
+      blue: isActive ? 'bg-blue-500 text-white shadow-md shadow-blue-500/25' : 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-700',
+      green: isActive ? 'bg-green-500 text-white shadow-md shadow-green-500/25' : 'bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 border border-green-200 dark:border-green-700',
+      red: isActive ? 'bg-red-500 text-white shadow-md shadow-red-500/25' : 'bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-700',
+      orange: isActive ? 'bg-orange-500 text-white shadow-md shadow-orange-500/25' : 'bg-orange-50 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 border border-orange-200 dark:border-orange-700',
+      purple: isActive ? 'bg-purple-500 text-white shadow-md shadow-purple-500/25' : 'bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 border border-purple-200 dark:border-purple-700',
+      pink: isActive ? 'bg-pink-500 text-white shadow-md shadow-pink-500/25' : 'bg-pink-50 dark:bg-pink-900/30 text-pink-600 dark:text-pink-400 border border-pink-200 dark:border-pink-700',
+      indigo: isActive ? 'bg-indigo-500 text-white shadow-md shadow-indigo-500/25' : 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-700',
+      gray: isActive ? 'bg-gray-500 text-white shadow-md shadow-gray-500/25' : 'bg-gray-50 dark:bg-gray-900/30 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700'
+    };
+    return colorMap[filter.color] || colorMap.blue;
+  };
+
+  if (isLoading) {
+    return (
+      <div className={`${className}`}>
+        <div className="flex items-center gap-2 mb-2">
+          <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+            快速筛选
+          </span>
+          <div className="flex-1 h-px bg-gradient-to-r from-gray-200 to-transparent dark:from-gray-700"></div>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="animate-pulse bg-gray-200 dark:bg-gray-700 h-8 w-20 rounded-lg"></div>
+          <div className="animate-pulse bg-gray-200 dark:bg-gray-700 h-8 w-24 rounded-lg"></div>
+          <div className="animate-pulse bg-gray-200 dark:bg-gray-700 h-8 w-16 rounded-lg"></div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={`${className}`}>
       <div className="flex items-center gap-2 mb-3">
@@ -29,19 +138,19 @@ export default function QuickFilters({
         </span>
         <div className="flex-1 h-px bg-gradient-to-r from-gray-200 to-transparent dark:from-gray-700"></div>
         
-        {/* 当前应用的筛选器提示 */}
-        {Object.values(currentFilters).some(v => v && v !== 'all' && v !== '') && (
-          <div className="text-xs text-blue-600 dark:text-blue-400 flex items-center gap-1">
-            <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.707A1 1 0 013 7V4z" />
-            </svg>
-            <span>已应用筛选</span>
-          </div>
-        )}
+        {/* 管理按钮 */}
+        <button
+          onClick={() => setShowManager(true)}
+          className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors flex items-center gap-1"
+        >
+          <span>🛠️</span>
+          <span>管理</span>
+        </button>
       </div>
 
       {/* 快速筛选按钮 */}
       <div className="flex flex-wrap gap-2">
+        {/* 默认快速筛选器 */}
         {filters.map((filter, index) => {
           const isActive = isFilterActive(filter);
           const hasMatchingConditions = Object.entries(filter.filter).some(([key, value]) => {
@@ -119,7 +228,55 @@ export default function QuickFilters({
           );
         })}
 
-        {/* 自定义筛选器添加按钮 */}
+        {/* 自定义筛选器 */}
+        {customFilters.map((customFilter, index) => {
+          const isActive = isCustomFilterActive(customFilter);
+          
+          return (
+            <motion.button
+              key={customFilter.id}
+              onClick={() => handleApplyCustomFilter(customFilter.id)}
+              className={`
+                inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium
+                transition-all duration-200 select-none relative overflow-hidden
+                ${getCustomFilterColorClasses(customFilter)}
+                ${isActive ? 'scale-105' : 'hover:scale-102'}
+              `}
+              whileHover={{ 
+                scale: isActive ? 1.05 : 1.02,
+                transition: { duration: 0.1 }
+              }}
+              whileTap={{ scale: 0.98 }}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: (filters.length + index) * 0.05 }}
+              title={customFilter.description || customFilter.name}
+            >
+              {/* 内容 */}
+              <div className="relative flex items-center gap-1.5">
+                <span className="text-base leading-none">{customFilter.icon}</span>
+                <span>{customFilter.name}</span>
+                
+                {/* 自定义标识 */}
+                {!customFilter.isDefault && (
+                  <div className="w-1 h-1 bg-current rounded-full opacity-60" />
+                )}
+                
+                {/* 激活状态指示器 */}
+                {isActive && (
+                  <motion.div
+                    className="w-1 h-1 bg-white rounded-full"
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ delay: 0.1 }}
+                  />
+                )}
+              </div>
+            </motion.button>
+          );
+        })}
+
+        {/* 创建自定义筛选器按钮 */}
         <motion.button
           className="
             inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium
@@ -135,81 +292,8 @@ export default function QuickFilters({
           whileTap={{ scale: 0.98 }}
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: filters.length * 0.05 }}
-        >
-          <span className="text-base leading-none">➕</span>// src/components/QuickFilters.jsx
-import { motion } from 'framer-motion';
-
-export default function QuickFilters({
-  filters = [],
-  activeFilter,
-  onFilterChange,
-  className = ''
-}) {
-  if (filters.length === 0) return null;
-
-  return (
-    <div className={`${className}`}>
-      <div className="flex items-center gap-2 mb-2">
-        <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-          快速筛选
-        </span>
-        <div className="flex-1 h-px bg-gradient-to-r from-gray-200 to-transparent dark:from-gray-700"></div>
-      </div>
-
-      {/* 快速筛选按钮 */}
-      <div className="flex flex-wrap gap-2">
-        {filters.map((filter, index) => {
-          const isActive = activeFilter === filter.id;
-          
-          return (
-            <motion.button
-              key={filter.id}
-              onClick={() => onFilterChange(filter.id, filter.filter)}
-              className={`
-                inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium
-                transition-all duration-200 select-none
-                ${isActive 
-                  ? 'bg-blue-500 text-white shadow-md shadow-blue-500/25 scale-105' 
-                  : 'bg-white/70 dark:bg-gray-700/70 text-gray-700 dark:text-gray-200 border border-gray-200/50 dark:border-gray-600/50 hover:border-gray-300 dark:hover:border-gray-500 hover:shadow-sm'
-                }
-              `}
-              whileHover={{ scale: isActive ? 1.05 : 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: index * 0.05 }}
-            >
-              <span className="text-base leading-none">{filter.icon}</span>
-              <span>{filter.label}</span>
-              
-              {/* 激活状态指示器 */}
-              {isActive && (
-                <motion.div
-                  className="w-1 h-1 bg-white rounded-full"
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ delay: 0.1 }}
-                />
-              )}
-            </motion.button>
-          );
-        })}
-
-        {/* 自定义筛选器添加按钮 - 占位 */}
-        <motion.button
-          className="
-            inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium
-            bg-gray-100 dark:bg-gray-600 text-gray-600 dark:text-gray-300
-            border border-dashed border-gray-300 dark:border-gray-500
-            hover:border-gray-400 dark:hover:border-gray-400 hover:bg-gray-200 dark:hover:bg-gray-500
-            transition-all duration-200
-          "
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: filters.length * 0.05 }}
+          transition={{ delay: (filters.length + customFilters.length) * 0.05 }}
+          onClick={() => setShowCreateModal(true)}
         >
           <span className="text-base leading-none">➕</span>
           <span>自定义</span>
@@ -224,7 +308,7 @@ export default function QuickFilters({
       </div>
 
       {/* 筛选器说明文字 */}
-      {activeFilter && (
+      {(activeFilter || customFilters.some(isCustomFilterActive)) && (
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -236,11 +320,45 @@ export default function QuickFilters({
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <span>
-              已应用快速筛选: {filters.find(f => f.id === activeFilter)?.label}
+              已应用筛选: {
+                activeFilter 
+                  ? filters.find(f => f.id === activeFilter)?.label
+                  : customFilters.find(isCustomFilterActive)?.name
+              }
             </span>
           </div>
         </motion.div>
       )}
+
+      {/* 自定义筛选器创建弹窗 */}
+      <CustomFilterModal
+        isOpen={showCreateModal}
+        onClose={() => {
+          setShowCreateModal(false);
+          setEditingFilter(null);
+        }}
+        onSave={editingFilter ? handleUpdateCustomFilter : handleCreateCustomFilter}
+        currentFilters={currentFilters}
+        editingFilter={editingFilter}
+        userRole={userRole}
+      />
+
+      {/* 自定义筛选器管理弹窗 */}
+      <CustomFilterManager
+        isOpen={showManager}
+        onClose={() => setShowManager(false)}
+        customFilters={customFilters}
+        onApplyFilter={handleApplyCustomFilter}
+        onEditFilter={handleEditCustomFilter}
+        onDeleteFilter={deleteCustomFilter}
+        onDuplicateFilter={duplicateCustomFilter}
+        onRenameFilter={renameCustomFilter}
+        onExportFilters={exportCustomFilters}
+        onImportFilters={importCustomFilters}
+        onResetToDefault={resetToDefault}
+        getFilterStats={getFilterStats}
+        searchCustomFilters={searchCustomFilters}
+      />
     </div>
   );
 }
