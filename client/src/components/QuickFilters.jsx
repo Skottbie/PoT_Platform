@@ -1,4 +1,4 @@
-// src/components/QuickFilters.jsx (第5步增强版本)
+// src/components/QuickFilters.jsx (修复版本)
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Button from './Button';
@@ -36,45 +36,60 @@ export default function QuickFilters({
     searchCustomFilters
   } = useCustomFilters(userRole);
 
-  // 检查筛选器是否匹配当前状态
+  // 🔧 修复：检查筛选器是否匹配当前状态
   const isFilterActive = (filter) => {
     if (activeFilter === filter.id) return true;
     
     // 检查筛选条件是否与当前状态匹配
-    return Object.entries(filter.filter).every(([key, value]) => {
-      return currentFilters[key] === value;
-    });
+    try {
+      return Object.entries(filter.filter || {}).every(([key, value]) => {
+        return currentFilters[key] === value;
+      });
+    } catch (error) {
+      console.warn('检查筛选器状态时出错:', error, filter);
+      return false;
+    }
   };
 
-  // 检查自定义筛选器是否匹配当前状态
+  // 🔧 修复：检查自定义筛选器是否匹配当前状态
   const isCustomFilterActive = (customFilter) => {
-    return Object.entries(customFilter.filters).every(([key, value]) => {
-      if (key === 'search') return currentFilters[key] === value;
-      if (key.includes('Range')) {
-        // 日期范围比较需要特殊处理
-        const current = currentFilters[key];
-        if (!current || !value) return !current && !value;
-        return JSON.stringify(current) === JSON.stringify(value);
-      }
-      return currentFilters[key] === value;
-    });
+    try {
+      return Object.entries(customFilter.filters || {}).every(([key, value]) => {
+        if (key === 'search') return currentFilters[key] === value;
+        if (key.includes('Range')) {
+          // 日期范围比较需要特殊处理
+          const current = currentFilters[key];
+          if (!current || !value) return !current && !value;
+          return JSON.stringify(current) === JSON.stringify(value);
+        }
+        return currentFilters[key] === value;
+      });
+    } catch (error) {
+      console.warn('检查自定义筛选器状态时出错:', error, customFilter);
+      return false;
+    }
   };
 
-  // 应用自定义筛选器
+  // 🔧 修复：应用自定义筛选器
   const handleApplyCustomFilter = (filterId) => {
-    const filterConditions = applyCustomFilter(filterId);
-    if (filterConditions) {
-      onFilterChange('custom_' + filterId, filterConditions);
+    try {
+      const filterConditions = applyCustomFilter(filterId);
+      if (filterConditions) {
+        onFilterChange('custom_' + filterId, filterConditions);
+      }
+    } catch (error) {
+      console.error('应用自定义筛选器失败:', error);
     }
   };
 
   // 创建自定义筛选器
   const handleCreateCustomFilter = async (filterData) => {
     try {
-      const newFilter = createCustomFilter(filterData);
+      const newFilter = await createCustomFilter(filterData);
       setShowCreateModal(false);
       return newFilter;
     } catch (error) {
+      console.error('创建自定义筛选器失败:', error);
       throw error;
     }
   };
@@ -88,15 +103,16 @@ export default function QuickFilters({
   // 更新自定义筛选器
   const handleUpdateCustomFilter = async (filterData) => {
     try {
-      updateCustomFilter(editingFilter.id, filterData);
+      await updateCustomFilter(editingFilter.id, filterData);
       setEditingFilter(null);
       setShowCreateModal(false);
     } catch (error) {
+      console.error('更新自定义筛选器失败:', error);
       throw error;
     }
   };
 
-  // 获取当前筛选器的颜色类
+  // 🔧 修复：获取当前筛选器的颜色类
   const getCustomFilterColorClasses = (filter) => {
     const isActive = isCustomFilterActive(filter);
     const colorMap = {
@@ -111,6 +127,10 @@ export default function QuickFilters({
     };
     return colorMap[filter.color] || colorMap.blue;
   };
+
+  // 🔧 修复：安全的筛选器处理
+  const safeFilters = Array.isArray(filters) ? filters : [];
+  const safeCustomFilters = Array.isArray(customFilters) ? customFilters : [];
 
   if (isLoading) {
     return (
@@ -138,29 +158,37 @@ export default function QuickFilters({
         </span>
         <div className="flex-1 h-px bg-gradient-to-r from-gray-200 to-transparent dark:from-gray-700"></div>
         
-        {/* 管理按钮 */}
-        <button
-          onClick={() => setShowManager(true)}
-          className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors flex items-center gap-1"
-        >
-          <span>🛠️</span>
-          <span>管理</span>
-        </button>
+        {/* 管理按钮 - 仅在有自定义筛选器时显示 */}
+        {safeCustomFilters.length > 0 && (
+          <button
+            onClick={() => setShowManager(true)}
+            className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors flex items-center gap-1"
+          >
+            <span>🛠️</span>
+            <span>管理</span>
+          </button>
+        )}
       </div>
 
       {/* 快速筛选按钮 */}
       <div className="flex flex-wrap gap-2">
         {/* 默认快速筛选器 */}
-        {filters.map((filter, index) => {
+        {safeFilters.map((filter, index) => {
           const isActive = isFilterActive(filter);
-          const hasMatchingConditions = Object.entries(filter.filter).some(([key, value]) => {
+          const hasMatchingConditions = Object.entries(filter.filter || {}).some(([key, value]) => {
             return currentFilters[key] === value;
           });
           
           return (
             <motion.button
               key={filter.id}
-              onClick={() => onFilterChange(filter.id, filter.filter)}
+              onClick={() => {
+                try {
+                  onFilterChange(filter.id, filter.filter);
+                } catch (error) {
+                  console.error('应用筛选器失败:', error, filter);
+                }
+              }}
               className={`
                 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium
                 transition-all duration-200 select-none relative overflow-hidden
@@ -229,7 +257,7 @@ export default function QuickFilters({
         })}
 
         {/* 自定义筛选器 */}
-        {customFilters.map((customFilter, index) => {
+        {safeCustomFilters.map((customFilter, index) => {
           const isActive = isCustomFilterActive(customFilter);
           
           return (
@@ -249,7 +277,7 @@ export default function QuickFilters({
               whileTap={{ scale: 0.98 }}
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: (filters.length + index) * 0.05 }}
+              transition={{ delay: (safeFilters.length + index) * 0.05 }}
               title={customFilter.description || customFilter.name}
             >
               {/* 内容 */}
@@ -292,7 +320,7 @@ export default function QuickFilters({
           whileTap={{ scale: 0.98 }}
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: (filters.length + customFilters.length) * 0.05 }}
+          transition={{ delay: (safeFilters.length + safeCustomFilters.length) * 0.05 }}
           onClick={() => setShowCreateModal(true)}
         >
           <span className="text-base leading-none">➕</span>
@@ -308,7 +336,7 @@ export default function QuickFilters({
       </div>
 
       {/* 筛选器说明文字 */}
-      {(activeFilter || customFilters.some(isCustomFilterActive)) && (
+      {(activeFilter || safeCustomFilters.some(isCustomFilterActive)) && (
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -322,8 +350,8 @@ export default function QuickFilters({
             <span>
               已应用筛选: {
                 activeFilter 
-                  ? filters.find(f => f.id === activeFilter)?.label
-                  : customFilters.find(isCustomFilterActive)?.name
+                  ? safeFilters.find(f => f.id === activeFilter)?.label
+                  : safeCustomFilters.find(isCustomFilterActive)?.name
               }
             </span>
           </div>
@@ -331,34 +359,38 @@ export default function QuickFilters({
       )}
 
       {/* 自定义筛选器创建弹窗 */}
-      <CustomFilterModal
-        isOpen={showCreateModal}
-        onClose={() => {
-          setShowCreateModal(false);
-          setEditingFilter(null);
-        }}
-        onSave={editingFilter ? handleUpdateCustomFilter : handleCreateCustomFilter}
-        currentFilters={currentFilters}
-        editingFilter={editingFilter}
-        userRole={userRole}
-      />
+      {showCreateModal && (
+        <CustomFilterModal
+          isOpen={showCreateModal}
+          onClose={() => {
+            setShowCreateModal(false);
+            setEditingFilter(null);
+          }}
+          onSave={editingFilter ? handleUpdateCustomFilter : handleCreateCustomFilter}
+          currentFilters={currentFilters}
+          editingFilter={editingFilter}
+          userRole={userRole}
+        />
+      )}
 
       {/* 自定义筛选器管理弹窗 */}
-      <CustomFilterManager
-        isOpen={showManager}
-        onClose={() => setShowManager(false)}
-        customFilters={customFilters}
-        onApplyFilter={handleApplyCustomFilter}
-        onEditFilter={handleEditCustomFilter}
-        onDeleteFilter={deleteCustomFilter}
-        onDuplicateFilter={duplicateCustomFilter}
-        onRenameFilter={renameCustomFilter}
-        onExportFilters={exportCustomFilters}
-        onImportFilters={importCustomFilters}
-        onResetToDefault={resetToDefault}
-        getFilterStats={getFilterStats}
-        searchCustomFilters={searchCustomFilters}
-      />
+      {showManager && (
+        <CustomFilterManager
+          isOpen={showManager}
+          onClose={() => setShowManager(false)}
+          customFilters={safeCustomFilters}
+          onApplyFilter={handleApplyCustomFilter}
+          onEditFilter={handleEditCustomFilter}
+          onDeleteFilter={deleteCustomFilter}
+          onDuplicateFilter={duplicateCustomFilter}
+          onRenameFilter={renameCustomFilter}
+          onExportFilters={exportCustomFilters}
+          onImportFilters={importCustomFilters}
+          onResetToDefault={resetToDefault}
+          getFilterStats={getFilterStats}
+          searchCustomFilters={searchCustomFilters}
+        />
+      )}
     </div>
   );
 }

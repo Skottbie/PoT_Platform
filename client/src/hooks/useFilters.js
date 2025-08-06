@@ -1,4 +1,4 @@
-// src/hooks/useFilters.js (第6步最终版本)
+// src/hooks/useFilters.js (修复版本)
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { filterTasks, sortTasks } from '../utils/filterUtils';
@@ -167,7 +167,7 @@ export function useFilters(initialFilters = {}) {
   };
 }
 
-// 使用筛选和排序的Hook（支持高级筛选）
+// 🔧 修复：使用筛选和排序的Hook（支持高级筛选）
 export function useTaskFiltering(tasks = [], classes = [], submissions = []) {
   const {
     filters,
@@ -178,77 +178,114 @@ export function useTaskFiltering(tasks = [], classes = [], submissions = []) {
     hasAdvancedFilters
   } = useFilters();
 
-  // 应用筛选和排序
+  // 🔧 修复：应用筛选和排序
   const { filteredTasks, stats } = useMemo(() => {
-    // 应用基础筛选
-    let filtered = filterTasks(tasks, filters, classes, submissions);
-    
-    // 应用高级筛选
-    if (filters.allowAIGC && filters.allowAIGC !== 'all') {
-      const allowAIGC = filters.allowAIGC === 'true';
-      filtered = filtered.filter(task => task.allowAIGC === allowAIGC);
+    console.log('🔍 筛选任务 - 输入:', { 
+      tasksCount: tasks.length, 
+      filters, 
+      classesCount: classes.length,
+      submissionsCount: submissions.length 
+    });
+
+    // 验证数据有效性
+    if (!Array.isArray(tasks)) {
+      console.warn('⚠️ tasks 不是数组:', tasks);
+      return { filteredTasks: [], stats: { total: 0, filtered: 0, hasActiveFilters: false, hasAdvancedFilters: false } };
     }
+
+    let filtered = [...tasks]; // 创建副本避免修改原数组
     
-    if (filters.needsFile && filters.needsFile !== 'all') {
-      const needsFile = filters.needsFile === 'true';
-      filtered = filtered.filter(task => task.needsFile === needsFile);
+    try {
+      // 应用基础筛选
+      filtered = filterTasks(filtered, filters, classes, submissions);
+      console.log('🔍 基础筛选后:', filtered.length);
+      
+      // 应用高级筛选
+      if (filters.allowAIGC && filters.allowAIGC !== 'all') {
+        const allowAIGC = filters.allowAIGC === 'true';
+        filtered = filtered.filter(task => task.allowAIGC === allowAIGC);
+        console.log('🔍 AIGC筛选后:', filtered.length);
+      }
+      
+      if (filters.needsFile && filters.needsFile !== 'all') {
+        const needsFile = filters.needsFile === 'true';
+        filtered = filtered.filter(task => task.needsFile === needsFile);
+        console.log('🔍 文件筛选后:', filtered.length);
+      }
+      
+      if (filters.allowLateSubmission && filters.allowLateSubmission !== 'all') {
+        const allowLateSubmission = filters.allowLateSubmission === 'true';
+        filtered = filtered.filter(task => task.allowLateSubmission === allowLateSubmission);
+        console.log('🔍 逾期筛选后:', filtered.length);
+      }
+      
+      // 日期范围筛选
+      if (filters.deadlineRange && filters.deadlineRange.startDate && filters.deadlineRange.endDate) {
+        const startTime = filters.deadlineRange.startDate.getTime();
+        const endTime = filters.deadlineRange.endDate.getTime();
+        filtered = filtered.filter(task => {
+          const taskDeadline = new Date(task.deadline).getTime();
+          return taskDeadline >= startTime && taskDeadline <= endTime;
+        });
+        console.log('🔍 截止日期范围筛选后:', filtered.length);
+      }
+      
+      if (filters.createdDateRange && filters.createdDateRange.startDate && filters.createdDateRange.endDate) {
+        const startTime = filters.createdDateRange.startDate.getTime();
+        const endTime = filters.createdDateRange.endDate.getTime();
+        filtered = filtered.filter(task => {
+          const taskCreated = new Date(task.createdAt).getTime();
+          return taskCreated >= startTime && taskCreated <= endTime;
+        });
+        console.log('🔍 创建日期范围筛选后:', filtered.length);
+      }
+      
+      // 应用搜索（在所有筛选基础上）
+      if (filters.search && filters.search.trim()) {
+        const searchTerms = filters.search.toLowerCase().split(/\s+/);
+        filtered = filtered.filter(task => {
+          const searchableText = [
+            task.title || '',
+            task.description || '',
+            task.category || '',
+            ...(task.classIds || []).map(cls => cls.name || ''),
+          ].join(' ').toLowerCase();
+          
+          return searchTerms.every(term => searchableText.includes(term));
+        });
+        console.log('🔍 搜索筛选后:', filtered.length);
+      }
+      
+      // 应用排序
+      const sorted = sortTasks(filtered, filters.sortBy, filters.sortOrder);
+      console.log('🔍 排序后:', sorted.length);
+      
+      // 统计信息
+      const stats = {
+        total: tasks.length,
+        filtered: sorted.length,
+        hasActiveFilters: Object.entries(filters).some(([key, value]) => {
+          if (key === 'category' || key === 'sortBy' || key === 'sortOrder') return false;
+          if (key === 'createdDateRange' || key === 'deadlineRange') return !!value;
+          return value && value !== 'all' && value !== '';
+        }),
+        hasAdvancedFilters
+      };
+      
+      console.log('🔍 筛选统计:', stats);
+      return { filteredTasks: sorted, stats };
+    } catch (error) {
+      console.error('❌ 筛选过程出错:', error);
+      return { 
+        filteredTasks: tasks, 
+        stats: { 
+          total: tasks.length, 
+          filtered: tasks.length, 
+          hasActiveFilters: false, 
+          hasAdvancedFilters: false 
+        } 
+      };
     }
-    
-    if (filters.allowLateSubmission && filters.allowLateSubmission !== 'all') {
-      const allowLateSubmission = filters.allowLateSubmission === 'true';
-      filtered = filtered.filter(task => task.allowLateSubmission === allowLateSubmission);
-    }
-    
-    // 日期范围筛选
-    if (filters.deadlineRange && filters.deadlineRange.startDate && filters.deadlineRange.endDate) {
-      const startTime = filters.deadlineRange.startDate.getTime();
-      const endTime = filters.deadlineRange.endDate.getTime();
-      filtered = filtered.filter(task => {
-        const taskDeadline = new Date(task.deadline).getTime();
-        return taskDeadline >= startTime && taskDeadline <= endTime;
-      });
-    }
-    
-    if (filters.createdDateRange && filters.createdDateRange.startDate && filters.createdDateRange.endDate) {
-      const startTime = filters.createdDateRange.startDate.getTime();
-      const endTime = filters.createdDateRange.endDate.getTime();
-      filtered = filtered.filter(task => {
-        const taskCreated = new Date(task.createdAt).getTime();
-        return taskCreated >= startTime && taskCreated <= endTime;
-      });
-    }
-    
-    // 应用搜索（在所有筛选基础上）
-    if (filters.search && filters.search.trim()) {
-      const searchTerms = filters.search.toLowerCase().split(/\s+/);
-      filtered = filtered.filter(task => {
-        const searchableText = [
-          task.title || '',
-          task.description || '',
-          task.category || '',
-          ...(task.classIds || []).map(cls => cls.name || ''),
-        ].join(' ').toLowerCase();
-        
-        return searchTerms.every(term => searchableText.includes(term));
-      });
-    }
-    
-    // 应用排序
-    const sorted = sortTasks(filtered, filters.sortBy, filters.sortOrder);
-    
-    // 统计信息
-    const stats = {
-      total: tasks.length,
-      filtered: sorted.length,
-      hasActiveFilters: Object.entries(filters).some(([key, value]) => {
-        if (key === 'category' || key === 'sortBy' || key === 'sortOrder') return false;
-        if (key === 'createdDateRange' || key === 'deadlineRange') return !!value;
-        return value && value !== 'all' && value !== '';
-      }),
-      hasAdvancedFilters
-    };
-    
-    return { filteredTasks: sorted, stats };
   }, [tasks, filters, classes, submissions, hasAdvancedFilters]);
 
   return {
