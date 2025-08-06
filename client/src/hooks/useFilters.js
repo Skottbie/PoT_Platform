@@ -1,9 +1,9 @@
-// src/hooks/useFilters.js (第6步最终版本)
+// src/hooks/useFilters.js (第4步更新版本)
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { filterTasks, sortTasks } from '../utils/filterUtils';
 
-// 默认筛选状态
+// 默认筛选状态（新增高级筛选字段）
 const defaultFilters = {
   category: 'active',
   classId: 'all',
@@ -13,7 +13,7 @@ const defaultFilters = {
   search: '',
   sortBy: 'deadline',
   sortOrder: 'asc',
-  // 高级筛选字段
+  // 📌 新增：高级筛选字段
   createdDateRange: null,
   deadlineRange: null,
   allowAIGC: 'all',
@@ -21,10 +21,10 @@ const defaultFilters = {
   allowLateSubmission: 'all'
 };
 
-// URL同步的参数列表
+// URL同步的参数列表（新增高级筛选参数）
 const urlSyncParams = ['category', 'classId', 'deadline', 'submitted', 'taskType', 'search', 'sortBy', 'sortOrder'];
 
-// 复杂对象的URL序列化工具
+// 📌 新增：复杂对象的URL序列化工具
 const serializeComplexParam = (value) => {
   if (!value) return null;
   try {
@@ -58,7 +58,7 @@ export function useFilters(initialFilters = {}) {
       }
     });
     
-    // 处理复杂参数（日期范围等）
+    // 📌 新增：处理复杂参数（日期范围等）
     const deadlineRange = searchParams.get('deadlineRange');
     if (deadlineRange) {
       const parsed = deserializeComplexParam(deadlineRange);
@@ -102,7 +102,7 @@ export function useFilters(initialFilters = {}) {
       }
     });
     
-    // 处理复杂参数
+    // 📌 新增：处理复杂参数
     if (newFilters.deadlineRange) {
       const serialized = serializeComplexParam(newFilters.deadlineRange);
       if (serialized) {
@@ -145,7 +145,7 @@ export function useFilters(initialFilters = {}) {
     setFilters(urlFilters);
   }, [initializeFromURL]);
 
-  // 计算高级筛选器激活状态
+  // 📌 新增：计算高级筛选器激活状态
   const hasAdvancedFilters = useMemo(() => {
     return (
       (filters.allowAIGC && filters.allowAIGC !== 'all') ||
@@ -167,7 +167,7 @@ export function useFilters(initialFilters = {}) {
   };
 }
 
-// 使用筛选和排序的Hook（支持高级筛选）
+// 📌 更新：使用筛选和排序的Hook（支持高级筛选）
 export function useTaskFiltering(tasks = [], classes = [], submissions = []) {
   const {
     filters,
@@ -183,7 +183,7 @@ export function useTaskFiltering(tasks = [], classes = [], submissions = []) {
     // 应用基础筛选
     let filtered = filterTasks(tasks, filters, classes, submissions);
     
-    // 应用高级筛选
+    // 📌 新增：应用高级筛选
     if (filters.allowAIGC && filters.allowAIGC !== 'all') {
       const allowAIGC = filters.allowAIGC === 'true';
       filtered = filtered.filter(task => task.allowAIGC === allowAIGC);
@@ -199,7 +199,7 @@ export function useTaskFiltering(tasks = [], classes = [], submissions = []) {
       filtered = filtered.filter(task => task.allowLateSubmission === allowLateSubmission);
     }
     
-    // 日期范围筛选
+    // 📌 新增：日期范围筛选
     if (filters.deadlineRange && filters.deadlineRange.startDate && filters.deadlineRange.endDate) {
       const startTime = filters.deadlineRange.startDate.getTime();
       const endTime = filters.deadlineRange.endDate.getTime();
@@ -263,7 +263,7 @@ export function useTaskFiltering(tasks = [], classes = [], submissions = []) {
   };
 }
 
-// 教师端快速筛选器配置
+// 📌 更新：扩展的教师端快速筛选器配置
 export const teacherQuickFilters = [
   {
     id: 'today_deadline',
@@ -275,7 +275,7 @@ export const teacherQuickFilters = [
     id: 'need_attention',
     label: '需要关注',
     icon: '🚨',
-    filter: { deadline: 'next48hours' }
+    filter: { status: 'needAttention' }
   },
   {
     id: 'low_submission',
@@ -309,7 +309,6 @@ export const teacherQuickFilters = [
   }
 ];
 
-// 学生端快速筛选器配置
 export const studentQuickFilters = [
   {
     id: 'not_submitted',
@@ -339,7 +338,7 @@ export const studentQuickFilters = [
     id: 'overdue_allowed',
     label: '逾期可提交',
     icon: '⚠️',
-    filter: { deadline: 'overdue', allowLateSubmission: 'true' }
+    filter: { deadline: 'overdue', status: 'lateAllowed' }
   },
   {
     id: 'aigc_tasks',

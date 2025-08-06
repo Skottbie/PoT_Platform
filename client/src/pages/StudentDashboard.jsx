@@ -4,41 +4,15 @@ import { useNavigate } from 'react-router-dom';
 import api from '../api/axiosInstance';
 import { motion, AnimatePresence } from 'framer-motion';
 import Button from '../components/Button';
-import FilterBar from '../components/FilterBar';
-import AdvancedFilters from '../components/AdvancedFilters';
-import { useTaskFiltering, studentQuickFilters } from '../hooks/useFilters';
-import { useSearch } from '../hooks/useSearch';
 
 const StudentDashboard = () => {
   const [user, setUser] = useState(null);
-  const [allTasks, setAllTasks] = useState({
+  const [tasks, setTasks] = useState({
     active: [],
     archived: []
   });
   const [currentCategory, setCurrentCategory] = useState('active');
-  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-
-  // 筛选和搜索相关状态
-  const {
-    filters,
-    updateFilters,
-    resetFilters,
-    showAdvancedFilters,
-    toggleAdvancedFilters,
-    filteredTasks,
-    stats
-  } = useTaskFiltering(allTasks[currentCategory] || [], [], []);
-
-  const {
-    searchQuery,
-    setSearchQuery,
-    searchHistory,
-    suggestions,
-    updateSuggestions,
-    performSearch,
-    clearSearchHistory
-  } = useSearch(allTasks[currentCategory] || []);
 
   useEffect(() => {
     const fetchUserAndTasks = async () => {
@@ -53,15 +27,13 @@ const StudentDashboard = () => {
       } catch (err) {
         console.error(err);
         navigate('/');
-      } finally {
-        setLoading(false);
       }
     };
 
     fetchUserAndTasks();
   }, [navigate]);
 
-  // 获取任务函数
+  // 📌 新增：获取任务函数
   const fetchTasks = async (category = 'active') => {
     try {
       const taskRes = await api.get(`/task/all?category=${category}`);
@@ -74,41 +46,15 @@ const StudentDashboard = () => {
         })
       );
 
-      setAllTasks(prev => ({ ...prev, [category]: results }));
+      setTasks(prev => ({ ...prev, [category]: results }));
     } catch (err) {
       console.error('获取任务失败:', err);
     }
   };
 
-  // 切换任务分类
-  const handleCategoryChange = async (category) => {
+  // 📌 新增：切换任务分类
+  const handleCategoryChange = (category) => {
     setCurrentCategory(category);
-    // 重置筛选器状态
-    resetFilters();
-    if (allTasks[category].length === 0) {
-      await fetchTasks(category);
-    }
-  };
-
-  // 更新搜索建议
-  useEffect(() => {
-    if (currentCategory === 'active') {
-      updateSuggestions(searchQuery, allTasks[currentCategory]);
-    }
-  }, [searchQuery, allTasks, currentCategory, updateSuggestions]);
-
-  // 处理搜索
-  const handleSearch = (query) => {
-    performSearch(query);
-    updateFilters({ ...filters, search: query });
-  };
-
-  // 处理筛选器变化
-  const handleFiltersChange = (newFilters) => {
-    updateFilters(newFilters);
-    if (newFilters.search !== searchQuery) {
-      setSearchQuery(newFilters.search || '');
-    }
   };
 
   const formatDeadline = (deadline) => {
@@ -126,7 +72,7 @@ const StudentDashboard = () => {
     const now = new Date();
     const deadline = new Date(task.deadline);
     
-    // 归档任务的特殊处理
+    // 📌 新增：归档任务的特殊处理
     if (task.isArchived) {
       if (task.submitted) {
         return {
@@ -224,46 +170,33 @@ const StudentDashboard = () => {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-        <p className="text-gray-600 dark:text-gray-300">加载中...</p>
-      </div>
-    );
-  }
-
   if (!user) return <p className="text-center mt-10 text-gray-600 dark:text-gray-400">加载中...</p>;
+
+  const currentTasks = tasks[currentCategory] || [];
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-10 px-4">
       <div className="max-w-4xl mx-auto">
-        {/* 页面头部 */}
-        <div className="flex flex-col lg:flex-row lg:justify-between lg:items-start gap-4 mb-6">
-          <div>
-            <h1 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-2">
-              欢迎回来，
-              <span className="text-blue-600 dark:text-blue-400">{user.email}</span>
-            </h1>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              管理您的学习任务，跟踪提交进度
-            </p>
-          </div>
+        <h1 className="text-2xl font-semibold mb-6 text-gray-800 dark:text-gray-100">
+          欢迎回来，
+          <span className="text-blue-600 dark:text-blue-400">{user.email}</span>
+        </h1>
 
+        <div className="flex justify-end mb-6">
           <Button
             variant="primary"
             onClick={() => navigate('/join-class')}
-            className="flex-shrink-0"
           >
             ➕ 加入班级
           </Button>
         </div>
 
-        {/* 任务分类标签 */}
+        {/* 📌 新增：任务分类标签 */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex gap-1 bg-gray-100 dark:bg-gray-700 p-1 rounded-lg">
             {[
-              { key: 'active', label: '📋 当前任务', count: allTasks.active.length },
-              { key: 'archived', label: '📦 已归档任务', count: allTasks.archived.length }
+              { key: 'active', label: '📋 当前任务', count: tasks.active.length },
+              { key: 'archived', label: '📦 已归档任务', count: tasks.archived.length }
             ].map(({ key, label, count }) => (
               <button
                 key={key}
@@ -280,62 +213,15 @@ const StudentDashboard = () => {
           </div>
         </div>
 
-        {/* 筛选系统 - 仅在活跃任务分类下显示 */}
-        {currentCategory === 'active' && (
-          <div className="space-y-4 mb-8">
-            <FilterBar
-              filters={filters}
-              onFiltersChange={handleFiltersChange}
-              quickFilters={studentQuickFilters}
-              showAdvanced={showAdvancedFilters}
-              onToggleAdvanced={toggleAdvancedFilters}
-              searchSuggestions={suggestions}
-              searchHistory={searchHistory}
-              onClearSearchHistory={clearSearchHistory}
-              onSearch={handleSearch}
-              totalCount={allTasks[currentCategory].length}
-              filteredCount={filteredTasks.length}
-            />
-
-            <AdvancedFilters
-              filters={filters}
-              onFiltersChange={handleFiltersChange}
-              isVisible={showAdvancedFilters}
-              onClose={() => toggleAdvancedFilters(false)}
-              userRole="student"
-            />
-          </div>
-        )}
-
-        {/* 任务列表 */}
         <div className="grid gap-6">
-          {(currentCategory === 'active' ? filteredTasks : allTasks[currentCategory]).length === 0 ? (
+          {currentTasks.length === 0 ? (
             <div className="text-center py-10">
-              <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center">
-                <span className="text-gray-400 dark:text-gray-500 text-2xl">
-                  {currentCategory === 'active' ? '📋' : '📦'}
-                </span>
-              </div>
-              <p className="text-gray-500 dark:text-gray-400 mb-2">
-                {currentCategory === 'active' 
-                  ? stats.hasActiveFilters 
-                    ? '没有符合筛选条件的任务' 
-                    : '暂无当前任务'
-                  : '暂无归档任务'
-                }
+              <p className="text-gray-500 dark:text-gray-400">
+                {currentCategory === 'active' ? '暂无当前任务' : '暂无归档任务'}
               </p>
-              {currentCategory === 'active' && stats.hasActiveFilters && (
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={resetFilters}
-                >
-                  清空筛选条件
-                </Button>
-              )}
             </div>
           ) : (
-            (currentCategory === 'active' ? filteredTasks : allTasks[currentCategory]).map((task) => {
+            currentTasks.map((task) => {
               const taskStatus = getTaskStatus(task);
               return (
                 <motion.div
@@ -384,16 +270,19 @@ const StudentDashboard = () => {
                       <p className="text-sm text-gray-500 dark:text-gray-400">
                         📋 逾期提交：{task.allowLateSubmission ? '允许' : '不允许'}
                       </p>
+                      {/* 📌 新增：逾期提交提示 */}
                       {taskStatus.status === 'late' && (
                         <p className="text-sm text-orange-600 dark:text-orange-400 font-medium">
                           ⚠️ 此任务已逾期，提交后将被标注为逾期作业
                         </p>
                       )}
+                      {/* 📌 新增：归档提示 */}
                       {task.isArchived && (
                         <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">
                           📦 此任务已归档，仅供查看
                         </p>
                       )}
+                      {/* 📌 新增：提交信息显示 */}
                       {task.submissionInfo && (
                         <p className="text-sm text-green-600 dark:text-green-400 font-medium">
                           ✅ 已于 {new Date(task.submissionInfo.submittedAt).toLocaleString()} 提交
@@ -403,7 +292,7 @@ const StudentDashboard = () => {
                     </div>
                   </div>
 
-                  {/* 操作按钮 */}
+                  {/* 📌 修改：根据任务状态显示不同按钮 */}
                   <div className="flex gap-2">
                     {taskStatus.canSubmit && currentCategory === 'active' && (
                       <Button
