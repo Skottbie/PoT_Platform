@@ -1,5 +1,3 @@
-//client/src/pages/TeacherDashboard.jsx
-
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/axiosInstance';
@@ -7,6 +5,10 @@ import Button from '../components/Button';
 import { motion, AnimatePresence } from 'framer-motion';
 import ConfirmDialog from '../components/ConfirmDialog';
 import toast from 'react-hot-toast';
+import FilterBar from '../components/FilterBar';
+import AdvancedFilters from '../components/AdvancedFilters';
+import { useTaskFiltering, teacherQuickFilters } from '../hooks/useFilters';
+import { useSearch } from '../hooks/useSearch';
 
 const TeacherDashboard = () => {
   const [user, setUser] = useState(null);
@@ -24,14 +26,14 @@ const TeacherDashboard = () => {
   const [message, setMessage] = useState('');
 
   const [confirmDialog, setConfirmDialog] = useState({
-  isOpen: false,
-  title: '',
-  message: '',
-  onConfirm: null,
-  confirmText: '确认',
-  confirmVariant: 'danger'
-});
-  // 📌 新增：任务分类状态
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: null,
+    confirmText: '确认',
+    confirmVariant: 'danger'
+  });
+  
   const [tasks, setTasks] = useState({
     active: [],
     archived: [],
@@ -46,6 +48,26 @@ const TeacherDashboard = () => {
   const navigate = useNavigate();
   const [myClasses, setMyClasses] = useState([]);
 
+  const {
+    filters,
+    updateFilters,
+    resetFilters,
+    showAdvancedFilters,
+    toggleAdvancedFilters,
+    filteredTasks,
+    stats
+  } = useTaskFiltering(tasks[currentCategory] || [], myClasses, []);
+
+  const {
+    searchQuery,
+    setSearchQuery,
+    searchHistory,
+    suggestions,
+    updateSuggestions,
+    performSearch,
+    clearSearchHistory
+  } = useSearch(tasks[currentCategory] || []);
+
   useEffect(() => {
     const fetchUserAndData = async () => {
       try {
@@ -53,13 +75,11 @@ const TeacherDashboard = () => {
         if (res.data.role !== 'teacher') return navigate('/');
         setUser(res.data);
 
-        // 获取班级
         const classRes = await api.get('/class/my-classes');
         if (classRes.data.success) {
           setMyClasses(classRes.data.classes);
         }
 
-        // 获取任务
         await fetchTasks();
       } catch {
         navigate('/');
@@ -68,7 +88,12 @@ const TeacherDashboard = () => {
     fetchUserAndData();
   }, [navigate]);
 
-  // 📌 新增：获取任务函数
+  useEffect(() => {
+    if (currentCategory === 'active') {
+      updateSuggestions(searchQuery, tasks[currentCategory], myClasses);
+    }
+  }, [searchQuery, tasks, currentCategory, myClasses, updateSuggestions]);
+
   const fetchTasks = async (category = 'active') => {
     try {
       const res = await api.get(`/task/mine?category=${category}`);
@@ -78,10 +103,10 @@ const TeacherDashboard = () => {
     }
   };
 
-  // 📌 新增：切换任务分类
   const handleCategoryChange = async (category) => {
     setCurrentCategory(category);
     setSelectedTasks(new Set());
+    resetFilters();
     await fetchTasks(category);
   };
 
@@ -136,16 +161,13 @@ const TeacherDashboard = () => {
         classIds: [],
       });
 
-      // 刷新活跃任务列表
       await fetchTasks('active');
     } catch (err) {
       console.error(err);
       setMessage('❌ 发布失败，请检查字段');
     }
-
   };
 
-  // 📌 新增：任务操作函数
   const handleTaskOperation = async (taskId, operation, options = {}) => {
     try {
       setLoading(true);
@@ -181,7 +203,6 @@ const TeacherDashboard = () => {
 
       await api(config);
       
-      // 刷新当前分类的任务列表
       await fetchTasks(currentCategory);
       toast.success('操作成功');
     } catch (err) {
@@ -192,7 +213,6 @@ const TeacherDashboard = () => {
     }
   };
 
-  // 📌 新增：批量操作
   const handleBatchOperation = async () => {
     if (selectedTasks.size === 0) {
       setMessage('❌ 请选择要操作的任务');
@@ -220,7 +240,6 @@ const TeacherDashboard = () => {
     }
   };
 
-  // 📌 新增：切换任务选择
   const toggleTaskSelection = (taskId) => {
     const newSelection = new Set(selectedTasks);
     if (newSelection.has(taskId)) {
@@ -231,13 +250,24 @@ const TeacherDashboard = () => {
     setSelectedTasks(newSelection);
   };
 
-  // 📌 新增：全选/取消全选
   const toggleSelectAll = () => {
     const currentTasks = tasks[currentCategory] || [];
     if (selectedTasks.size === currentTasks.length) {
       setSelectedTasks(new Set());
     } else {
       setSelectedTasks(new Set(currentTasks.map(task => task._id)));
+    }
+  };
+
+  const handleSearch = (query) => {
+    performSearch(query);
+    updateFilters({ ...filters, search: query });
+  };
+
+  const handleFiltersChange = (newFilters) => {
+    updateFilters(newFilters);
+    if (newFilters.search !== searchQuery) {
+      setSearchQuery(newFilters.search || '');
     }
   };
 
@@ -277,7 +307,7 @@ const TeacherDashboard = () => {
   if (!user)
     return <p className="text-center mt-10 text-gray-500">加载中...</p>;
 
-  const currentTasks = tasks[currentCategory] || [];
+  const currentTasks = currentCategory === 'active' ? filteredTasks : (tasks[currentCategory] || []);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-10 px-4 transition-colors duration-300">
@@ -449,9 +479,7 @@ const TeacherDashboard = () => {
           </form>
         </div>
 
-        {/* 📌 新增：任务管理区域 */}
         <div>
-          {/* 任务分类标签 */}
           <div className="flex flex-wrap items-center justify-between mb-6">
             <div className="flex gap-1 bg-gray-100 dark:bg-gray-700 p-1 rounded-lg">
               {[
@@ -473,7 +501,6 @@ const TeacherDashboard = () => {
               ))}
             </div>
 
-            {/* 批量操作按钮 */}
             {selectedTasks.size > 0 && (
               <div className="flex gap-2">
                 <Button
@@ -504,7 +531,33 @@ const TeacherDashboard = () => {
             )}
           </div>
 
-          {/* 全选复选框 */}
+          {currentCategory === 'active' && (
+            <div className="space-y-4 mb-6">
+              <FilterBar
+                filters={filters}
+                onFiltersChange={handleFiltersChange}
+                quickFilters={teacherQuickFilters}
+                showAdvanced={showAdvancedFilters}
+                onToggleAdvanced={toggleAdvancedFilters}
+                searchSuggestions={suggestions}
+                searchHistory={searchHistory}
+                onClearSearchHistory={clearSearchHistory}
+                onSearch={handleSearch}
+                totalCount={tasks[currentCategory].length}
+                filteredCount={filteredTasks.length}
+              />
+
+              <AdvancedFilters
+                filters={filters}
+                onFiltersChange={handleFiltersChange}
+                isVisible={showAdvancedFilters}
+                onClose={() => toggleAdvancedFilters(false)}
+                classes={myClasses}
+                userRole="teacher"
+              />
+            </div>
+          )}
+
           {currentTasks.length > 0 && (
             <div className="mb-4">
               <label className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
@@ -519,13 +572,33 @@ const TeacherDashboard = () => {
             </div>
           )}
 
-          {/* 任务列表 */}
           {currentTasks.length === 0 ? (
             <div className="text-center py-10">
-              <p className="text-gray-500 dark:text-gray-400">
-                {currentCategory === 'active' ? '暂无活跃任务' :
-                 currentCategory === 'archived' ? '暂无归档任务' : '回收站为空'}
+              <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center">
+                <span className="text-gray-400 dark:text-gray-500 text-2xl">
+                  {currentCategory === 'active' ? '📋' : 
+                   currentCategory === 'archived' ? '📦' : '🗑️'}
+                </span>
+              </div>
+              <p className="text-gray-500 dark:text-gray-400 mb-2">
+                {currentCategory === 'active' 
+                  ? stats.hasActiveFilters 
+                    ? '没有符合筛选条件的任务' 
+                    : '暂无活跃任务'
+                  : currentCategory === 'archived' 
+                  ? '暂无归档任务' 
+                  : '回收站为空'
+                }
               </p>
+              {currentCategory === 'active' && stats.hasActiveFilters && (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={resetFilters}
+                >
+                  清空筛选条件
+                </Button>
+              )}
             </div>
           ) : (
             <div className="space-y-4">
@@ -541,7 +614,6 @@ const TeacherDashboard = () => {
                                  shadow transition-colors duration-300"
                   >
                     <div className="flex items-start gap-3">
-                      {/* 选择框 */}
                       <input
                         type="checkbox"
                         checked={selectedTasks.has(task._id)}
@@ -585,7 +657,6 @@ const TeacherDashboard = () => {
                         </div>
                         
                         <div className="flex flex-wrap gap-2 mt-3">
-                          {/* 查看提交记录按钮 */}
                           <Button
                             variant="secondary"
                             size="sm"
@@ -594,7 +665,6 @@ const TeacherDashboard = () => {
                             查看提交记录
                           </Button>
                           
-                          {/* 班级提交情况按钮 */}
                           <Button
                             variant="primary"
                             size="sm"
@@ -603,7 +673,6 @@ const TeacherDashboard = () => {
                             班级提交情况
                           </Button>
 
-                          {/* 根据任务状态显示不同操作按钮 */}
                           {currentCategory === 'active' && (
                             <>
                               <Button
@@ -725,7 +794,6 @@ const TeacherDashboard = () => {
           )}
         </div>
 
-        {/* 📌 新增：批量操作确认模态框 */}
         <AnimatePresence>
           {showBatchModal && (
             <motion.div
@@ -774,18 +842,17 @@ const TeacherDashboard = () => {
           )}
         </AnimatePresence>
       </div>
-          <ConfirmDialog
-            isOpen={confirmDialog.isOpen}
-            onClose={() => setConfirmDialog(prev => ({ ...prev, isOpen: false }))}
-            onConfirm={confirmDialog.onConfirm}
-            title={confirmDialog.title}
-            message={confirmDialog.message}
-            confirmText={confirmDialog.confirmText}
-            confirmVariant={confirmDialog.confirmVariant}
-            loading={loading}
-          />
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        onClose={() => setConfirmDialog(prev => ({ ...prev, isOpen: false }))}
+        onConfirm={confirmDialog.onConfirm}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        confirmText={confirmDialog.confirmText}
+        confirmVariant={confirmDialog.confirmVariant}
+        loading={loading}
+      />
     </div>
-    
   );
 };
 
