@@ -183,7 +183,7 @@ const TeacherDashboard = () => {
       
       // 刷新当前分类的任务列表
       await fetchTasks(currentCategory);
-      toast.success('操作成功');
+      toast.success('✅ 操作成功');
     } catch (err) {
       console.error('操作失败:', err);
       toast.error(`❌ 操作失败：${err.response?.data?.message || err.message}`);
@@ -664,7 +664,7 @@ const TeacherDashboard = () => {
                                     await api.put(`/task/${task._id}/student-permission`, {
                                       allowStudentViewWhenArchived: !task.allowStudentViewWhenArchived
                                     });
-                                    toast.success('权限设置成功');
+                                    toast.success('✅ 权限设置成功');
                                     await fetchTasks(currentCategory);
                                   } catch (err) {
                                     toast.error(`❌ 权限设置失败：${err.response?.data?.message || err.message}`);
