@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+// src/pages/TeacherDashboard.jsx (修复版本 - 解决无限循环和性能优化)
+import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/axiosInstance';
 import Button from '../components/Button';
@@ -48,6 +49,15 @@ const TeacherDashboard = () => {
   const navigate = useNavigate();
   const [myClasses, setMyClasses] = useState([]);
 
+  // 🔧 修复：使用ref避免依赖循环
+  const fetchingRef = useRef(false);
+  const dataLoadedRef = useRef(false);
+  const prevCategoryRef = useRef(currentCategory);
+
+  // 🔧 修复：优化的筛选Hook使用，稳定化数据引用
+  const currentTasks = useMemo(() => tasks[currentCategory] || [], [tasks, currentCategory]);
+  const stableClasses = useMemo(() => myClasses || [], [myClasses]);
+  
   const {
     filters,
     updateFilters,
@@ -56,8 +66,9 @@ const TeacherDashboard = () => {
     toggleAdvancedFilters,
     filteredTasks,
     stats
-  } = useTaskFiltering(tasks[currentCategory] || [], myClasses, []);
+  } = useTaskFiltering(currentTasks, stableClasses, []);
 
+  // 🔧 修复：稳定化搜索Hook
   const {
     searchQuery,
     setSearchQuery,
@@ -66,59 +77,103 @@ const TeacherDashboard = () => {
     updateSuggestions,
     performSearch,
     clearSearchHistory
-  } = useSearch(tasks[currentCategory] || []);
+  } = useSearch(currentTasks);
 
-  useEffect(() => {
-    const fetchUserAndData = async () => {
-      try {
-        const res = await api.get('/user/profile');
-        if (res.data.role !== 'teacher') return navigate('/');
-        setUser(res.data);
-
-        const classRes = await api.get('/class/my-classes');
-        if (classRes.data.success) {
-          setMyClasses(classRes.data.classes);
-        }
-
-        await fetchTasks();
-      } catch {
+  // 🔧 修复：防抖的数据获取函数
+  const fetchUserAndData = useCallback(async () => {
+    if (fetchingRef.current) return;
+    
+    fetchingRef.current = true;
+    try {
+      // 获取用户信息
+      const res = await api.get('/user/profile');
+      if (res.data.role !== 'teacher') {
         navigate('/');
+        return;
       }
-    };
-    fetchUserAndData();
+      setUser(res.data);
+
+      // 获取班级信息
+      const classRes = await api.get('/class/my-classes');
+      if (classRes.data.success) {
+        setMyClasses(classRes.data.classes || []);
+      }
+
+      // 获取任务数据
+      await fetchTasks();
+      dataLoadedRef.current = true;
+    } catch (error) {
+      console.error('获取数据失败:', error);
+      navigate('/');
+    } finally {
+      fetchingRef.current = false;
+    }
   }, [navigate]);
 
-  useEffect(() => {
-    if (currentCategory === 'active') {
-      updateSuggestions(searchQuery, tasks[currentCategory], myClasses);
-    }
-  }, [searchQuery, tasks, currentCategory, myClasses, updateSuggestions]);
-
-  const fetchTasks = async (category = 'active') => {
+  // 🔧 修复：优化的任务获取函数
+  const fetchTasks = useCallback(async (category = 'active') => {
     try {
       const res = await api.get(`/task/mine?category=${category}`);
-      setTasks(prev => ({ ...prev, [category]: res.data }));
+      const taskList = Array.isArray(res.data) ? res.data : [];
+      
+      setTasks(prev => ({ 
+        ...prev, 
+        [category]: taskList 
+      }));
     } catch (err) {
       console.error('获取任务失败:', err);
     }
-  };
+  }, []);
 
-  const handleCategoryChange = async (category) => {
+  // 🔧 修复：优化的分类切换函数
+  const handleCategoryChange = useCallback(async (category) => {
+    if (category === prevCategoryRef.current) return;
+    
     setCurrentCategory(category);
     setSelectedTasks(new Set());
     resetFilters();
-    await fetchTasks(category);
-  };
+    
+    prevCategoryRef.current = category;
+    
+    // 如果数据为空或者需要刷新，重新获取
+    if (!tasks[category] || tasks[category].length === 0) {
+      await fetchTasks(category);
+    }
+  }, [tasks, resetFilters, fetchTasks]);
 
-  const handleChange = (e) => {
+  // 🔧 修复：稳定化的搜索建议更新
+  const updateSearchSuggestions = useCallback(() => {
+    if (currentCategory === 'active' && dataLoadedRef.current) {
+      updateSuggestions(searchQuery, currentTasks, stableClasses);
+    }
+  }, [currentCategory, searchQuery, currentTasks, stableClasses, updateSuggestions]);
+
+  // 初始化数据
+  useEffect(() => {
+    fetchUserAndData();
+  }, [fetchUserAndData]);
+
+  // 🔧 修复：优化的搜索建议更新，避免过度调用
+  useEffect(() => {
+    if (!dataLoadedRef.current) return;
+    
+    const timeoutId = setTimeout(() => {
+      updateSearchSuggestions();
+    }, 100); // 轻微延迟，避免频繁调用
+
+    return () => clearTimeout(timeoutId);
+  }, [updateSearchSuggestions]);
+
+  // 🔧 修复：稳定化的表单处理函数
+  const handleChange = useCallback((e) => {
     const { name, value, type, checked } = e.target;
     setForm((prev) => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value,
     }));
-  };
+  }, []);
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = useCallback(async (e) => {
     e.preventDefault();
     setMessage('');
     
@@ -126,11 +181,8 @@ const TeacherDashboard = () => {
       return setMessage('❌ 必须先允许使用AIGC，才能要求上传AIGC记录。');
     }
 
-    if (!form.deadline) {
-      return setMessage('❌ 请设置截止日期。');
-    }
-    if (!form.deadlineTime) {
-      return setMessage('❌ 请设置截止时间。');
+    if (!form.deadline || !form.deadlineTime) {
+      return setMessage('❌ 请设置完整的截止日期和时间。');
     }
 
     const deadlineDateTime = new Date(`${form.deadline}T${form.deadlineTime}`);
@@ -161,14 +213,16 @@ const TeacherDashboard = () => {
         classIds: [],
       });
 
+      // 重新获取活跃任务
       await fetchTasks('active');
     } catch (err) {
       console.error(err);
       setMessage('❌ 发布失败，请检查字段');
     }
-  };
+  }, [form, fetchTasks]);
 
-  const handleTaskOperation = async (taskId, operation, options = {}) => {
+  // 🔧 修复：优化的任务操作函数
+  const handleTaskOperation = useCallback(async (taskId, operation, options = {}) => {
     try {
       setLoading(true);
       let endpoint = '';
@@ -211,9 +265,10 @@ const TeacherDashboard = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentCategory, fetchTasks]);
 
-  const handleBatchOperation = async () => {
+  // 🔧 修复：优化的批量操作函数
+  const handleBatchOperation = useCallback(async () => {
     if (selectedTasks.size === 0) {
       setMessage('❌ 请选择要操作的任务');
       return;
@@ -238,51 +293,56 @@ const TeacherDashboard = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedTasks, batchOperation, currentCategory, fetchTasks]);
 
-  const toggleTaskSelection = (taskId) => {
-    const newSelection = new Set(selectedTasks);
-    if (newSelection.has(taskId)) {
-      newSelection.delete(taskId);
-    } else {
-      newSelection.add(taskId);
-    }
-    setSelectedTasks(newSelection);
-  };
+  // 🔧 修复：优化的任务选择函数
+  const toggleTaskSelection = useCallback((taskId) => {
+    setSelectedTasks(prev => {
+      const newSelection = new Set(prev);
+      if (newSelection.has(taskId)) {
+        newSelection.delete(taskId);
+      } else {
+        newSelection.add(taskId);
+      }
+      return newSelection;
+    });
+  }, []);
 
-  const toggleSelectAll = () => {
-    const currentTasks = tasks[currentCategory] || [];
-    if (selectedTasks.size === currentTasks.length) {
-      setSelectedTasks(new Set());
-    } else {
-      setSelectedTasks(new Set(currentTasks.map(task => task._id)));
-    }
-  };
+  const toggleSelectAll = useCallback(() => {
+    setSelectedTasks(prev => {
+      if (prev.size === currentTasks.length && currentTasks.length > 0) {
+        return new Set();
+      } else {
+        return new Set(currentTasks.map(task => task._id));
+      }
+    });
+  }, [currentTasks]);
 
-  const handleSearch = (query) => {
+  // 🔧 修复：稳定化的搜索处理函数
+  const handleSearch = useCallback((query) => {
     performSearch(query);
     updateFilters({ ...filters, search: query });
-  };
+  }, [performSearch, updateFilters, filters]);
 
-  const handleFiltersChange = (newFilters) => {
+  const handleFiltersChange = useCallback((newFilters) => {
     updateFilters(newFilters);
     if (newFilters.search !== searchQuery) {
       setSearchQuery(newFilters.search || '');
     }
-  };
+  }, [updateFilters, searchQuery, setSearchQuery]);
 
-  const formatDeadline = (deadline) => {
-    const date = new Date(deadline);
-    return date.toLocaleString('zh-CN', {
+  // 🔧 修复：优化的日期格式化函数
+  const formatDeadline = useCallback((deadline) => {
+    return new Date(deadline).toLocaleString('zh-CN', {
       year: 'numeric',
       month: '2-digit',
       day: '2-digit',
       hour: '2-digit',
       minute: '2-digit',
     });
-  };
+  }, []);
 
-  const getTaskStatus = (deadline) => {
+  const getTaskStatus = useCallback((deadline) => {
     const now = new Date();
     const deadlineDate = new Date(deadline);
     
@@ -302,12 +362,13 @@ const TeacherDashboard = () => {
         return { status: 'urgent', text: `还有${minutes}分钟`, color: 'text-red-600 dark:text-red-400' };
       }
     }
-  };
+  }, []);
 
   if (!user)
     return <p className="text-center mt-10 text-gray-500">加载中...</p>;
 
-  const currentTasks = currentCategory === 'active' ? filteredTasks : (tasks[currentCategory] || []);
+  // 🔧 修复：使用优化后的筛选结果，避免重复计算
+  const displayTasks = currentCategory === 'active' ? filteredTasks : currentTasks;
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-10 px-4 transition-colors duration-300">
@@ -394,7 +455,7 @@ const TeacherDashboard = () => {
             <div>
               <p className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1">📌 选择关联班级</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {myClasses.map((cls) => (
+                {stableClasses.map((cls) => (
                   <label key={cls._id} className="flex items-center gap-2 text-sm">
                     <input
                       type="checkbox"
@@ -543,7 +604,7 @@ const TeacherDashboard = () => {
                 searchHistory={searchHistory}
                 onClearSearchHistory={clearSearchHistory}
                 onSearch={handleSearch}
-                totalCount={tasks[currentCategory].length}
+                totalCount={currentTasks.length}
                 filteredCount={filteredTasks.length}
               />
 
@@ -552,27 +613,27 @@ const TeacherDashboard = () => {
                 onFiltersChange={handleFiltersChange}
                 isVisible={showAdvancedFilters}
                 onClose={() => toggleAdvancedFilters(false)}
-                classes={myClasses}
+                classes={stableClasses}
                 userRole="teacher"
               />
             </div>
           )}
 
-          {currentTasks.length > 0 && (
+          {displayTasks.length > 0 && (
             <div className="mb-4">
               <label className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
                 <input
                   type="checkbox"
-                  checked={selectedTasks.size === currentTasks.length && currentTasks.length > 0}
+                  checked={selectedTasks.size === displayTasks.length && displayTasks.length > 0}
                   onChange={toggleSelectAll}
                   className="rounded"
                 />
-                全选 ({selectedTasks.size}/{currentTasks.length})
+                全选 ({selectedTasks.size}/{displayTasks.length})
               </label>
             </div>
           )}
 
-          {currentTasks.length === 0 ? (
+          {displayTasks.length === 0 ? (
             <div className="text-center py-10">
               <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center">
                 <span className="text-gray-400 dark:text-gray-500 text-2xl">
@@ -602,7 +663,7 @@ const TeacherDashboard = () => {
             </div>
           ) : (
             <div className="space-y-4">
-              {currentTasks.map((task) => {
+              {displayTasks.map((task) => {
                 const taskStatus = getTaskStatus(task.deadline);
                 return (
                   <motion.div

@@ -1,5 +1,5 @@
-// src/hooks/useSearch.js
-import { useState, useEffect, useCallback, useMemo } from 'react';
+// src/hooks/useSearch.js (修复版本 - 解决防抖循环和性能优化)
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { debounce } from 'lodash';
 
 // 搜索历史记录管理
@@ -10,6 +10,10 @@ export function useSearch(tasks = [], searchFields = ['title', 'description']) {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchHistory, setSearchHistory] = useState([]);
   const [suggestions, setSuggestions] = useState([]);
+
+  // 🔧 修复：使用ref缓存之前的输入，避免无限循环
+  const prevTasksRef = useRef([]);
+  const prevSearchFieldsRef = useRef(searchFields);
 
   // 从localStorage加载搜索历史
   useEffect(() => {
@@ -22,7 +26,7 @@ export function useSearch(tasks = [], searchFields = ['title', 'description']) {
     }
   }, []);
 
-  // 保存搜索历史
+  // 🔧 修复：稳定的保存搜索历史函数
   const saveSearchHistory = useCallback((query) => {
     if (!query.trim() || query.length < 2) return;
 
@@ -40,100 +44,131 @@ export function useSearch(tasks = [], searchFields = ['title', 'description']) {
     });
   }, []);
 
-  // 生成搜索建议
-  const generateSuggestions = useCallback((query, tasks, classes = []) => {
+  // 🔧 修复：优化的搜索建议生成函数，使用缓存
+  const generateSuggestions = useCallback((query, taskList, classes = []) => {
     if (!query.trim() || query.length < 1) {
       return searchHistory;
     }
 
     const queryLower = query.toLowerCase();
-    const suggestions = new Set();
+    const suggestionSet = new Set();
 
+    // 限制处理的任务数量，避免性能问题
+    const maxTasks = Math.min(taskList.length, 100);
+    
     // 从任务中提取建议
-    tasks.forEach(task => {
+    for (let i = 0; i < maxTasks; i++) {
+      const task = taskList[i];
+      
       // 任务标题匹配
       if (task.title && task.title.toLowerCase().includes(queryLower)) {
-        suggestions.add(task.title);
-      }
-
-      // 任务描述匹配（部分匹配）
-      if (task.description) {
-        const words = task.description.toLowerCase().split(/\s+/);
-        words.forEach(word => {
-          if (word.includes(queryLower) && word.length > 2) {
-            suggestions.add(word);
-          }
-        });
-      }
-
-      // 班级名称匹配
-      if (task.classIds && Array.isArray(task.classIds)) {
-        task.classIds.forEach(cls => {
-          if (cls.name && cls.name.toLowerCase().includes(queryLower)) {
-            suggestions.add(cls.name);
-          }
-        });
+        suggestionSet.add(task.title);
+        if (suggestionSet.size >= 6) break; // 限制建议数量
       }
 
       // 任务类型匹配
       if (task.category && task.category.toLowerCase().includes(queryLower)) {
-        suggestions.add(task.category);
+        suggestionSet.add(task.category);
+        if (suggestionSet.size >= 6) break;
       }
-    });
+
+      // 班级名称匹配
+      if (task.classIds && Array.isArray(task.classIds)) {
+        for (const cls of task.classIds) {
+          if (cls.name && cls.name.toLowerCase().includes(queryLower)) {
+            suggestionSet.add(cls.name);
+            if (suggestionSet.size >= 6) break;
+          }
+        }
+        if (suggestionSet.size >= 6) break;
+      }
+    }
 
     // 从班级列表中提取建议
-    classes.forEach(cls => {
+    for (const cls of classes.slice(0, 20)) { // 限制班级数量
       if (cls.name && cls.name.toLowerCase().includes(queryLower)) {
-        suggestions.add(cls.name);
+        suggestionSet.add(cls.name);
+        if (suggestionSet.size >= 8) break;
       }
-    });
+    }
 
     // 结合搜索历史
     const historySuggestions = searchHistory.filter(item => 
       item.toLowerCase().includes(queryLower)
     );
 
-    const allSuggestions = [...historySuggestions, ...Array.from(suggestions)];
+    const allSuggestions = [...historySuggestions, ...Array.from(suggestionSet)];
     return [...new Set(allSuggestions)].slice(0, 8);
   }, [searchHistory]);
 
-  // 防抖的建议生成
+  // 🔧 修复：防抖的建议生成，避免重复创建
   const debouncedGenerateSuggestions = useMemo(
-    () => debounce((query, tasks, classes) => {
-      const newSuggestions = generateSuggestions(query, tasks, classes);
-      setSuggestions(newSuggestions);
-    }, 150),
-    [generateSuggestions]
+    () => debounce((query, taskList, classes) => {
+      // 只有在数据真正变化时才更新建议
+      const tasksChanged = taskList !== prevTasksRef.current;
+      const searchFieldsChanged = searchFields !== prevSearchFieldsRef.current;
+      
+      if (!query.trim()) {
+        setSuggestions(searchHistory);
+        return;
+      }
+      
+      if (tasksChanged || searchFieldsChanged || query) {
+        const newSuggestions = generateSuggestions(query, taskList, classes);
+        setSuggestions(newSuggestions);
+        
+        // 更新引用
+        prevTasksRef.current = taskList;
+        prevSearchFieldsRef.current = searchFields;
+      }
+    }, 200), // 增加防抖时间，减少调用频率
+    [generateSuggestions, searchHistory, searchFields]
   );
 
-  // 更新搜索建议
-  const updateSuggestions = useCallback((query, tasks, classes = []) => {
-    debouncedGenerateSuggestions(query, tasks, classes);
-  }, [debouncedGenerateSuggestions]);
+  // 🔧 修复：稳定的更新建议函数
+  const updateSuggestions = useCallback((query, taskList, classes = []) => {
+    // 防止不必要的调用
+    if (!Array.isArray(taskList) || taskList.length === 0) {
+      if (query.trim()) {
+        setSuggestions(searchHistory);
+      }
+      return;
+    }
+    
+    debouncedGenerateSuggestions(query, taskList, classes);
+  }, [debouncedGenerateSuggestions, searchHistory]);
 
-  // 执行搜索
+  // 🔧 修复：稳定的执行搜索函数
   const performSearch = useCallback((query) => {
-    setSearchQuery(query);
-    if (query.trim() && query.length >= 2) {
-      saveSearchHistory(query);
+    const trimmedQuery = query.trim();
+    setSearchQuery(trimmedQuery);
+    
+    if (trimmedQuery && trimmedQuery.length >= 2) {
+      saveSearchHistory(trimmedQuery);
     }
   }, [saveSearchHistory]);
 
-  // 清空搜索历史
+  // 🔧 修复：稳定的清空搜索历史函数
   const clearSearchHistory = useCallback(() => {
     setSearchHistory([]);
-    localStorage.removeItem(SEARCH_HISTORY_KEY);
+    setSuggestions([]);
+    try {
+      localStorage.removeItem(SEARCH_HISTORY_KEY);
+    } catch (error) {
+      console.error('清空搜索历史失败:', error);
+    }
   }, []);
 
-  // 搜索过滤函数
-  const filterTasks = useCallback((tasks, query) => {
-    if (!query.trim()) return tasks;
+  // 🔧 修复：优化的搜索过滤函数
+  const filterTasks = useCallback((taskList, query) => {
+    if (!query.trim() || !Array.isArray(taskList)) return taskList;
 
     const queryLower = query.toLowerCase();
     const searchTerms = queryLower.split(/\s+/).filter(term => term.length > 0);
 
-    return tasks.filter(task => {
-      // 构建搜索文本
+    // 使用更高效的过滤逻辑
+    return taskList.filter(task => {
+      // 预先构建搜索文本，避免重复计算
       const searchableText = [
         task.title || '',
         task.description || '',
@@ -145,6 +180,13 @@ export function useSearch(tasks = [], searchFields = ['title', 'description']) {
       return searchTerms.every(term => searchableText.includes(term));
     });
   }, []);
+
+  // 清理防抖函数
+  useEffect(() => {
+    return () => {
+      debouncedGenerateSuggestions.cancel();
+    };
+  }, [debouncedGenerateSuggestions]);
 
   return {
     searchQuery,
@@ -162,8 +204,13 @@ export function useSearch(tasks = [], searchFields = ['title', 'description']) {
 export function highlightSearchText(text, query) {
   if (!query.trim() || !text) return text;
   
-  const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
-  return text.replace(regex, '<mark class="bg-yellow-200 dark:bg-yellow-800 px-0.5 rounded">$1</mark>');
+  try {
+    const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+    return text.replace(regex, '<mark class="bg-yellow-200 dark:bg-yellow-800 px-0.5 rounded">$1</mark>');
+  } catch (error) {
+    console.warn('高亮搜索文本失败:', error);
+    return text;
+  }
 }
 
 // 搜索结果统计
