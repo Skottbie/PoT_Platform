@@ -1,5 +1,5 @@
-//client/src/pages/StudentDashboard.jsx (修复版本 - 解决无限循环和性能优化)
-import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
+//client/src/pages/StudentDashboard.jsx (修复版本)
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/axiosInstance';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -20,13 +20,7 @@ const StudentDashboard = () => {
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  // 🔧 修复：使用ref避免依赖循环
-  const fetchingRef = useRef(false);
-  const dataLoadedRef = useRef(false);
-
-  // 🔧 修复：优化的筛选Hook使用
-  const currentTasks = useMemo(() => allTasks[currentCategory] || [], [allTasks, currentCategory]);
-  
+  // 🔧 修复：确保正确传递数据到筛选Hook
   const {
     filters,
     updateFilters,
@@ -36,7 +30,7 @@ const StudentDashboard = () => {
     filteredTasks,
     stats
   } = useTaskFiltering(
-    currentTasks, // 使用稳定的引用
+    allTasks[currentCategory] || [], // 确保始终传递数组
     [], // 学生端通常不需要班级数据进行筛选
     [] // 学生端不需要提交数据进行筛选
   );
@@ -49,52 +43,51 @@ const StudentDashboard = () => {
     updateSuggestions,
     performSearch,
     clearSearchHistory
-  } = useSearch(currentTasks);
+  } = useSearch(allTasks[currentCategory] || []);
 
-  // 🔧 修复：稳定的获取用户和任务数据函数
-  const fetchUserAndTasks = useCallback(async () => {
-    if (fetchingRef.current) return; // 防止重复调用
-    
-    try {
-      fetchingRef.current = true;
-      setLoading(true);
-      setError('');
+  // 🔧 修复：获取用户和任务数据
+  useEffect(() => {
+    const fetchUserAndTasks = async () => {
+      try {
+        setLoading(true);
+        setError('');
 
-      // 获取用户信息
-      const res = await api.get('/user/profile');
-      if (res.data.role !== 'student') {
-        navigate('/');
-        return;
+        // 获取用户信息
+        const res = await api.get('/user/profile');
+        if (res.data.role !== 'student') {
+          navigate('/');
+          return;
+        }
+        setUser(res.data);
+
+        // 获取活跃任务和归档任务
+        await Promise.all([
+          fetchTasks('active'),
+          fetchTasks('archived')
+        ]);
+
+      } catch (err) {
+        console.error('获取数据失败:', err);
+        setError('加载数据失败，请刷新重试');
+        if (err.response?.status === 401) {
+          navigate('/');
+        }
+      } finally {
+        setLoading(false);
       }
-      setUser(res.data);
+    };
 
-      // 并行获取活跃任务和归档任务
-      await Promise.all([
-        fetchTasks('active'),
-        fetchTasks('archived')
-      ]);
-
-      dataLoadedRef.current = true;
-    } catch (err) {
-      console.error('获取数据失败:', err);
-      setError('加载数据失败，请刷新重试');
-      if (err.response?.status === 401) {
-        navigate('/');
-      }
-    } finally {
-      setLoading(false);
-      fetchingRef.current = false;
-    }
+    fetchUserAndTasks();
   }, [navigate]);
 
-  // 🔧 修复：优化的获取任务函数，减少API调用
-  const fetchTasks = useCallback(async (category = 'active') => {
+  // 🔧 修复：获取任务函数，增加错误处理和提交状态检查
+  const fetchTasks = async (category = 'active') => {
     try {
       console.log(`🔄 获取${category}任务...`);
       const taskRes = await api.get(`/task/all?category=${category}`);
       const taskList = Array.isArray(taskRes.data) ? taskRes.data : [];
 
-      // 🔧 修复：优化提交状态检查，使用批量请求或缓存
+      // 🔧 修复：批量检查提交状态，提高性能
       const taskWithSubmissions = await Promise.all(
         taskList.map(async (task) => {
           try {
@@ -116,71 +109,48 @@ const StudentDashboard = () => {
       );
 
       console.log(`✅ 获取到${taskWithSubmissions.length}个${category}任务`);
-      
-      // 🔧 修复：使用函数式更新，避免状态竞争
       setAllTasks(prev => ({ ...prev, [category]: taskWithSubmissions }));
     } catch (err) {
       console.error(`获取${category}任务失败:`, err);
       setError(`获取${category}任务失败`);
     }
-  }, []);
+  };
 
-  // 🔧 修复：优化的切换任务分类函数
-  const handleCategoryChange = useCallback(async (category) => {
-    if (currentCategory === category) return; // 避免重复切换
-    
+  // 🔧 修复：切换任务分类
+  const handleCategoryChange = async (category) => {
     console.log(`🔄 切换到${category}分类`);
     setCurrentCategory(category);
     resetFilters();
     
-    // 如果数据为空或未加载，重新获取
+    // 如果数据为空，重新获取
     if (!allTasks[category] || allTasks[category].length === 0) {
       await fetchTasks(category);
     }
-  }, [currentCategory, resetFilters, allTasks, fetchTasks]);
+  };
 
-  // 🔧 修复：优化的搜索建议更新，避免频繁调用
-  const updateSuggestionsThrottled = useCallback((query, tasks) => {
-    // 只在活跃分类且数据已加载时更新建议
-    if (currentCategory === 'active' && dataLoadedRef.current && tasks.length > 0) {
-      updateSuggestions(query, tasks);
+  // 更新搜索建议
+  useEffect(() => {
+    if (currentCategory === 'active') {
+      updateSuggestions(searchQuery, allTasks[currentCategory] || []);
     }
-  }, [currentCategory, updateSuggestions]);
+  }, [searchQuery, allTasks, currentCategory, updateSuggestions]);
 
-  // 🔧 修复：稳定的搜索处理函数
-  const handleSearch = useCallback((query) => {
+  // 处理搜索
+  const handleSearch = (query) => {
     performSearch(query);
     updateFilters({ ...filters, search: query });
-  }, [performSearch, updateFilters, filters]);
+  };
 
-  // 🔧 修复：稳定的筛选器变化处理函数
-  const handleFiltersChange = useCallback((newFilters) => {
+  // 处理筛选器变化
+  const handleFiltersChange = (newFilters) => {
     console.log('🔧 筛选器变化:', newFilters);
     updateFilters(newFilters);
     if (newFilters.search !== searchQuery) {
       setSearchQuery(newFilters.search || '');
     }
-  }, [updateFilters, searchQuery, setSearchQuery]);
+  };
 
-  // 初始化数据加载
-  useEffect(() => {
-    if (!dataLoadedRef.current && !fetchingRef.current) {
-      fetchUserAndTasks();
-    }
-  }, [fetchUserAndTasks]);
-
-  // 🔧 修复：优化搜索建议更新逻辑，减少不必要的调用
-  useEffect(() => {
-    // 防抖更新搜索建议
-    const timeoutId = setTimeout(() => {
-      updateSuggestionsThrottled(searchQuery, currentTasks);
-    }, 300);
-
-    return () => clearTimeout(timeoutId);
-  }, [searchQuery, currentTasks, updateSuggestionsThrottled]);
-
-  // 格式化函数 - 移到组件外部避免重复创建
-  const formatDeadline = useCallback((deadline) => {
+  const formatDeadline = (deadline) => {
     const date = new Date(deadline);
     return date.toLocaleString('zh-CN', {
       year: 'numeric',
@@ -189,9 +159,9 @@ const StudentDashboard = () => {
       hour: '2-digit',
       minute: '2-digit',
     });
-  }, []);
+  };
 
-  const getTaskStatus = useCallback((task) => {
+  const getTaskStatus = (task) => {
     const now = new Date();
     const deadline = new Date(task.deadline);
     
@@ -269,9 +239,9 @@ const StudentDashboard = () => {
         canSubmit: true
       };
     }
-  }, []);
+  };
 
-  const getTaskCardStyle = useCallback((taskStatus) => {
+  const getTaskCardStyle = (taskStatus) => {
     const baseStyle = "p-6 rounded-2xl border shadow-md backdrop-blur-md hover:shadow-xl hover:scale-[1.01] transition-all duration-200";
     
     switch (taskStatus.status) {
@@ -291,7 +261,7 @@ const StudentDashboard = () => {
       default:
         return `${baseStyle} bg-white/70 dark:bg-gray-800/60 border-gray-200/50 dark:border-gray-700/50`;
     }
-  }, []);
+  };
 
   // 🔧 修复：加载和错误状态处理
   if (loading) {
@@ -329,7 +299,7 @@ const StudentDashboard = () => {
     );
   }
 
-  const displayTasks = currentCategory === 'active' ? filteredTasks : currentTasks;
+  const currentTasks = currentCategory === 'active' ? filteredTasks : (allTasks[currentCategory] || []);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-10 px-4">
@@ -406,7 +376,7 @@ const StudentDashboard = () => {
 
         {/* 任务列表 */}
         <div className="grid gap-6">
-          {displayTasks.length === 0 ? (
+          {currentTasks.length === 0 ? (
             <div className="text-center py-10">
               <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center">
                 <span className="text-gray-400 dark:text-gray-500 text-2xl">
@@ -432,14 +402,14 @@ const StudentDashboard = () => {
               )}
             </div>
           ) : (
-            displayTasks.map((task, index) => {
+            currentTasks.map((task, index) => {
               const taskStatus = getTaskStatus(task);
               return (
                 <motion.div
                   key={task._id}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.05 }}
+                  transition={{ delay: index * 0.1 }}
                   className={getTaskCardStyle(taskStatus)}
                 >
                   <div className="flex justify-between items-start mb-3">

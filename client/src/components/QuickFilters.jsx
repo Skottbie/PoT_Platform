@@ -1,5 +1,5 @@
-// src/components/QuickFilters.jsx (修复版本 - 解决状态同步和性能问题)
-import { useState, useCallback, useMemo, useRef } from 'react';
+// src/components/QuickFilters.jsx (修复版本)
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Button from './Button';
 import CustomFilterModal from './CustomFilterModal';
@@ -19,10 +19,6 @@ export default function QuickFilters({
   const [showManager, setShowManager] = useState(false);
   const [editingFilter, setEditingFilter] = useState(null);
 
-  // 🔧 修复：使用ref缓存之前的状态，避免不必要的重新计算
-  const prevCurrentFiltersRef = useRef({});
-  const prevFiltersRef = useRef([]);
-
   // 使用自定义筛选器Hook
   const {
     customFilters,
@@ -40,79 +36,54 @@ export default function QuickFilters({
     searchCustomFilters
   } = useCustomFilters(userRole);
 
-  // 🔧 修复：优化筛选器状态检查函数，使用深度比较和缓存
-  const isFilterActive = useCallback((filter) => {
+  // 🔧 修复：检查筛选器是否匹配当前状态
+  const isFilterActive = (filter) => {
     if (activeFilter === filter.id) return true;
     
     // 检查筛选条件是否与当前状态匹配
     try {
-      if (!filter.filter || typeof filter.filter !== 'object') {
-        return false;
-      }
-      
-      return Object.entries(filter.filter).every(([key, value]) => {
-        const currentValue = currentFilters[key];
-        
-        // 处理不同类型的值比较
-        if (typeof value === 'object' && value !== null) {
-          return JSON.stringify(currentValue) === JSON.stringify(value);
-        }
-        
-        return currentValue === value;
+      return Object.entries(filter.filter || {}).every(([key, value]) => {
+        return currentFilters[key] === value;
       });
     } catch (error) {
       console.warn('检查筛选器状态时出错:', error, filter);
       return false;
     }
-  }, [activeFilter, currentFilters]);
+  };
 
-  // 🔧 修复：优化自定义筛选器状态检查
-  const isCustomFilterActive = useCallback((customFilter) => {
+  // 🔧 修复：检查自定义筛选器是否匹配当前状态
+  const isCustomFilterActive = (customFilter) => {
     try {
-      if (!customFilter.filters || typeof customFilter.filters !== 'object') {
-        return false;
-      }
-      
-      return Object.entries(customFilter.filters).every(([key, value]) => {
-        const currentValue = currentFilters[key];
-        
-        if (key === 'search') {
-          return currentValue === value;
-        }
-        
+      return Object.entries(customFilter.filters || {}).every(([key, value]) => {
+        if (key === 'search') return currentFilters[key] === value;
         if (key.includes('Range')) {
           // 日期范围比较需要特殊处理
-          if (!currentValue || !value) return !currentValue && !value;
-          
-          try {
-            return JSON.stringify(currentValue) === JSON.stringify(value);
-          } catch {
-            return false;
-          }
+          const current = currentFilters[key];
+          if (!current || !value) return !current && !value;
+          return JSON.stringify(current) === JSON.stringify(value);
         }
-        
-        return currentValue === value;
+        return currentFilters[key] === value;
       });
     } catch (error) {
       console.warn('检查自定义筛选器状态时出错:', error, customFilter);
       return false;
     }
-  }, [currentFilters]);
+  };
 
-  // 🔧 修复：优化应用自定义筛选器函数
-  const handleApplyCustomFilter = useCallback((filterId) => {
+  // 🔧 修复：应用自定义筛选器
+  const handleApplyCustomFilter = (filterId) => {
     try {
       const filterConditions = applyCustomFilter(filterId);
-      if (filterConditions && typeof onFilterChange === 'function') {
+      if (filterConditions) {
         onFilterChange('custom_' + filterId, filterConditions);
       }
     } catch (error) {
       console.error('应用自定义筛选器失败:', error);
     }
-  }, [applyCustomFilter, onFilterChange]);
+  };
 
-  // 🔧 修复：稳定化创建自定义筛选器函数
-  const handleCreateCustomFilter = useCallback(async (filterData) => {
+  // 创建自定义筛选器
+  const handleCreateCustomFilter = async (filterData) => {
     try {
       const newFilter = await createCustomFilter(filterData);
       setShowCreateModal(false);
@@ -121,16 +92,16 @@ export default function QuickFilters({
       console.error('创建自定义筛选器失败:', error);
       throw error;
     }
-  }, [createCustomFilter]);
+  };
 
   // 编辑自定义筛选器
-  const handleEditCustomFilter = useCallback((filter) => {
+  const handleEditCustomFilter = (filter) => {
     setEditingFilter(filter);
     setShowCreateModal(true);
-  }, []);
+  };
 
   // 更新自定义筛选器
-  const handleUpdateCustomFilter = useCallback(async (filterData) => {
+  const handleUpdateCustomFilter = async (filterData) => {
     try {
       await updateCustomFilter(editingFilter.id, filterData);
       setEditingFilter(null);
@@ -139,10 +110,10 @@ export default function QuickFilters({
       console.error('更新自定义筛选器失败:', error);
       throw error;
     }
-  }, [updateCustomFilter, editingFilter]);
+  };
 
-  // 🔧 修复：优化筛选器颜色类获取函数，添加缓存
-  const getCustomFilterColorClasses = useCallback((filter) => {
+  // 🔧 修复：获取当前筛选器的颜色类
+  const getCustomFilterColorClasses = (filter) => {
     const isActive = isCustomFilterActive(filter);
     const colorMap = {
       blue: isActive ? 'bg-blue-500 text-white shadow-md shadow-blue-500/25' : 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-700',
@@ -155,18 +126,12 @@ export default function QuickFilters({
       gray: isActive ? 'bg-gray-500 text-white shadow-md shadow-gray-500/25' : 'bg-gray-50 dark:bg-gray-900/30 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700'
     };
     return colorMap[filter.color] || colorMap.blue;
-  }, [isCustomFilterActive]);
+  };
 
-  // 🔧 修复：安全的筛选器处理和性能优化
-  const safeFilters = useMemo(() => {
-    return Array.isArray(filters) ? filters : [];
-  }, [filters]);
+  // 🔧 修复：安全的筛选器处理
+  const safeFilters = Array.isArray(filters) ? filters : [];
+  const safeCustomFilters = Array.isArray(customFilters) ? customFilters : [];
 
-  const safeCustomFilters = useMemo(() => {
-    return Array.isArray(customFilters) ? customFilters : [];
-  }, [customFilters]);
-
-  // 🔧 修复：优化加载状态渲染
   if (isLoading) {
     return (
       <div className={`${className}`}>
@@ -210,24 +175,16 @@ export default function QuickFilters({
         {/* 默认快速筛选器 */}
         {safeFilters.map((filter, index) => {
           const isActive = isFilterActive(filter);
-          const hasMatchingConditions = useMemo(() => {
-            try {
-              return Object.entries(filter.filter || {}).some(([key, value]) => {
-                return currentFilters[key] === value;
-              });
-            } catch {
-              return false;
-            }
-          }, [filter.filter, currentFilters]);
+          const hasMatchingConditions = Object.entries(filter.filter || {}).some(([key, value]) => {
+            return currentFilters[key] === value;
+          });
           
           return (
             <motion.button
               key={filter.id}
               onClick={() => {
                 try {
-                  if (typeof onFilterChange === 'function') {
-                    onFilterChange(filter.id, filter.filter);
-                  }
+                  onFilterChange(filter.id, filter.filter);
                 } catch (error) {
                   console.error('应用筛选器失败:', error, filter);
                 }

@@ -1,5 +1,5 @@
-// src/components/FilterBar.jsx (性能优化修复版本)
-import { useState, useCallback, useMemo } from 'react';
+// src/components/FilterBar.jsx (第6步移动端优化版本)
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import SearchInput from './SearchInput';
 import QuickFilters from './QuickFilters';
@@ -28,8 +28,7 @@ export default function FilterBar({
   const [activeQuickFilter, setActiveQuickFilter] = useState(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  // 🔧 修复：使用 useCallback 优化处理函数，避免重新创建
-  const handleQuickFilterChange = useCallback((filterId, filterConfig) => {
+  const handleQuickFilterChange = (filterId, filterConfig) => {
     if (activeQuickFilter === filterId) {
       // 取消激活的快速筛选
       setActiveQuickFilter(null);
@@ -49,24 +48,24 @@ export default function FilterBar({
         ...filterConfig
       });
     }
-  }, [activeQuickFilter, filters, onFiltersChange]);
+  };
 
-  const handleSearchChange = useCallback((searchValue) => {
+  const handleSearchChange = (searchValue) => {
     onFiltersChange({
       ...filters,
       search: searchValue
     });
-  }, [filters, onFiltersChange]);
+  };
 
-  const handleSearchSubmit = useCallback((searchValue) => {
+  const handleSearchSubmit = (searchValue) => {
     onSearch?.(searchValue);
     onFiltersChange({
       ...filters,
       search: searchValue
     });
-  }, [filters, onFiltersChange, onSearch]);
+  };
 
-  const clearAllFilters = useCallback(() => {
+  const clearAllFilters = () => {
     setActiveQuickFilter(null);
     onFiltersChange({
       category: filters.category, // 保持当前分类
@@ -84,74 +83,16 @@ export default function FilterBar({
       needsFile: 'all',
       allowLateSubmission: 'all'
     });
-  }, [filters.category, onFiltersChange]);
+  };
 
-  // 🔧 修复：使用 useMemo 缓存计算结果，避免重复计算
-  const activeFiltersCount = useMemo(() => {
-    return Object.entries(filters).filter(([key, value]) => {
-      if (key === 'category' || key === 'sortBy' || key === 'sortOrder') return false;
-      if (key === 'createdDateRange' || key === 'deadlineRange') return Boolean(value);
-      return value && value !== 'all' && value !== '';
-    }).length;
-  }, [filters]);
+  // 计算当前激活的筛选器数量
+  const activeFiltersCount = Object.entries(filters).filter(([key, value]) => {
+    if (key === 'category' || key === 'sortBy' || key === 'sortOrder') return false;
+    if (key === 'createdDateRange' || key === 'deadlineRange') return !!value;
+    return value && value !== 'all' && value !== '';
+  }).length;
 
   const hasActiveFilters = activeFiltersCount > 0;
-
-  // 🔧 修复：使用 useCallback 优化移动端菜单切换
-  const toggleMobileMenu = useCallback(() => {
-    setIsMobileMenuOpen(prev => !prev);
-  }, []);
-
-  // 🔧 修复：使用 useMemo 缓存筛选器控制按钮JSX
-  const filterControls = useMemo(() => (
-    <div className="flex items-center gap-2 w-full lg:w-auto justify-between lg:justify-start">
-      {/* 高级筛选切换 */}
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={onToggleAdvanced}
-        className={`${showAdvanced ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400' : ''}`}
-      >
-        🏷️ 筛选
-        {activeFiltersCount > 0 && (
-          <span className="ml-1 px-1.5 py-0.5 text-xs bg-blue-500 text-white rounded-full">
-            {activeFiltersCount}
-          </span>
-        )}
-      </Button>
-
-      {/* 清空筛选 */}
-      {hasActiveFilters && (
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={clearAllFilters}
-          className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-        >
-          清空
-        </Button>
-      )}
-    </div>
-  ), [showAdvanced, activeFiltersCount, hasActiveFilters, onToggleAdvanced, clearAllFilters]);
-
-  // 🔧 修复：使用 useMemo 缓存移动端菜单按钮
-  const mobileMenuButton = useMemo(() => (
-    <Button
-      variant="ghost"
-      size="sm"
-      onClick={toggleMobileMenu}
-      className={`px-3 ${isMobileMenuOpen || hasActiveFilters ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400' : ''}`}
-    >
-      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.707A1 1 0 013 7V4z" />
-      </svg>
-      {activeFiltersCount > 0 && (
-        <span className="ml-1 px-1.5 py-0.5 text-xs bg-blue-500 text-white rounded-full">
-          {activeFiltersCount}
-        </span>
-      )}
-    </Button>
-  ), [toggleMobileMenu, isMobileMenuOpen, hasActiveFilters, activeFiltersCount]);
 
   return (
     <div className={`space-y-4 ${className}`}>
@@ -173,7 +114,34 @@ export default function FilterBar({
           </div>
 
           {/* 筛选器控制按钮 */}
-          {filterControls}
+          <div className="flex items-center gap-2 w-full lg:w-auto justify-between lg:justify-start">
+            {/* 高级筛选切换 */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onToggleAdvanced}
+              className={`${showAdvanced ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400' : ''}`}
+            >
+              🏷️ 筛选
+              {activeFiltersCount > 0 && (
+                <span className="ml-1 px-1.5 py-0.5 text-xs bg-blue-500 text-white rounded-full">
+                  {activeFiltersCount}
+                </span>
+              )}
+            </Button>
+
+            {/* 清空筛选 */}
+            {hasActiveFilters && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={clearAllFilters}
+                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+              >
+                清空
+              </Button>
+            )}
+          </div>
         </div>
 
         {/* 快速筛选器 */}
@@ -215,7 +183,21 @@ export default function FilterBar({
             />
           </div>
           
-          {mobileMenuButton}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className={`px-3 ${isMobileMenuOpen || hasActiveFilters ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400' : ''}`}
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.707A1 1 0 013 7V4z" />
+            </svg>
+            {activeFiltersCount > 0 && (
+              <span className="ml-1 px-1.5 py-0.5 text-xs bg-blue-500 text-white rounded-full">
+                {activeFiltersCount}
+              </span>
+            )}
+          </Button>
         </div>
 
         {/* 移动端筛选菜单 */}
