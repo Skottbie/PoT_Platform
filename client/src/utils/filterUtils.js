@@ -1,4 +1,4 @@
-// src/utils/filterUtils.js (修复版本)
+// src/utils/filterUtils.js (第4步更新版本)
 
 // 时间筛选工具函数
 export const timeFilters = {
@@ -132,7 +132,7 @@ export const statusFilters = {
   }
 };
 
-// 高级筛选工具函数
+// 📌 新增：高级筛选工具函数
 export const advancedFilters = {
   // 日期范围筛选
   dateRange: (date, range) => {
@@ -196,129 +196,105 @@ export const getSubmissionRate = (task, submissions = []) => {
   return totalStudents > 0 ? (submittedCount / totalStudents) * 100 : 0;
 };
 
-// 🔧 修复：综合任务筛选函数（支持高级筛选）
+// 📌 更新：综合任务筛选函数（支持高级筛选）
 export function filterTasks(tasks, filters, classes = [], submissions = []) {
-  console.log('🔍 开始筛选任务:', { 
-    tasksCount: tasks.length, 
-    filters: { ...filters, deadlineRange: filters.deadlineRange ? 'set' : 'null' },
-    classesCount: classes.length 
-  });
-
-  if (!Array.isArray(tasks)) {
-    console.warn('⚠️ filterTasks: tasks 不是数组');
-    return [];
-  }
-
   return tasks.filter(task => {
-    try {
-      // 🔧 修复：基础分类筛选（活跃/归档/删除）
-      if (filters.category === 'active' && (task.isArchived || task.isDeleted)) {
-        return false;
-      }
-      if (filters.category === 'archived' && !task.isArchived) {
-        return false;
-      }
-      if (filters.category === 'deleted' && !task.isDeleted) {
-        return false;
-      }
-      
-      // 🔧 修复：班级筛选 - 支持多种数据结构
-      if (filters.classId && filters.classId !== 'all') {
-        let hasClass = false;
-        if (task.classIds && Array.isArray(task.classIds)) {
-          hasClass = task.classIds.some(cls => {
-            // 支持对象和字符串ID
-            const classId = typeof cls === 'object' ? cls._id : cls;
-            return classId === filters.classId;
-          });
-        }
-        if (!hasClass) return false;
-      }
-      
-      // 任务类型筛选
-      if (filters.taskType && filters.taskType !== 'all') {
-        if (task.category !== filters.taskType) return false;
-      }
-      
-      // 🔧 修复：提交状态筛选（学生端）
-      if (filters.submitted && filters.submitted !== 'all') {
-        if (filters.submitted === 'true' && !task.submitted) return false;
-        if (filters.submitted === 'false' && task.submitted) return false;
-      }
-      
-      // 🔧 修复：截止时间筛选
-      if (filters.deadline && filters.deadline !== 'all') {
-        const timeFilter = timeFilters[filters.deadline];
-        if (timeFilter && !timeFilter(task.deadline)) return false;
-      }
-      
-      // 特殊状态筛选
-      if (filters.status && filters.status !== 'all') {
-        const statusFilter = statusFilters[filters.status];
-        if (statusFilter && !statusFilter(task)) return false;
-      }
-      
-      // 🔧 修复：提交率筛选（教师端）
-      if (filters.submissionRate && filters.submissionRate !== 'all') {
-        const rate = getSubmissionRate(task, submissions);
-        
-        switch (filters.submissionRate) {
-          case 'high':
-            if (rate < 80) return false;
-            break;
-          case 'medium':
-            if (rate < 50 || rate >= 80) return false;
-            break;
-          case 'low':
-            if (rate >= 50) return false;
-            break;
-        }
-      }
-      
-      return true;
-    } catch (error) {
-      console.error('❌ 筛选任务时出错:', error, task);
-      return true; // 出错时保留任务
+    // 基础分类筛选（活跃/归档/删除）
+    if (filters.category === 'active' && (task.isArchived || task.isDeleted)) return false;
+    if (filters.category === 'archived' && !task.isArchived) return false;
+    if (filters.category === 'deleted' && !task.isDeleted) return false;
+    
+    // 班级筛选
+    if (filters.classId && filters.classId !== 'all') {
+      const hasClass = task.classIds?.some(cls => 
+        cls._id === filters.classId || cls === filters.classId
+      );
+      if (!hasClass) return false;
     }
+    
+    // 任务类型筛选
+    if (filters.taskType && filters.taskType !== 'all') {
+      if (task.category !== filters.taskType) return false;
+    }
+    
+    // 提交状态筛选（学生端）
+    if (filters.submitted && filters.submitted !== 'all') {
+      if (filters.submitted === 'true' && !task.submitted) return false;
+      if (filters.submitted === 'false' && task.submitted) return false;
+    }
+    
+    // 截止时间筛选
+    if (filters.deadline && filters.deadline !== 'all') {
+      const timeFilter = timeFilters[filters.deadline];
+      if (timeFilter && !timeFilter(task.deadline)) return false;
+    }
+    
+    // 特殊状态筛选
+    if (filters.status && filters.status !== 'all') {
+      const statusFilter = statusFilters[filters.status];
+      if (statusFilter && !statusFilter(task)) return false;
+    }
+    
+    // 提交率筛选（教师端）
+    if (filters.submissionRate && filters.submissionRate !== 'all') {
+      const rate = getSubmissionRate(task, submissions);
+      
+      switch (filters.submissionRate) {
+        case 'high':
+          if (rate < 80) return false;
+          break;
+        case 'medium':
+          if (rate < 50 || rate >= 80) return false;
+          break;
+        case 'low':
+          if (rate >= 50) return false;
+          break;
+      }
+    }
+    
+    // 📌 新增：高级筛选逻辑
+    const advancedConditions = {
+      allowAIGC: filters.allowAIGC,
+      needsFile: filters.needsFile,
+      allowLateSubmission: filters.allowLateSubmission,
+      deadlineRange: filters.deadlineRange,
+      createdDateRange: filters.createdDateRange
+    };
+    
+    if (!advancedFilters.combineFilters(task, advancedConditions)) {
+      return false;
+    }
+    
+    return true;
   });
 }
 
 // 任务排序函数
 export function sortTasks(tasks, sortBy = 'deadline', sortOrder = 'asc') {
-  if (!Array.isArray(tasks)) {
-    console.warn('⚠️ sortTasks: tasks 不是数组');
-    return [];
-  }
-
   const sorted = [...tasks].sort((a, b) => {
     let comparison = 0;
     
-    try {
-      switch (sortBy) {
-        case 'deadline':
-          comparison = new Date(a.deadline) - new Date(b.deadline);
-          break;
-        case 'title':
-          comparison = (a.title || '').localeCompare(b.title || '');
-          break;
-        case 'category':
-          comparison = (a.category || '').localeCompare(b.category || '');
-          break;
-        case 'createdAt':
-          comparison = new Date(a.createdAt) - new Date(b.createdAt);
-          break;
-        case 'submissionRate':
-          // 教师端按提交率排序
-          const rateA = a.submissionRate || 0;
-          const rateB = b.submissionRate || 0;
-          comparison = rateA - rateB;
-          break;
-        default:
-          comparison = 0;
-      }
-    } catch (error) {
-      console.error('❌ 排序时出错:', error, { a, b, sortBy });
-      comparison = 0;
+    switch (sortBy) {
+      case 'deadline':
+        comparison = new Date(a.deadline) - new Date(b.deadline);
+        break;
+      case 'title':
+        comparison = a.title.localeCompare(b.title);
+        break;
+      case 'category':
+        comparison = a.category.localeCompare(b.category);
+        break;
+      case 'createdAt':
+        comparison = new Date(a.createdAt) - new Date(b.createdAt);
+        break;
+      case 'submissionRate':
+        // 教师端按提交率排序
+        const rateA = a.submissionRate || 0;
+        const rateB = b.submissionRate || 0;
+        comparison = rateA - rateB;
+        break;
+      default:
+        comparison = 0;
     }
     
     return sortOrder === 'desc' ? -comparison : comparison;
@@ -327,7 +303,7 @@ export function sortTasks(tasks, sortBy = 'deadline', sortOrder = 'asc') {
   return sorted;
 }
 
-// 获取筛选器显示文本（支持高级筛选）
+// 📌 更新：获取筛选器显示文本（支持高级筛选）
 export function getFilterDisplayText(filters) {
   const texts = [];
   
@@ -357,7 +333,7 @@ export function getFilterDisplayText(filters) {
     texts.push(`类型: ${filters.taskType}`);
   }
   
-  // 高级筛选器文本
+  // 📌 新增：高级筛选器文本
   if (filters.allowAIGC && filters.allowAIGC !== 'all') {
     texts.push(`AIGC: ${filters.allowAIGC === 'true' ? '允许' : '禁止'}`);
   }
@@ -371,23 +347,15 @@ export function getFilterDisplayText(filters) {
   }
   
   if (filters.deadlineRange) {
-    try {
-      const start = filters.deadlineRange.startDate.toLocaleDateString('zh-CN');
-      const end = filters.deadlineRange.endDate.toLocaleDateString('zh-CN');
-      texts.push(`截止时间: ${start} ~ ${end}`);
-    } catch (error) {
-      console.warn('日期范围显示出错:', error);
-    }
+    const start = filters.deadlineRange.startDate.toLocaleDateString('zh-CN');
+    const end = filters.deadlineRange.endDate.toLocaleDateString('zh-CN');
+    texts.push(`截止时间: ${start} ~ ${end}`);
   }
   
   if (filters.createdDateRange) {
-    try {
-      const start = filters.createdDateRange.startDate.toLocaleDateString('zh-CN');
-      const end = filters.createdDateRange.endDate.toLocaleDateString('zh-CN');
-      texts.push(`创建时间: ${start} ~ ${end}`);
-    } catch (error) {
-      console.warn('创建日期范围显示出错:', error);
-    }
+    const start = filters.createdDateRange.startDate.toLocaleDateString('zh-CN');
+    const end = filters.createdDateRange.endDate.toLocaleDateString('zh-CN');
+    texts.push(`创建时间: ${start} ~ ${end}`);
   }
   
   if (filters.search) {
@@ -397,7 +365,7 @@ export function getFilterDisplayText(filters) {
   return texts;
 }
 
-// 筛选器统计信息
+// 📌 新增：筛选器统计信息
 export function getFilterStats(filters) {
   const totalFilters = Object.keys(filters).length;
   const activeFilters = Object.entries(filters).filter(([key, value]) => {

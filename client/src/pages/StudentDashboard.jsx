@@ -1,4 +1,4 @@
-//client/src/pages/StudentDashboard.jsx (修复版本)
+//client/src/pages/StudentDashboard.jsx
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/axiosInstance';
@@ -17,10 +17,9 @@ const StudentDashboard = () => {
   });
   const [currentCategory, setCurrentCategory] = useState('active');
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  // 🔧 修复：确保正确传递数据到筛选Hook
+  // 筛选和搜索相关状态
   const {
     filters,
     updateFilters,
@@ -29,11 +28,7 @@ const StudentDashboard = () => {
     toggleAdvancedFilters,
     filteredTasks,
     stats
-  } = useTaskFiltering(
-    allTasks[currentCategory] || [], // 确保始终传递数组
-    [], // 学生端通常不需要班级数据进行筛选
-    [] // 学生端不需要提交数据进行筛选
-  );
+  } = useTaskFiltering(allTasks[currentCategory] || [], [], []);
 
   const {
     searchQuery,
@@ -45,33 +40,19 @@ const StudentDashboard = () => {
     clearSearchHistory
   } = useSearch(allTasks[currentCategory] || []);
 
-  // 🔧 修复：获取用户和任务数据
   useEffect(() => {
     const fetchUserAndTasks = async () => {
       try {
-        setLoading(true);
-        setError('');
-
-        // 获取用户信息
         const res = await api.get('/user/profile');
-        if (res.data.role !== 'student') {
-          navigate('/');
-          return;
-        }
+        if (res.data.role !== 'student') return navigate('/');
         setUser(res.data);
 
         // 获取活跃任务和归档任务
-        await Promise.all([
-          fetchTasks('active'),
-          fetchTasks('archived')
-        ]);
-
+        await fetchTasks('active');
+        await fetchTasks('archived');
       } catch (err) {
-        console.error('获取数据失败:', err);
-        setError('加载数据失败，请刷新重试');
-        if (err.response?.status === 401) {
-          navigate('/');
-        }
+        console.error(err);
+        navigate('/');
       } finally {
         setLoading(false);
       }
@@ -80,50 +61,31 @@ const StudentDashboard = () => {
     fetchUserAndTasks();
   }, [navigate]);
 
-  // 🔧 修复：获取任务函数，增加错误处理和提交状态检查
+  // 获取任务函数
   const fetchTasks = async (category = 'active') => {
     try {
-      console.log(`🔄 获取${category}任务...`);
       const taskRes = await api.get(`/task/all?category=${category}`);
-      const taskList = Array.isArray(taskRes.data) ? taskRes.data : [];
+      const taskList = taskRes.data;
 
-      // 🔧 修复：批量检查提交状态，提高性能
-      const taskWithSubmissions = await Promise.all(
+      const results = await Promise.all(
         taskList.map(async (task) => {
-          try {
-            const submissionRes = await api.get(`/submission/check/${task._id}`);
-            return { 
-              ...task, 
-              submitted: submissionRes.data.submitted,
-              submissionInfo: submissionRes.data.submission
-            };
-          } catch (err) {
-            console.warn(`检查任务${task._id}提交状态失败:`, err);
-            return { 
-              ...task, 
-              submitted: false, 
-              submissionInfo: null 
-            };
-          }
+          const r = await api.get(`/submission/check/${task._id}`);
+          return { ...task, submitted: r.data.submitted, submissionInfo: r.data.submission };
         })
       );
 
-      console.log(`✅ 获取到${taskWithSubmissions.length}个${category}任务`);
-      setAllTasks(prev => ({ ...prev, [category]: taskWithSubmissions }));
+      setAllTasks(prev => ({ ...prev, [category]: results }));
     } catch (err) {
-      console.error(`获取${category}任务失败:`, err);
-      setError(`获取${category}任务失败`);
+      console.error('获取任务失败:', err);
     }
   };
 
-  // 🔧 修复：切换任务分类
+  // 切换任务分类
   const handleCategoryChange = async (category) => {
-    console.log(`🔄 切换到${category}分类`);
     setCurrentCategory(category);
+    // 重置筛选器状态
     resetFilters();
-    
-    // 如果数据为空，重新获取
-    if (!allTasks[category] || allTasks[category].length === 0) {
+    if (allTasks[category].length === 0) {
       await fetchTasks(category);
     }
   };
@@ -131,7 +93,7 @@ const StudentDashboard = () => {
   // 更新搜索建议
   useEffect(() => {
     if (currentCategory === 'active') {
-      updateSuggestions(searchQuery, allTasks[currentCategory] || []);
+      updateSuggestions(searchQuery, allTasks[currentCategory]);
     }
   }, [searchQuery, allTasks, currentCategory, updateSuggestions]);
 
@@ -143,7 +105,6 @@ const StudentDashboard = () => {
 
   // 处理筛选器变化
   const handleFiltersChange = (newFilters) => {
-    console.log('🔧 筛选器变化:', newFilters);
     updateFilters(newFilters);
     if (newFilters.search !== searchQuery) {
       setSearchQuery(newFilters.search || '');
@@ -263,43 +224,15 @@ const StudentDashboard = () => {
     }
   };
 
-  // 🔧 修复：加载和错误状态处理
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-500 mx-auto mb-4"></div>
-          <p className="text-gray-600 dark:text-gray-300">加载任务数据中...</p>
-        </div>
+        <p className="text-gray-600 dark:text-gray-300">加载中...</p>
       </div>
     );
   }
 
-  if (error) {
-    return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-        <div className="text-center max-w-md mx-auto">
-          <p className="text-red-600 dark:text-red-400 mb-4">{error}</p>
-          <Button 
-            variant="primary" 
-            onClick={() => window.location.reload()}
-          >
-            刷新重试
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-        <p className="text-gray-600 dark:text-gray-400">用户信息加载中...</p>
-      </div>
-    );
-  }
-
-  const currentTasks = currentCategory === 'active' ? filteredTasks : (allTasks[currentCategory] || []);
+  if (!user) return <p className="text-center mt-10 text-gray-600 dark:text-gray-400">加载中...</p>;
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-10 px-4">
@@ -376,7 +309,7 @@ const StudentDashboard = () => {
 
         {/* 任务列表 */}
         <div className="grid gap-6">
-          {currentTasks.length === 0 ? (
+          {(currentCategory === 'active' ? filteredTasks : allTasks[currentCategory]).length === 0 ? (
             <div className="text-center py-10">
               <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center">
                 <span className="text-gray-400 dark:text-gray-500 text-2xl">
@@ -402,14 +335,13 @@ const StudentDashboard = () => {
               )}
             </div>
           ) : (
-            currentTasks.map((task, index) => {
+            (currentCategory === 'active' ? filteredTasks : allTasks[currentCategory]).map((task) => {
               const taskStatus = getTaskStatus(task);
               return (
                 <motion.div
                   key={task._id}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 }}
                   className={getTaskCardStyle(taskStatus)}
                 >
                   <div className="flex justify-between items-start mb-3">
@@ -446,7 +378,7 @@ const StudentDashboard = () => {
                       <p className="text-sm text-gray-500 dark:text-gray-400">
                         📚 所属班级：
                         {task.classIds && task.classIds.length > 0
-                          ? task.classIds.map(cls => cls.name || cls).join('，')
+                          ? task.classIds.map(cls => cls.name).join('，')
                           : '未绑定'}
                       </p>
                       <p className="text-sm text-gray-500 dark:text-gray-400">
