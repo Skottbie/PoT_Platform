@@ -4,10 +4,17 @@ import { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../api/axiosInstance';
 import ReactMarkdown from 'react-markdown';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { duotoneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
+//import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+//import { duotoneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { Light as SyntaxHighlighter } from 'react-syntax-highlighter';
+import javascript from 'react-syntax-highlighter/dist/esm/languages/hljs/javascript';
+import python from 'react-syntax-highlighter/dist/esm/languages/hljs/python';
+import { github } from 'react-syntax-highlighter/dist/esm/styles/hljs'; 
 import { motion, AnimatePresence } from 'framer-motion';
 import Button from '../components/Button';
+
+SyntaxHighlighter.registerLanguage('javascript', javascript);
+SyntaxHighlighter.registerLanguage('python', python);
 
 const SubmitTask = () => {
   const { taskId } = useParams();
@@ -188,6 +195,8 @@ const SubmitTask = () => {
       if (file) {
         formData.append('file', file);
       }
+
+      /*
       if (task.requireAIGCLog && aigcLog.length > 0) {
         const logBlob = new Blob([JSON.stringify(aigcLog)], {
           type: 'application/json',
@@ -201,6 +210,20 @@ const SubmitTask = () => {
         });
         formData.append('aigcLog', logBlob, 'aigcLog.json');
       }
+        */
+      if (task.requireAIGCLog && aigcLog.length > 0) {
+        const logBlob = new Blob([JSON.stringify(aigcLog)], {
+          type: 'application/json',
+        });
+        formData.append('aigcLog', logBlob, 'aigcLog.json');
+      } else if (shouldUploadAIGC && aigcLog.length > 0) {
+        // 只有在不是必需的情况下，但用户选择上传时才添加
+        const logBlob = new Blob([JSON.stringify(aigcLog)], {
+          type: 'application/json',
+        });
+        formData.append('aigcLog', logBlob, 'aigcLog.json');
+      }
+
       
       // 📌 新增：传递逾期信息
       if (taskStatus.isLate) {

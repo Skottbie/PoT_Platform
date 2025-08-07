@@ -68,6 +68,9 @@ app.use('/api/class', classRoutes);
 
 app.use('/api/feedback', feedbackRouter);
 
+app.use('/api/analytics', require('./routes/analytics'));
+
+
 // 数据库连接
 mongoose.connect(process.env.MONGO_URI)
   .then(() => {

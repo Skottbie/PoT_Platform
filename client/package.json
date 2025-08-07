@@ -5,11 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host",
-    "build": "vite build",
-    "lint": "eslint .",
+    "build": "vite build --mode production",
+    "build:analyze": "vite build --mode production && npx vite-bundle-analyzer dist",
     "preview": "vite preview",
-    "deploy": "npm run build && aws s3 sync dist/ s3://www.potacademy.net --delete --region ap-east-1 && aws s3 cp dist/index.html s3://www.potacademy.net/index.html --content-type \"text/html\" --region ap-east-1",
-    "deploy:full": "npm run build && aws s3 sync dist/ s3://www.potacademy.net --delete --region ap-east-1 && aws s3 cp dist/index.html s3://www.potacademy.net/index.html --content-type \"text/html\" --region ap-east-1 && aws s3 sync dist/assets/ s3://www.potacademy.net/assets/ --delete --cache-control \"public,max-age=31536000\" --region ap-east-1"
+    "deploy": "npm run build && aws s3 sync dist/ s3://www.potacademy.net --delete --region ap-east-1",
+    "deploy:full": "npm run build && aws s3 sync dist/ s3://www.potacademy.net --delete --region ap-east-1 && aws s3 cp dist/index.html s3://www.potacademy.net/index.html --content-type \"text/html\" --cache-control \"no-cache\" --region ap-east-1 && aws s3 sync dist/assets/ s3://www.potacademy.net/assets/ --delete --cache-control \"public,max-age=31536000\" --content-encoding gzip --region ap-east-1"
   },
   "dependencies": {
     "axios": "^1.10.0",
@@ -39,6 +39,8 @@
     "globals": "^16.3.0",
     "postcss": "^8.5.6",
     "tailwindcss": "^3.4.17",
-    "vite": "^7.0.4"
+    "terser": "^5.43.1",
+    "vite": "^7.0.4",
+    "vite-bundle-analyzer": "^1.2.0"
   }
 }
