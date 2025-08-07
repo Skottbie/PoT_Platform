@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const instance = axios.create({
-  baseURL: 'https://pot-platform.onrender.com/api',
+  baseURL: 'https://api.potacademy.net/api',
   withCredentials: true,
 });
 

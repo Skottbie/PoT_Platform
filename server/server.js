@@ -16,6 +16,7 @@ const allowedOrigins = [
   'https://pot-platform.vercel.app',
   'https://potacademy.net',
   'https://www.potacademy.net',
+  'https://api.potacademy.net'
 ];
 
 dotenv.config();
@@ -61,10 +62,7 @@ app.get('/', (req, res) => {
   res.send('后端服务正常运行');
 });
 
-app.use(cors({
-  origin: ['http://localhost:5173', 'http://192.168.2.42:5173'], // 允许前端访问的源
-  credentials: true // 允许发送 Cookie
-}));
+
 
 app.use('/api/class', classRoutes);
 
