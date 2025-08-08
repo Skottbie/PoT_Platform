@@ -5,100 +5,20 @@ import { useParams, useNavigate } from 'react-router-dom';
 import api from '../api/axiosInstance';
 import Button from '../components/Button';
 import { motion, AnimatePresence } from 'framer-motion';
-import Modal from 'react-modal';
-
-Modal.setAppElement('#root');
-
-// 图片加载组件（保持原有实现）
-const ImageWithLoading = ({ imageId, fetchImage }) => {
-  const [src, setSrc] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    let isMounted = true;
-    const loadImg = async () => {
-      setIsLoading(true);
-      try {
-        const url = await fetchImage(imageId);
-        if (isMounted) {
-          setSrc(url);
-        }
-      } catch (e) {
-        if (isMounted) {
-          setSrc('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-image"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>');
-        }
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
-      }
-    };
-    loadImg();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [imageId, fetchImage]);
-
-  if (isLoading) {
-    return (
-      <div className="w-full h-full flex items-center justify-center bg-gray-200 dark:bg-gray-700 animate-pulse">
-        <svg className="w-6 h-6 text-gray-400 dark:text-gray-500" fill="currentColor" viewBox="0 0 20 20">
-          <path d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 4-4v6z" />
-        </svg>
-      </div>
-    );
-  }
-
-  return (
-    <img
-      src={src}
-      alt="学生提交的图片"
-      className="w-full h-full object-cover"
-      onError={(e) => {
-        if (!e.target.src.startsWith('data:')) {
-          e.target.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-image"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>';
-        }
-      }}
-    />
-  );
-};
+import LazyImageGrid from '../components/LazyImageGrid';
 
 const TeacherTaskSubmissions = () => {
   const { taskId } = useParams();
   const [submissions, setSubmissions] = useState([]);
-  const [task, setTask] = useState(null); // 📌 新增：存储任务信息
+  const [task, setTask] = useState(null);
   const [loading, setLoading] = useState(true);
   const [expandedJsons, setExpandedJsons] = useState({});
   const navigate = useNavigate();
 
-  const [modalIsOpen, setModalIsOpen] = useState(false);
-  const [currentImageUrl, setCurrentImageUrl] = useState('');
-  const [imageUrls, setImageUrls] = useState({});
-
-  // 图片加载函数
-  const fetchAndCacheImage = async (imageId) => {
-    if (imageUrls[imageId]) {
-      return imageUrls[imageId];
-    }
-    try {
-      const res = await api.get(`/download/${imageId}`, {
-        responseType: 'blob',
-      });
-      const blob = new Blob([res.data], { type: res.headers['content-type'] });
-      const url = URL.createObjectURL(blob);
-      setImageUrls(prev => ({ ...prev, [imageId]: url }));
-      return url;
-    } catch (error) {
-      console.error('图片加载失败:', error);
-      throw new Error("图片加载失败");
-    }
-  };
-
   useEffect(() => {
     const fetchTaskAndSubmissions = async () => {
       try {
-        // 📌 获取任务信息
+        // 获取任务信息
         const taskRes = await api.get(`/task/${taskId}`);
         setTask(taskRes.data);
 
@@ -115,7 +35,7 @@ const TeacherTaskSubmissions = () => {
     fetchTaskAndSubmissions();
   }, [taskId, navigate]);
 
-  // 📌 新增：格式化截止时间
+  // 格式化截止时间
   const formatDeadline = (deadline) => {
     const date = new Date(deadline);
     return date.toLocaleString('zh-CN', {
@@ -127,7 +47,7 @@ const TeacherTaskSubmissions = () => {
     });
   };
 
-  // 📌 新增：格式化逾期时间
+  // 格式化逾期时间
   const formatLateTime = (lateMinutes) => {
     if (lateMinutes < 60) {
       return `逾期 ${lateMinutes} 分钟`;
@@ -207,37 +127,17 @@ const TeacherTaskSubmissions = () => {
     );
   };
 
-  // 渲染图片缩略图
+  // 渲染图片网格（使用懒加载）
   const renderImageLinks = (imageIds) => {
     if (!imageIds || imageIds.length === 0) return null;
     
-    const openModal = async (imageId) => {
-      try {
-          const imageUrl = await fetchAndCacheImage(imageId);
-          setCurrentImageUrl(imageUrl);
-          setModalIsOpen(true);
-      } catch (e) {
-          alert('图片加载失败，请重试。');
-      }
-    };
-    
     return (
-      <div className="mt-4">
-        <p className="font-semibold text-gray-700 dark:text-gray-300 mb-2">📸 提交图片:</p>
-        <div className="flex flex-wrap gap-2">
-          {imageIds.map((imageId) => (
-            <div
-              key={imageId}
-              onClick={() => openModal(imageId)}
-              className="w-24 h-24 rounded-lg overflow-hidden cursor-pointer
-                         border border-gray-200 dark:border-gray-700
-                         hover:shadow-lg transition-shadow duration-200"
-            >
-              <ImageWithLoading imageId={imageId} fetchImage={fetchAndCacheImage} />
-            </div>
-          ))}
-        </div>
-      </div>
+      <LazyImageGrid
+        imageIds={imageIds}
+        title="提交图片"
+        gridClassName="flex flex-wrap gap-2"
+        imageClassName="w-24 h-24 rounded-lg overflow-hidden cursor-pointer border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-shadow duration-200"
+      />
     );
   };
   
@@ -319,7 +219,7 @@ const TeacherTaskSubmissions = () => {
             <h1 className="text-2xl font-bold mb-2 text-gray-800 dark:text-gray-100">
               📄 提交记录
             </h1>
-            {/* 📌 新增：显示任务信息 */}
+            {/* 显示任务信息 */}
             {task && (
               <div className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
                 <p><strong>任务：</strong>{task.title}</p>
@@ -330,7 +230,7 @@ const TeacherTaskSubmissions = () => {
           </div>
           
           <div className="flex gap-2">
-            {/* 📌 新增：班级提交情况按钮 */}
+            {/* 班级提交情况按钮 */}
             <Button
               variant="primary"
               size="sm"
@@ -384,7 +284,7 @@ const TeacherTaskSubmissions = () => {
                       </p>
                     </div>
                     
-                    {/* 📌 新增：逾期提交标识 */}
+                    {/* 逾期提交标识 */}
                     {s.isLateSubmission && (
                       <div className="flex flex-col items-end">
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800 dark:bg-orange-900/50 dark:text-orange-300">
@@ -439,43 +339,6 @@ const TeacherTaskSubmissions = () => {
           </ul>
         )}
       </div>
-
-      <Modal
-        isOpen={modalIsOpen}
-        onRequestClose={() => setModalIsOpen(false)}
-        contentLabel="Image Modal"
-        style={{
-          overlay: {
-            backgroundColor: 'rgba(0, 0, 0, 0.75)',
-            zIndex: 1000,
-          },
-          content: {
-            top: '50%',
-            left: '50%',
-            right: 'auto',
-            bottom: 'auto',
-            marginRight: '-50%',
-            transform: 'translate(-50%, -50%)',
-            border: 'none',
-            background: 'transparent',
-            padding: 0,
-            width: '90%',
-            maxWidth: '900px',
-            maxHeight: '90%',
-            overflow: 'auto',
-          },
-        }}
-      >
-        <button 
-          onClick={() => setModalIsOpen(false)}
-          className="absolute top-4 right-4 text-white text-3xl font-bold bg-black bg-opacity-50 rounded-full w-10 h-10 flex items-center justify-center z-10"
-        >
-          &times;
-        </button>
-        {currentImageUrl && (
-          <img src={currentImageUrl} alt="放大图片" className="w-full h-auto object-contain rounded-lg" />
-        )}
-      </Modal>
     </div>
   );
 };

@@ -2,15 +2,15 @@
 const express = require('express');
 const dotenv = require('dotenv');
 const axios = require('axios');
-// const OpenAI = require('openai'); // 已移除 OpenAI 库的引入
+const OpenAI = require('openai'); // ✅ 不要解构了！
 
 dotenv.config();
 const router = express.Router();
 
-// 📌 已移除 OpenAI 客户端的初始化
-// const openai = new OpenAI({
-//   apiKey: process.env.OPENAI_API_KEY,
-// });
+// ✅ 新版本初始化方式
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
 
 // ✅ 通义千问请求函数
 const callQwen = async (messages) => {
@@ -32,17 +32,21 @@ const callQwen = async (messages) => {
 };
 
 router.post('/chat', async (req, res) => {
-  const { messages, model = 'qwen' } = req.body; // 📌 将默认模型改为 'qwen'
+  const { messages, model = 'openai' } = req.body;
 
   try {
     let reply = '';
 
-    // 📌 只保留了通义千问的调用逻辑
-    if (model === 'qwen') {
+    if (model === 'openai') {
+      const completion = await openai.chat.completions.create({
+        model: 'gpt-3.5-turbo',
+        messages,
+      });
+      reply = completion.choices[0].message.content;
+    } else if (model === 'qwen') {
       reply = await callQwen(messages);
     } else {
-      // 如果客户端请求了 OpenAI，由于服务器端已禁用，返回错误
-      return res.status(400).json({ error: 'OpenAI服务已暂时禁用' });
+      return res.status(400).json({ error: '不支持的模型类型' });
     }
 
     res.json({ reply });

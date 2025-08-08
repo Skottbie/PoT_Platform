@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import api from '../api/axiosInstance';
-import logo from '../assets/logo.png';
 import Button from './Button';
+import ProgressiveLogo from './ProgressiveLogo';
 
 export default function FeedbackWidget() {
   const [open, setOpen] = useState(false);
@@ -94,10 +94,15 @@ export default function FeedbackWidget() {
           onClick={toggleOpen}
           className={`w-14 h-14 rounded-full shadow-lg flex items-center justify-center
                       bg-white dark:bg-gray-900
-                      hover:scale-110 active:scale-95 transition-transform backdrop-blur-md`}
+                      hover:scale-110 active:scale-95 transition-transform backdrop-blur-md
+                      overflow-hidden`}
           title="点击反馈"
         >
-          <img src={logo} alt="Feedback" className="w-10 h-10" />
+          <ProgressiveLogo
+            size="medium"
+            priority={false} // 反馈按钮可以稍后加载高质量版本
+            className="transform transition-transform duration-200"
+          />
         </button>
       </div>
 

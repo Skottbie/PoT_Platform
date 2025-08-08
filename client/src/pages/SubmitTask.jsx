@@ -4,14 +4,13 @@ import { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../api/axiosInstance';
 import ReactMarkdown from 'react-markdown';
-//import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-//import { duotoneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { Light as SyntaxHighlighter } from 'react-syntax-highlighter';
 import javascript from 'react-syntax-highlighter/dist/esm/languages/hljs/javascript';
 import python from 'react-syntax-highlighter/dist/esm/languages/hljs/python';
 import { github } from 'react-syntax-highlighter/dist/esm/styles/hljs'; 
 import { motion, AnimatePresence } from 'framer-motion';
 import Button from '../components/Button';
+import LazyImageGrid from '../components/LazyImageGrid';
 
 SyntaxHighlighter.registerLanguage('javascript', javascript);
 SyntaxHighlighter.registerLanguage('python', python);
@@ -22,6 +21,7 @@ const SubmitTask = () => {
   const [task, setTask] = useState(null);
   const [file, setFile] = useState(null);
   const [images, setImages] = useState([]);
+  const [imagePreviewIds, setImagePreviewIds] = useState([]); // 用于预览已上传的图片
   const [content, setContent] = useState('');
   const [message, setMessage] = useState('');
   const [model, setModel] = useState('qwen');
@@ -72,7 +72,7 @@ const SubmitTask = () => {
     }
   }, [aigcLog, loading]);
 
-  // 📌 新增：检查任务状态
+  // 检查任务状态
   const getTaskStatus = () => {
     if (!task) return null;
     
@@ -118,7 +118,7 @@ const SubmitTask = () => {
     };
   };
 
-  // 📌 新增：格式化截止时间
+  // 格式化截止时间
   const formatDeadline = (deadline) => {
     const date = new Date(deadline);
     return date.toLocaleString('zh-CN', {
@@ -156,7 +156,45 @@ const SubmitTask = () => {
   };
 
   const handleImageChange = (e) => {
-    setImages(Array.from(e.target.files));
+    const selectedFiles = Array.from(e.target.files);
+    setImages(selectedFiles);
+    
+    // 创建预览（这里暂时用文件名作为ID，实际项目中可能需要其他方式）
+    const previewIds = selectedFiles.map((file, index) => `preview_${Date.now()}_${index}`);
+    setImagePreviewIds(previewIds);
+  };
+
+  // 渲染图片预览（针对即将上传的图片）
+  const renderImagePreview = () => {
+    if (!images || images.length === 0) return null;
+    
+    return (
+      <div className="mt-2">
+        <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          📷 即将上传的图片预览 ({images.length} 张)
+        </p>
+        <div className="flex flex-wrap gap-2">
+          {images.map((file, index) => (
+            <div key={index} className="relative">
+              <img
+                src={URL.createObjectURL(file)}
+                alt={`预览 ${index + 1}`}
+                className="w-20 h-20 object-cover rounded-lg border border-gray-300 dark:border-gray-600"
+              />
+              <div className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs cursor-pointer"
+                   onClick={() => {
+                     const newImages = images.filter((_, i) => i !== index);
+                     setImages(newImages);
+                     const newPreviewIds = imagePreviewIds.filter((_, i) => i !== index);
+                     setImagePreviewIds(newPreviewIds);
+                   }}>
+                ×
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
   };
 
   const handleSubmit = async (e) => {
@@ -165,7 +203,7 @@ const SubmitTask = () => {
 
     const taskStatus = getTaskStatus();
     
-    // 📌 新增：检查是否可以提交
+    // 检查是否可以提交
     if (!taskStatus.canSubmit) {
       return setMessage(`❌ ${taskStatus.message}`);
     }
@@ -196,21 +234,6 @@ const SubmitTask = () => {
         formData.append('file', file);
       }
 
-      /*
-      if (task.requireAIGCLog && aigcLog.length > 0) {
-        const logBlob = new Blob([JSON.stringify(aigcLog)], {
-          type: 'application/json',
-        });
-        formData.append('aigcLog', logBlob, 'aigcLog.json');
-      }
-
-      if ((task.requireAIGCLog || shouldUploadAIGC) && aigcLog.length > 0) {
-        const logBlob = new Blob([JSON.stringify(aigcLog)], {
-          type: 'application/json',
-        });
-        formData.append('aigcLog', logBlob, 'aigcLog.json');
-      }
-        */
       if (task.requireAIGCLog && aigcLog.length > 0) {
         const logBlob = new Blob([JSON.stringify(aigcLog)], {
           type: 'application/json',
@@ -224,8 +247,7 @@ const SubmitTask = () => {
         formData.append('aigcLog', logBlob, 'aigcLog.json');
       }
 
-      
-      // 📌 新增：传递逾期信息
+      // 传递逾期信息
       if (taskStatus.isLate) {
         formData.append('isLateSubmission', 'true');
         formData.append('lateMinutes', taskStatus.lateMinutes.toString());
@@ -245,6 +267,7 @@ const SubmitTask = () => {
       
       setFile(null);
       setImages([]);
+      setImagePreviewIds([]);
       setContent('');
       setAigcLog([]);
 
@@ -299,7 +322,7 @@ const SubmitTask = () => {
           提交任务：{task.title}
         </h1>
 
-        {/* 📌 新增：任务状态提醒 */}
+        {/* 任务状态提醒 */}
         {taskStatus && (
           <div className={`mb-6 p-4 rounded-xl ${
             taskStatus.isLate 
@@ -336,7 +359,7 @@ const SubmitTask = () => {
           <p>📋 逾期提交：{task.allowLateSubmission ? '允许' : '不允许'}</p>
         </div>
 
-        {/* 📌 修改：只有在可以提交时才显示表单 */}
+        {/* 只有在可以提交时才显示表单 */}
         {taskStatus?.canSubmit ? (
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* 文本提交框 */}
@@ -364,6 +387,8 @@ const SubmitTask = () => {
                 onChange={handleImageChange}
                 className="w-full p-2 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:text-gray-100"
               />
+              {/* 图片预览 */}
+              {renderImagePreview()}
             </div>
 
             {/* 文件上传 */}
@@ -471,7 +496,7 @@ const SubmitTask = () => {
                               const match = /language-(\w+)/.exec(className || '');
                               return !inline ? (
                                 <SyntaxHighlighter
-                                  style={duotoneLight}
+                                  style={github}
                                   language={match ? match[1] : 'text'}
                                   PreTag="div"
                                   className={`rounded-lg my-1 overflow-x-auto ${isFullscreen ? 'text-base leading-relaxed' : 'text-sm'}`}

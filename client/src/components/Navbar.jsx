@@ -1,7 +1,7 @@
 // src/components/Navbar.jsx
 import { useNavigate } from 'react-router-dom';
-import logo from '../assets/logo.png';
 import { useState, useEffect } from 'react';
+import ProgressiveLogo from './ProgressiveLogo';
 
 const Navbar = ({ user }) => {
   const navigate = useNavigate();
@@ -39,10 +39,10 @@ const Navbar = ({ user }) => {
         className="flex items-center cursor-pointer group"
         onClick={() => navigate(user.role === 'teacher' ? '/teacher' : '/student')}
       >
-        <img
-          src={logo}
-          alt="PoTAcademy Logo"
-          className="h-8 w-8 mr-2 rounded-lg shadow-sm transform transition-transform duration-300 group-hover:scale-110"
+        <ProgressiveLogo
+          size="medium"
+          className="mr-2 rounded-lg shadow-sm transform transition-transform duration-300 group-hover:scale-110"
+          priority={true} // 导航栏logo优先加载
         />
         <span
           className="text-xl font-bold bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 

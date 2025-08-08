@@ -1,4 +1,7 @@
 // server/server.js
+const fetch = require('node-fetch');
+globalThis.fetch = fetch;
+
 const express = require('express');
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
@@ -62,8 +65,6 @@ app.get('/', (req, res) => {
   res.send('后端服务正常运行');
 });
 
-
-
 app.use('/api/class', classRoutes);
 
 app.use('/api/feedback', feedbackRouter);
@@ -75,8 +76,6 @@ app.use('/api/analytics', require('./routes/analytics'));
 mongoose.connect(process.env.MONGO_URI)
   .then(() => {
     console.log('✅ MongoDB 连接成功');
-    
-    // 📌 新增：数据库连接成功后启动定时清理任务
     startCleanupTasks();
   })
   .catch(err => console.error('❌ MongoDB 连接失败：', err));
@@ -84,48 +83,45 @@ mongoose.connect(process.env.MONGO_URI)
 // 📌 新增：定时清理任务函数
 const startCleanupTasks = () => {
   console.log('🧹 启动定时清理任务...');
-  
+
   // 每天凌晨2点执行清理任务
   const scheduleCleanup = () => {
     const now = new Date();
     const next = new Date();
-    
+
     // 设置为明天凌晨2点
     next.setDate(now.getDate() + 1);
     next.setHours(2, 0, 0, 0);
-    
+
     const timeUntilNext = next.getTime() - now.getTime();
-    
+
     setTimeout(async () => {
       try {
         console.log('🧹 开始执行定时清理任务...');
-        
+
         // 清理软删除的学生
         const cleanedStudents = await cleanupRemovedStudents();
         console.log(`✅ 清理了 ${cleanedStudents} 名过期的软删除学生`);
-        
+
         // 清理软删除的任务
         const cleanedTasks = await cleanupDeletedTasks();
         console.log(`✅ 清理了 ${cleanedTasks} 个过期的软删除任务`);
-        
+
         console.log('🎉 定时清理任务完成');
-        
+
         // 安排下一次清理
         scheduleCleanup();
       } catch (error) {
         console.error('❌ 定时清理任务失败:', error);
-        // 即使失败也要安排下一次清理
         scheduleCleanup();
       }
     }, timeUntilNext);
-    
+
     console.log(`⏰ 下一次清理时间: ${next.toLocaleString()}`);
   };
-  
-  // 启动定时清理
+
   scheduleCleanup();
-  
-  // 📌 可选：服务器启动时也执行一次清理（用于测试）
+
   if (process.env.NODE_ENV === 'development') {
     setTimeout(async () => {
       try {
@@ -136,11 +132,10 @@ const startCleanupTasks = () => {
       } catch (error) {
         console.error('❌ 启动清理失败:', error);
       }
-    }, 5000); // 5秒后执行
+    }, 5000);
   }
 };
 
-// 启动服务器
 const PORT = process.env.PORT || 5000;
 app.use('/uploads', express.static('uploads'));
 

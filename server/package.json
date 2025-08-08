@@ -23,6 +23,7 @@
     "multer": "^2.0.2",
     "node-fetch": "^3.3.2",
     "openai": "^5.9.2",
+    "sharp": "^0.34.3",
     "strip-bom-stream": "^5.0.0"
   },
   "devDependencies": {
