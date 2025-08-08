@@ -1,5 +1,4 @@
 // server/models/Submission.js
-
 const mongoose = require('mongoose');
 
 const submissionSchema = new mongoose.Schema({
@@ -13,16 +12,13 @@ const submissionSchema = new mongoose.Schema({
     ref: 'User', 
     required: true 
   },
-  // 📌 修改：支持文本内容
   content: { 
     type: String, 
     default: '' 
   },
-  // 📌 新增：支持多张图片
   imageIds: [{ 
     type: String 
   }],
-  // 📌 修改：作业文件变为可选
   fileId: { 
     type: String, 
     default: null 
@@ -39,15 +35,21 @@ const submissionSchema = new mongoose.Schema({
     type: Date, 
     default: Date.now 
   },
-  // 📌 新增：是否为逾期提交
   isLateSubmission: {
     type: Boolean,
     default: false
   },
-  // 📌 新增：逾期时长（分钟数）
   lateMinutes: {
     type: Number,
     default: 0
+  },
+  // 📌 新增：教师反馈字段
+  feedback: {
+    content: { type: String, default: '' }, // 反馈内容
+    rating: { type: Number, min: 1, max: 5, default: null }, // 评分 1-5星
+    createdAt: { type: Date, default: null }, // 反馈时间
+    createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null }, // 反馈教师
+    updatedAt: { type: Date, default: null } // 最后更新时间
   }
 }, { 
   timestamps: true 

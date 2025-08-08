@@ -340,29 +340,77 @@ const StudentDashboard = () => {
                     </div>
                   </div>
 
-                  <div className="flex gap-2">
-                    {taskStatus.canSubmit && currentCategory === 'active' && (
-                      <Button
-                        variant={taskStatus.status === 'late' ? "warning" : 
-                                taskStatus.status === 'urgent' ? "danger" : "primary"}
-                        onClick={() => navigate(`/submit/${task._id}`)}
-                      >
-                        {taskStatus.status === 'late' ? '⚠️ 逾期提交' : '📤 提交作业'}
-                      </Button>
-                    )}
+                  <div className="flex gap-2 flex-wrap">
+                  {taskStatus.canSubmit && currentCategory === 'active' && (
+                    <Button
+                      variant={taskStatus.status === 'late' ? "warning" : 
+                              taskStatus.status === 'urgent' ? "danger" : "primary"}
+                      onClick={() => navigate(`/submit/${task._id}`)}
+                    >
+                      {taskStatus.status === 'late' ? '⚠️ 逾期提交' : '📤 提交作业'}
+                    </Button>
+                  )}
 
-                    {!taskStatus.canSubmit && taskStatus.status === 'expired' && currentCategory === 'active' && (
-                      <div className="px-5 py-2 rounded-xl bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 text-center">
-                        ❌ 已截止，无法提交
-                      </div>
-                    )}
+                  {/* 📌 新增：如果已提交，显示查看提交按钮 */}
+                  {task.submitted && (
+                    <Button
+                      variant="secondary"
+                      onClick={() => navigate(`/view-submission/${task._id}`)}
+                    >
+                      👀 查看我的提交
+                    </Button>
+                  )}
 
-                    {currentCategory === 'archived' && (
-                      <div className="px-5 py-2 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 text-center text-sm">
-                        📦 归档任务，仅供查看
-                      </div>
-                    )}
+                  {!taskStatus.canSubmit && taskStatus.status === 'expired' && currentCategory === 'active' && (
+                    <div className="px-5 py-2 rounded-xl bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 text-center">
+                      ❌ 已截止，无法提交
+                    </div>
+                  )}
+
+                  {currentCategory === 'archived' && (
+                    <div className="px-5 py-2 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 text-center text-sm">
+                      📦 归档任务，仅供查看
+                      {task.submitted && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => navigate(`/view-submission/${task._id}`)}
+                          className="ml-2"
+                        >
+                          👀 查看提交
+                        </Button>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* 📌 新增：在任务卡片底部显示教师反馈预览 */}
+                {task.submitted && task.submissionInfo?.hasFeedback && (
+                  <div className="mt-4 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-lg">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-green-600 dark:text-green-400 font-medium text-sm">
+                        💬 教师已反馈
+                      </span>
+                      {task.submissionInfo.feedbackRating && (
+                        <span className="text-yellow-500">
+                          {'⭐'.repeat(task.submissionInfo.feedbackRating)}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-sm text-green-700 dark:text-green-300 line-clamp-2">
+                      {task.submissionInfo.feedbackPreview}
+                    </p>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => navigate(`/view-submission/${task._id}`)}
+                      className="mt-2 text-xs"
+                    >
+                      查看完整反馈 →
+                    </Button>
                   </div>
+                )}
+
                 </motion.div>
               );
             })

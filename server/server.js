@@ -77,6 +77,7 @@ app.use(securityHeaders);
 app.use(extractClientInfo);
 app.use('/api', apiLimiter);
 
+app.use('/api/submission', require('./routes/submissionFeedback'));
 
 // 数据库连接
 mongoose.connect(process.env.MONGO_URI)

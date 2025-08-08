@@ -16,6 +16,7 @@ import FeedbackWidget from './components/FeedbackWidget';
 import ClassSubmissionStatus from './pages/ClassSubmissionStatus';
 import EditClassStudents from './pages/EditClassStudents';
 import ClassHistory from './pages/ClassHistory';
+import ViewSubmission from './pages/ViewSubmission';
 
 import Test from './Test'; // 导入测试组件
 
@@ -48,6 +49,7 @@ function App() {
         <Route path="/task/:taskId/class-status" element={<ClassSubmissionStatus />} />
         <Route path="/class/:classId/edit-students" element={<EditClassStudents />} />
         <Route path="/class/:classId/history" element={<ClassHistory />} />
+        <Route path="/view-submission/:taskId" element={<ViewSubmission />} />
 
 
         <Route path="/test" element={<Test />} />

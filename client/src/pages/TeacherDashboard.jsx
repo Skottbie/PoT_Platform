@@ -12,6 +12,7 @@ const TeacherDashboard = () => {
   const [user, setUser] = useState(null);
   const [form, setForm] = useState({
     title: '',
+    description: '', 
     category: '课堂练习',
     needsFile: false,
     allowAIGC: false,
@@ -187,6 +188,7 @@ const TeacherDashboard = () => {
       // 重置表单
       setForm({
         title: '',
+        description: '',
         category: '课堂练习',
         needsFile: false,
         allowAIGC: false,
@@ -436,6 +438,18 @@ const TeacherDashboard = () => {
                              rounded-lg bg-white dark:bg-gray-700 
                              text-gray-900 dark:text-gray-100 
                              transition-colors duration-300 p-2"
+            />
+
+            <textarea
+              name="description"
+              placeholder="任务描述（可选）"
+              value={form.description}
+              onChange={handleChange}
+              rows={3}
+              className="w-full border border-gray-300 dark:border-gray-600 
+                            rounded-lg bg-white dark:bg-gray-700 
+                            text-gray-900 dark:text-gray-100 
+                            transition-colors duration-300 p-2 resize-vertical"
             />
             
             <p className="text-sm font-semibold text-gray-700 dark:text-gray-200">

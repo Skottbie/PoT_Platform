@@ -337,6 +337,19 @@ const SubmitTask = () => {
           <h1 className="text-2xl font-bold mb-4 text-gray-800 dark:text-gray-100">
             提交任务：{task.title}
           </h1>
+
+          {/* 📌 新增：显示任务描述 */}
+          {task.description && (
+            <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-xl">
+              <h3 className="text-sm font-semibold text-blue-800 dark:text-blue-200 mb-2">
+                📋 任务说明
+              </h3>
+              <p className="text-blue-700 dark:text-blue-300 text-sm leading-relaxed whitespace-pre-wrap">
+                {task.description}
+              </p>
+            </div>
+          )}
+          
           <p className="text-green-600 dark:text-green-400 text-sm mb-4">
             ✅ 你已提交此任务，无法重复提交。
           </p>
@@ -452,152 +465,176 @@ const SubmitTask = () => {
               </div>
             )}
 
-            {/* AIGC 对话区域 */}
-            {task.allowAIGC && (
-              <AnimatePresence mode="wait">
-                <motion.div
-                  layout
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  transition={{ duration: 0.3, ease: 'easeInOut' }}
-                  className={`border rounded-2xl p-4 bg-gray-50 dark:bg-gray-700 space-y-3
-                    ${isFullscreen
-                      ? 'fixed inset-0 w-full h-full z-50 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm p-4 flex flex-col md:items-center md:justify-center md:px-0'
-                      : 'relative'
-                    }
-                  `}
-                >
-                  <div className="flex justify-between items-center mb-2">
-                    <label className="font-semibold text-gray-700 dark:text-gray-200">
-                      💬 AIGC 对话区
-                      {task.requireAIGCLog && (
-                         <span className="ml-2 text-red-500 text-sm font-normal">（必交）</span>
-                      )}
-                    </label>
-
-                    {!isFullscreen && (
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="secondary"
-                        onClick={() => setIsFullscreen(true)}
-                      >
-                        全屏
-                      </Button>
+          {/* AIGC 对话区域 */}
+          {task.allowAIGC && (
+            <AnimatePresence mode="wait">
+              <motion.div
+                layout
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.3, ease: 'easeInOut' }}
+                className={`border rounded-2xl p-4 bg-gray-50 dark:bg-gray-700 space-y-3
+                  ${isFullscreen
+                    ? 'fixed inset-0 w-full h-full z-50 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm p-4 flex flex-col md:items-center md:justify-center md:px-0'
+                    : 'relative'
+                  }
+                `}
+              >
+                <div className="flex justify-between items-center mb-2">
+                  <label className="font-semibold text-gray-700 dark:text-gray-200">
+                    💬 AIGC 对话区
+                    {task.requireAIGCLog && (
+                      <span className="ml-2 text-red-500 text-sm font-normal">（必交）</span>
                     )}
-                  </div>
+                  </label>
 
-                  {isFullscreen && (
+                  {!isFullscreen && (
                     <Button
                       type="button"
                       size="sm"
                       variant="secondary"
-                      className="absolute top-4 right-4"
-                      onClick={() => setIsFullscreen(false)}
+                      onClick={() => setIsFullscreen(true)}
                     >
-                      退出全屏
+                      全屏
                     </Button>
                   )}
+                </div>
 
-                  {/* 模型选择 */}
-                  <div className="mb-2">
-                    <label className="text-sm font-medium block mb-1 text-gray-600 dark:text-gray-300">
-                      选择 AI 模型
-                    </label>
-                    <select
-                      value={model}
-                      onChange={(e) => setModel(e.target.value)}
-                      className="border p-2 rounded-lg w-full bg-white dark:bg-gray-600 dark:text-gray-100"
-                    >
-                      <option value="openai">ChatGPT*(维护中)</option>
-                      <option value="qwen">通义千问</option>
-                    </select>
-                  </div>
-
-                  {/* 对话内容 */}
-                  <div
-                    ref={chatBoxRef}
-                    className={`bg-white dark:bg-gray-600 border dark:border-gray-500 flex-1 p-3 rounded-lg overflow-y-auto space-y-2
-                      ${isFullscreen
-                        ? `flex-1 pb-24 text-lg leading-relaxed px-2 sm:px-4 space-y-3 
-                        md:max-w-3xl md:w-full md:mx-auto`
-                        : 'h-40 sm:h-52 md:h-64 text-sm leading-snug'
-                      }
-                    `}
+                {isFullscreen && (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="secondary"
+                    className="absolute top-4 right-4"
+                    onClick={() => setIsFullscreen(false)}
                   >
-                    {aigcLog.map((msg, idx) => (
-                      <div key={idx}>
-                        <strong
-                          className={`${msg.role === 'user' ? 'text-blue-600' : 'text-green-600'}
-                            ${isFullscreen ? 'text-xl block mb-1' : 'text-base'}
-                          `}
-                        >
-                          {msg.role === 'user' ? '我：' : 'AI：'}
-                        </strong>{' '}
-                        <ReactMarkdown
-                          className="inline"
-                          components={{
-                            code({ inline, className, children, ...props }) {
-                              const match = /language-(\w+)/.exec(className || '');
-                              return !inline ? (
-                                <SyntaxHighlighter
-                                  style={github}
-                                  language={match ? match[1] : 'text'}
-                                  PreTag="div"
-                                  className={`rounded-lg my-1 overflow-x-auto ${isFullscreen ? 'text-base leading-relaxed' : 'text-sm'}`}
-                                  {...props}
-                                >
-                                  {String(children).replace(/\n$/, '')}
-                                </SyntaxHighlighter>
-                              ) : (
-                                <code className="bg-gray-200 dark:bg-gray-800 px-1 rounded">{children}</code>
-                              );
-                            },
-                          }}
-                        >
-                          {msg.content}
-                        </ReactMarkdown>
-                      </div>
-                    ))}
+                    退出全屏
+                  </Button>
+                )}
 
-                    {loading && (
-                      <p className={`mt-1 text-gray-400 ${isFullscreen ? 'text-base' : 'text-xs'}`}>
-                        AI 生成中...
-                      </p>
-                    )}
-                  </div>
-
-                  {/* 输入区 */}
-                  <div
-                    className={`flex gap-2 mt-2 ${
-                      isFullscreen
-                        ? 'md:max-w-3xl md:mx-auto w-full pb-10'
-                        : ''
-                    }`}
+                {/* 模型选择 */}
+                <div className="mb-2">
+                  <label className="text-sm font-medium block mb-1 text-gray-600 dark:text-gray-300">
+                    选择 AI 模型
+                  </label>
+                  <select
+                    value={model}
+                    onChange={(e) => setModel(e.target.value)}
+                    className="border p-2 rounded-lg w-full bg-white dark:bg-gray-600 dark:text-gray-100"
                   >
+                    <option value="openai">ChatGPT*(维护中)</option>
+                    <option value="qwen">通义千问</option>
+                  </select>
+                </div>
+
+                {/* 对话内容 */}
+                <div
+                  ref={chatBoxRef}
+                  className={`bg-white dark:bg-gray-600 border dark:border-gray-500 flex-1 p-3 rounded-lg overflow-y-auto space-y-2
+                    ${isFullscreen
+                      ? `flex-1 pb-24 text-lg leading-relaxed px-2 sm:px-4 space-y-3 
+                      md:max-w-3xl md:w-full md:mx-auto`
+                      : 'h-40 sm:h-52 md:h-64 text-sm leading-snug'
+                    }
+                  `}
+                >
+                  {aigcLog.map((msg, idx) => (
+                    <div key={idx}>
+                      <strong
+                        className={`${msg.role === 'user' ? 'text-blue-600' : 'text-green-600'}
+                          ${isFullscreen ? 'text-xl block mb-1' : 'text-base'}
+                        `}
+                      >
+                        {msg.role === 'user' ? '我：' : 'AI：'}
+                      </strong>{' '}
+                      <ReactMarkdown
+                        className="inline"
+                        components={{
+                          code({ inline, className, children, ...props }) {
+                            const match = /language-(\w+)/.exec(className || '');
+                            return !inline ? (
+                              <SyntaxHighlighter
+                                style={github}
+                                language={match ? match[1] : 'text'}
+                                PreTag="div"
+                                className={`rounded-lg my-1 overflow-x-auto ${isFullscreen ? 'text-base leading-relaxed' : 'text-sm'}`}
+                                {...props}
+                              >
+                                {String(children).replace(/\n$/, '')}
+                              </SyntaxHighlighter>
+                            ) : (
+                              <code className="bg-gray-200 dark:bg-gray-800 px-1 rounded">{children}</code>
+                            );
+                          },
+                        }}
+                      >
+                        {msg.content}
+                      </ReactMarkdown>
+                    </div>
+                  ))}
+
+                  {loading && (
+                    <p className={`mt-1 text-gray-400 ${isFullscreen ? 'text-base' : 'text-xs'}`}>
+                      AI 生成中...
+                    </p>
+                  )}
+                </div>
+
+                {/* 🔧 修复：优化输入区样式，防止手机端溢出 */}
+                <div
+                  className={`flex gap-2 mt-2 ${
+                    isFullscreen
+                      ? 'md:max-w-3xl md:mx-auto w-full pb-10'
+                      : ''
+                  }`}
+                >
+                  {/* 🔧 关键修复：确保输入框在小屏幕上不会溢出 */}
+                  <div className="flex-1 min-w-0">
                     <input
                       type="text"
                       value={input}
                       onChange={(e) => setInput(e.target.value)}
                       onKeyPress={(e) => e.key === 'Enter' && !loading && handleAIGCSubmit()}
                       placeholder="输入你的问题..."
-                      className="flex-1 border rounded-lg p-2 dark:bg-gray-800 dark:text-gray-100"
+                      className="w-full border rounded-lg p-2 dark:bg-gray-800 dark:text-gray-100
+                                min-w-0 text-sm sm:text-base
+                                focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+                                transition-all duration-200"
                       disabled={loading}
+                      style={{ 
+                        // 🔧 确保在所有设备上输入框不会超出边界
+                        maxWidth: '100%',
+                        boxSizing: 'border-box'
+                      }}
                     />
+                  </div>
+                  
+                  {/* 🔧 优化按钮样式 */}
+                  <div className="flex-shrink-0">
                     <Button 
                       type="button" 
                       onClick={handleAIGCSubmit} 
                       variant="primary"
+                      size="sm"
                       disabled={loading || !input.trim()}
                       loading={loading}
+                      className="whitespace-nowrap px-3 py-2 text-sm"
                     >
                       发送
                     </Button>
                   </div>
-                </motion.div>
-              </AnimatePresence>
-            )}
+                </div>
+
+                {/* 🔧 增加移动端适配提示 */}
+                {!isFullscreen && (
+                  <div className="block sm:hidden text-xs text-gray-500 dark:text-gray-400 text-center">
+                    💡 建议点击"全屏"获得更好的对话体验
+                  </div>
+                )}
+              </motion.div>
+            </AnimatePresence>
+          )}
 
             {task.allowAIGC && !task.requireAIGCLog && aigcLog.length > 0 && (
               <div className="mt-4">

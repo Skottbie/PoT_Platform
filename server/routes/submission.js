@@ -186,22 +186,61 @@ router.get('/by-student/:studentId', verifyToken, async (req, res) => {
   }
 });
 
-// ✅ 检查学生是否已提交指定任务
+// check路由
 router.get('/check/:taskId', verifyToken, async (req, res) => {
   try {
     const taskId = req.params.taskId;
     const studentId = req.user.id;
 
     const existing = await Submission.findOne({ task: taskId, student: studentId });
-    res.json({ 
-      submitted: !!existing,
-      submission: existing ? {
+    
+    let submissionInfo = null;
+    if (existing) {
+      submissionInfo = {
         submittedAt: existing.submittedAt,
         isLateSubmission: existing.isLateSubmission,
-        lateMinutes: existing.lateMinutes
-      } : null
+        lateMinutes: existing.lateMinutes,
+        // 📌 新增：反馈相关信息
+        hasFeedback: !!(existing.feedback && existing.feedback.content),
+        feedbackRating: existing.feedback?.rating || null,
+        feedbackPreview: existing.feedback?.content ? 
+          (existing.feedback.content.length > 50 ? 
+            existing.feedback.content.substring(0, 50) + '...' : 
+            existing.feedback.content) : null
+      };
+    }
+    
+    res.json({ 
+      submitted: !!existing,
+      submission: submissionInfo
     });
   } catch (err) {
+    res.status(500).json({ message: '服务器错误' });
+  }
+});
+
+// ✅ 学生查看自己在指定任务的提交记录
+router.get('/my/:taskId', verifyToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'student') {
+      return res.status(403).json({ message: '仅限学生查看自己的提交记录' });
+    }
+
+    const taskId = req.params.taskId;
+    const studentId = req.user.id;
+
+    const submission = await Submission.findOne({ 
+      task: taskId, 
+      student: studentId 
+    }).populate('feedback.createdBy', 'email');
+
+    if (!submission) {
+      return res.status(404).json({ message: '未找到提交记录' });
+    }
+
+    res.json(submission);
+  } catch (err) {
+    console.error('获取学生提交记录失败:', err);
     res.status(500).json({ message: '服务器错误' });
   }
 });
