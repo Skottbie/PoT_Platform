@@ -9,6 +9,8 @@ const cors = require('cors');
 const aigcRoutes = require('./routes/aigc');
 const classRoutes = require('./routes/classRoutes');
 const feedbackRouter = require('./routes/feedback');
+const { apiLimiter, extractClientInfo, securityHeaders } = require('./middleware/security');
+
 
 // 📌 新增：导入清理函数
 const { cleanupRemovedStudents } = require('./controllers/classController');
@@ -70,6 +72,10 @@ app.use('/api/class', classRoutes);
 app.use('/api/feedback', feedbackRouter);
 
 app.use('/api/analytics', require('./routes/analytics'));
+
+app.use(securityHeaders);
+app.use(extractClientInfo);
+app.use('/api', apiLimiter);
 
 
 // 数据库连接
