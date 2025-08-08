@@ -37,19 +37,9 @@ export default defineConfig({
           'vendor-syntax': ['react-syntax-highlighter'],
           
           // 工具库 - 更新频率中等
-          'vendor-utils': ['axios', 'papaparse'],
-          
-          // 🚀 修复：使用正确的路径格式进行页面分包
-          'pages-auth': [
-            '/src/pages/Login.jsx',
-            '/src/pages/Register.jsx'
-          ],
-          'pages-dashboard': [
-            '/src/pages/StudentDashboard.jsx', 
-            '/src/pages/TeacherDashboard.jsx'
-          ]
+          'vendor-utils': ['axios', 'papaparse']
         },
-        // 🔧 确保所有 JS 文件都有正确的扩展名
+        // 🔧 确保所有文件都有正确的扩展名和命名
         entryFileNames: 'assets/[name]-[hash].js',
         chunkFileNames: 'assets/[name]-[hash].js',
         assetFileNames: (assetInfo) => {
@@ -66,43 +56,54 @@ export default defineConfig({
       }
     },
     
-    // 🎯 压缩优化 - 针对广深网络环境
+    // 🎯 关键修复：使用更保守的压缩设置
     minify: 'terser',
     terserOptions: {
       compress: {
         drop_console: true,
         drop_debugger: true,
-        pure_funcs: ['console.log', 'console.info', 'console.debug'],
-        // 针对移动端网络优化
-        unsafe: true,
-        unsafe_comps: true,
-        passes: 3, // 增加压缩轮数
+        // 🔧 使用更保守的压缩选项，避免编码问题
+        unsafe: false,
+        unsafe_comps: false,
+        passes: 2, // 减少压缩轮数
         reduce_vars: true,
-        reduce_funcs: true
+        reduce_funcs: false // 关闭函数简化，避免潜在问题
       },
       mangle: {
         safari10: true,
-        // 保持函数名简短
-        toplevel: true
+        // 🔧 保守的标识符混淆
+        toplevel: false
+      },
+      format: {
+        // 🔧 确保输出格式兼容性
+        ascii_only: true, // 确保只使用 ASCII 字符
+        beautify: false,
+        comments: false
       }
     },
     
-    // 🚀 关键优化：更激进的分包大小
-    chunkSizeWarningLimit: 300, // 降低至300KB
+    // 🚀 调整分包大小限制
+    chunkSizeWarningLimit: 500, // 提高到 500KB，减少过度分包
     sourcemap: false,
     
     // 🎯 CSS优化
     cssCodeSplit: true,
     cssMinify: true,
     
-    // 📦 压缩优化
-    reportCompressedSize: false, // 构建时跳过大小报告，提升构建速度
+    // 📦 关闭压缩大小报告
+    reportCompressedSize: false,
     
-    // 🚀 现代浏览器优化
-    target: ['es2015', 'chrome79', 'safari13'],
+    // 🚀 兼容性目标 - 确保广泛兼容性
+    target: ['es2020', 'chrome80', 'safari14', 'firefox78'],
     
     // 🔧 确保输出目录清理
-    emptyOutDir: true
+    emptyOutDir: true,
+    
+    // 🔧 关键修复：确保正确的文件输出
+    assetsInlineLimit: 4096, // 4KB 以下的资源内联
+    
+    // 🔧 确保构建过程稳定
+    watch: null
   },
   
   // 🎯 预加载优化
@@ -115,18 +116,28 @@ export default defineConfig({
       'framer-motion'
     ],
     // 强制预构建，避免首次加载时的依赖发现
-    force: true
+    force: false // 改为 false，避免不必要的重建
   },
 
-  // 🚀 esbuild 优化
+  // 🚀 esbuild 优化 - 使用更保守的设置
   esbuild: {
-    // 移除所有调试代码
-    drop: ['console', 'debugger'],
-    // 最小化标识符名称
+    // 保留必要的调试信息用于生产环境故障排查
+    drop: process.env.NODE_ENV === 'production' ? ['console', 'debugger'] : [],
+    // 🔧 保守的压缩设置
     minifyIdentifiers: true,
     minifySyntax: true,
     minifyWhitespace: true,
-    // 🔧 确保 JSX 文件正确转换
-    jsx: 'automatic'
+    // 🔧 确保 JSX 转换正确
+    jsx: 'automatic',
+    target: 'es2020'
+  },
+
+  // 🔧 新增：确保正确的基础路径
+  base: './',
+  
+  // 🔧 新增：预览配置
+  preview: {
+    port: 4173,
+    host: true
   }
 })
