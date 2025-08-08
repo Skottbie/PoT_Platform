@@ -1,5 +1,5 @@
 //client/src/pages/StudentDashboard.jsx
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/axiosInstance';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -12,67 +12,93 @@ const StudentDashboard = () => {
     archived: []
   });
   const [currentCategory, setCurrentCategory] = useState('active');
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const fetchUserAndTasks = async () => {
-      try {
-        const res = await api.get('/user/profile');
-        if (res.data.role !== 'student') return navigate('/');
-        setUser(res.data);
+  // 🚀 并发获取数据，显著提升加载速度
+  const fetchUserAndTasks = useCallback(async () => {
+    try {
+      setLoading(true);
+      
+      // 并行请求关键数据
+      const promises = [
+        api.get('/user/profile'),
+        api.get('/task/all?category=active'),
+        api.get('/task/all?category=archived')
+      ];
 
-        // 获取活跃任务和归档任务
-        await fetchTasks('active');
-        await fetchTasks('archived');
-      } catch (err) {
-        console.error(err);
-        navigate('/');
+      const [userRes, activeTasksRes, archivedTasksRes] = await Promise.allSettled(promises);
+
+      // 处理用户信息
+      if (userRes.status === 'fulfilled') {
+        if (userRes.value.data.role !== 'student') {
+          navigate('/');
+          return;
+        }
+        setUser(userRes.value.data);
       }
-    };
 
-    fetchUserAndTasks();
+      // 处理任务数据
+      const activeTaskList = activeTasksRes.status === 'fulfilled' ? activeTasksRes.value.data : [];
+      const archivedTaskList = archivedTasksRes.status === 'fulfilled' ? archivedTasksRes.value.data : [];
+
+      // 🎯 并行检查提交状态，避免串行请求
+      const checkSubmissions = async (taskList) => {
+        const submissionPromises = taskList.map(async (task) => {
+          try {
+            const r = await api.get(`/submission/check/${task._id}`);
+            return { ...task, submitted: r.data.submitted, submissionInfo: r.data.submission };
+          } catch {
+            return { ...task, submitted: false, submissionInfo: null };
+          }
+        });
+        return Promise.all(submissionPromises);
+      };
+
+      const [activeResults, archivedResults] = await Promise.all([
+        checkSubmissions(activeTaskList),
+        checkSubmissions(archivedTaskList)
+      ]);
+
+      setTasks({
+        active: activeResults,
+        archived: archivedResults
+      });
+
+    } catch (err) {
+      console.error('获取数据失败:', err);
+      navigate('/');
+    } finally {
+      setLoading(false);
+    }
   }, [navigate]);
 
-  // 📌 新增：获取任务函数
-  const fetchTasks = async (category = 'active') => {
-    try {
-      const taskRes = await api.get(`/task/all?category=${category}`);
-      const taskList = taskRes.data;
+  useEffect(() => {
+    fetchUserAndTasks();
+  }, [fetchUserAndTasks]);
 
-      const results = await Promise.all(
-        taskList.map(async (task) => {
-          const r = await api.get(`/submission/check/${task._id}`);
-          return { ...task, submitted: r.data.submitted, submissionInfo: r.data.submission };
-        })
-      );
-
-      setTasks(prev => ({ ...prev, [category]: results }));
-    } catch (err) {
-      console.error('获取任务失败:', err);
+  // 🎯 预加载可能访问的任务详情
+  useEffect(() => {
+    if (tasks.active.length > 0) {
+      // 延迟预加载前3个任务的详情
+      setTimeout(() => {
+        tasks.active.slice(0, 3).forEach(task => {
+          api.get(`/task/${task._id}`).catch(() => {});
+        });
+      }, 2000);
     }
-  };
+  }, [tasks.active]);
 
-  // 📌 新增：切换任务分类
-  const handleCategoryChange = (category) => {
+  // 📌 切换任务分类
+  const handleCategoryChange = useCallback((category) => {
     setCurrentCategory(category);
-  };
+  }, []);
 
-  const formatDeadline = (deadline) => {
-    const date = new Date(deadline);
-    return date.toLocaleString('zh-CN', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
-
-  const getTaskStatus = (task) => {
+  // 🎯 优化任务状态计算，使用 useMemo 避免重复计算
+  const getTaskStatus = useCallback((task) => {
     const now = new Date();
     const deadline = new Date(task.deadline);
     
-    // 📌 新增：归档任务的特殊处理
     if (task.isArchived) {
       if (task.submitted) {
         return {
@@ -118,7 +144,6 @@ const StudentDashboard = () => {
       }
     }
     
-    // 计算剩余时间
     const timeDiff = deadline - now;
     const days = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
     const hours = Math.floor(timeDiff / (1000 * 60 * 60));
@@ -146,9 +171,9 @@ const StudentDashboard = () => {
         canSubmit: true
       };
     }
-  };
+  }, []);
 
-  const getTaskCardStyle = (taskStatus) => {
+  const getTaskCardStyle = useCallback((taskStatus) => {
     const baseStyle = "p-6 rounded-2xl border shadow-md backdrop-blur-md hover:shadow-xl hover:scale-[1.01] transition-all duration-200";
     
     switch (taskStatus.status) {
@@ -168,11 +193,37 @@ const StudentDashboard = () => {
       default:
         return `${baseStyle} bg-white/70 dark:bg-gray-800/60 border-gray-200/50 dark:border-gray-700/50`;
     }
-  };
+  }, []);
 
-  if (!user) return <p className="text-center mt-10 text-gray-600 dark:text-gray-400">加载中...</p>;
+  const formatDeadline = useMemo(() => (deadline) => {
+    const date = new Date(deadline);
+    return date.toLocaleString('zh-CN', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  }, []);
 
-  const currentTasks = tasks[currentCategory] || [];
+  // 🚀 提前计算当前任务列表，避免在渲染中计算
+  const currentTasks = useMemo(() => tasks[currentCategory] || [], [tasks, currentCategory]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <p className="text-gray-600 dark:text-gray-400">加载中...</p>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <p className="text-gray-600 dark:text-gray-400">获取用户信息中...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-10 px-4">
@@ -191,7 +242,7 @@ const StudentDashboard = () => {
           </Button>
         </div>
 
-        {/* 📌 新增：任务分类标签 */}
+        {/* 任务分类标签 */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex gap-1 bg-gray-100 dark:bg-gray-700 p-1 rounded-lg">
             {[
@@ -270,19 +321,16 @@ const StudentDashboard = () => {
                       <p className="text-sm text-gray-500 dark:text-gray-400">
                         📋 逾期提交：{task.allowLateSubmission ? '允许' : '不允许'}
                       </p>
-                      {/* 📌 新增：逾期提交提示 */}
                       {taskStatus.status === 'late' && (
                         <p className="text-sm text-orange-600 dark:text-orange-400 font-medium">
                           ⚠️ 此任务已逾期，提交后将被标注为逾期作业
                         </p>
                       )}
-                      {/* 📌 新增：归档提示 */}
                       {task.isArchived && (
                         <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">
                           📦 此任务已归档，仅供查看
                         </p>
                       )}
-                      {/* 📌 新增：提交信息显示 */}
                       {task.submissionInfo && (
                         <p className="text-sm text-green-600 dark:text-green-400 font-medium">
                           ✅ 已于 {new Date(task.submissionInfo.submittedAt).toLocaleString()} 提交
@@ -292,7 +340,6 @@ const StudentDashboard = () => {
                     </div>
                   </div>
 
-                  {/* 📌 修改：根据任务状态显示不同按钮 */}
                   <div className="flex gap-2">
                     {taskStatus.canSubmit && currentCategory === 'active' && (
                       <Button

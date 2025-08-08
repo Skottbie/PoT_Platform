@@ -1,11 +1,32 @@
 <!doctype html>
-<html lang="en">
+<html lang="zh-CN">
   <head>
     <meta name="color-scheme" content="light dark">
     <meta charset="UTF-8" />
+    
+    <!-- 🚀 关键资源预加载优化 -->
+    <link rel="preconnect" href="https://api.potacademy.net" crossorigin>
+    <link rel="dns-prefetch" href="https://api.potacademy.net">
+    
+    <!-- 预加载核心资源 -->
+    <link rel="modulepreload" href="/src/main.jsx">
+    <link rel="modulepreload" href="/src/App.jsx">
+    <link rel="modulepreload" href="/src/pages/Login.jsx">
+    
+    <!-- 预加载关键样式 -->
+    <link rel="preload" href="/src/index.css" as="style">
+    <link rel="preload" href="/src/App.css" as="style">
+    
+    <!-- 原有配置 -->
     <link rel="icon" type="image/svg+xml" href="./src/assets/logo.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>PoTAcademy</title>
+    
+    <!-- 🎯 SEO优化（顺便做了） -->
+    <title>PoTAcademy - AI时代教学新范式</title>
+    <meta name="description" content="AI时代教学新范式，负责任使用AI教学管理平台">
+    
+    <!-- 🔧 性能提示 -->
+    <meta name="resource-hints" content="preload, preconnect, dns-prefetch">
   </head>
   <body>
     <div id="root"></div>

@@ -4,13 +4,12 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite --host",
-    "build": "vite build --mode production",
-    "build:analyze": "vite build --mode production && npx vite-bundle-analyzer dist",
-    "preview": "vite preview",
-    "deploy": "npm run build && aws s3 sync dist/ s3://www.potacademy.net --delete --region ap-east-1",
-    "deploy:full": "npm run build && aws s3 sync dist/ s3://www.potacademy.net --delete --region ap-east-1 && aws s3 cp dist/index.html s3://www.potacademy.net/index.html --content-type \"text/html\" --cache-control \"no-cache\" --region ap-east-1 && aws s3 sync dist/assets/ s3://www.potacademy.net/assets/ --delete --cache-control \"public,max-age=31536000\" --content-encoding gzip --region ap-east-1"
-  },
+  "dev": "vite --host",
+  "build": "vite build --mode production",
+  "preview": "vite preview",
+  "deploy:clean": "npm run build && aws s3 sync dist/ s3://www.potacademy.net --delete --region ap-east-1 && aws s3 cp dist/index.html s3://www.potacademy.net/index.html --content-type \"text/html\" --cache-control \"no-cache\" --region ap-east-1 && aws s3 sync dist/assets/ s3://www.potacademy.net/assets/ --delete --cache-control \"public,max-age=31536000\" --region ap-east-1"
+  }
+  ,
   "dependencies": {
     "axios": "^1.10.0",
     "clsx": "^2.1.1",

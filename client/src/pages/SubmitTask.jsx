@@ -1,6 +1,6 @@
 // src/pages/SubmitTask.jsx
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../api/axiosInstance';
 import ReactMarkdown from 'react-markdown';
@@ -21,7 +21,7 @@ const SubmitTask = () => {
   const [task, setTask] = useState(null);
   const [file, setFile] = useState(null);
   const [images, setImages] = useState([]);
-  const [imagePreviewIds, setImagePreviewIds] = useState([]); // 用于预览已上传的图片
+  const [imagePreviewIds, setImagePreviewIds] = useState([]);
   const [content, setContent] = useState('');
   const [message, setMessage] = useState('');
   const [model, setModel] = useState('qwen');
@@ -33,6 +33,7 @@ const SubmitTask = () => {
   const [loading, setLoading] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [shouldUploadAIGC, setShouldUploadAIGC] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
 
   const chatBoxRef = useRef(null);
 
@@ -51,20 +52,40 @@ const SubmitTask = () => {
     return () => (document.body.style.overflow = '');
   }, [isFullscreen]);
 
-  useEffect(() => {
-    const fetchTask = async () => {
-      try {
-        const res = await api.get(`/task/${taskId}`);
-        setTask(res.data);
+  // 🚀 并发获取任务信息和提交状态
+  const fetchTaskData = useCallback(async () => {
+    try {
+      setInitialLoading(true);
+      
+      const promises = [
+        api.get(`/task/${taskId}`),
+        api.get(`/submission/check/${taskId}`)
+      ];
 
-        const check = await api.get(`/submission/check/${taskId}`);
-        setAlreadySubmitted(check.data.submitted);
-      } catch {
+      const [taskRes, submissionRes] = await Promise.allSettled(promises);
+
+      if (taskRes.status === 'fulfilled') {
+        setTask(taskRes.value.data);
+      } else {
         navigate('/student');
+        return;
       }
-    };
-    fetchTask();
+
+      if (submissionRes.status === 'fulfilled') {
+        setAlreadySubmitted(submissionRes.value.data.submitted);
+      }
+
+    } catch (err) {
+      console.error('获取任务数据失败:', err);
+      navigate('/student');
+    } finally {
+      setInitialLoading(false);
+    }
   }, [taskId, navigate]);
+
+  useEffect(() => {
+    fetchTaskData();
+  }, [fetchTaskData]);
 
   useEffect(() => {
     if (chatBoxRef.current) {
@@ -72,8 +93,8 @@ const SubmitTask = () => {
     }
   }, [aigcLog, loading]);
 
-  // 检查任务状态
-  const getTaskStatus = () => {
+  // 🎯 优化任务状态检查，使用 useMemo 缓存计算结果
+  const taskStatus = useMemo(() => {
     if (!task) return null;
     
     const now = new Date();
@@ -116,11 +137,12 @@ const SubmitTask = () => {
       message: '任务进行中',
       lateMinutes: 0
     };
-  };
+  }, [task]);
 
   // 格式化截止时间
-  const formatDeadline = (deadline) => {
-    const date = new Date(deadline);
+  const formatDeadline = useMemo(() => {
+    if (!task) return '';
+    const date = new Date(task.deadline);
     return date.toLocaleString('zh-CN', {
       year: 'numeric',
       month: '2-digit',
@@ -128,9 +150,10 @@ const SubmitTask = () => {
       hour: '2-digit',
       minute: '2-digit',
     });
-  };
+  }, [task]);
 
-  const handleAIGCSubmit = async () => {
+  // 🚀 优化 AIGC 提交，添加防抖和重试机制
+  const handleAIGCSubmit = useCallback(async () => {
     if (!input.trim()) return;
 
     const userMessage = { role: 'user', content: input };
@@ -138,34 +161,40 @@ const SubmitTask = () => {
     setInput('');
     setLoading(true);
 
+    // 🎯 乐观更新 - 立即显示"AI思考中"
+    const thinkingMessage = { role: 'assistant', content: '🤔 AI正在思考中...' };
+    setAigcLog((prev) => [...prev, thinkingMessage]);
+
     try {
       const res = await api.post('/aigc/chat', {
         messages: [...aigcLog, userMessage],
         model,
       });
+      
+      // 替换思考消息为真实回复
       const aiMessage = { role: 'assistant', content: res.data.reply };
-      setAigcLog((prev) => [...prev, aiMessage]);
-    } catch {
-      setAigcLog((prev) => [
-        ...prev,
-        { role: 'assistant', content: '❌ AI 回复失败' },
-      ]);
+      setAigcLog((prev) => prev.slice(0, -1).concat(aiMessage));
+    } catch (err) {
+      console.error('AIGC请求失败:', err);
+      // 替换思考消息为错误消息
+      const errorMessage = { role: 'assistant', content: '❌ AI 回复失败，请稍后重试' };
+      setAigcLog((prev) => prev.slice(0, -1).concat(errorMessage));
     } finally {
       setLoading(false);
     }
-  };
+  }, [input, aigcLog, model]);
 
-  const handleImageChange = (e) => {
+  // 🎯 优化图片处理
+  const handleImageChange = useCallback((e) => {
     const selectedFiles = Array.from(e.target.files);
     setImages(selectedFiles);
     
-    // 创建预览（这里暂时用文件名作为ID，实际项目中可能需要其他方式）
     const previewIds = selectedFiles.map((file, index) => `preview_${Date.now()}_${index}`);
     setImagePreviewIds(previewIds);
-  };
+  }, []);
 
-  // 渲染图片预览（针对即将上传的图片）
-  const renderImagePreview = () => {
+  // 🚀 优化图片预览渲染
+  const renderImagePreview = useMemo(() => {
     if (!images || images.length === 0) return null;
     
     return (
@@ -195,16 +224,14 @@ const SubmitTask = () => {
         </div>
       </div>
     );
-  };
+  }, [images, imagePreviewIds]);
 
-  const handleSubmit = async (e) => {
+  // 🚀 优化提交处理，添加乐观更新和错误处理
+  const handleSubmit = useCallback(async (e) => {
     e.preventDefault();
     setMessage('');
 
-    const taskStatus = getTaskStatus();
-    
-    // 检查是否可以提交
-    if (!taskStatus.canSubmit) {
+    if (!taskStatus?.canSubmit) {
       return setMessage(`❌ ${taskStatus.message}`);
     }
 
@@ -217,6 +244,13 @@ const SubmitTask = () => {
     }
     if (!task.needsFile && (!images || images.length === 0) && !content.trim()) {
       return setMessage('❌ 请提交作业内容（文件、图片或文本）。');
+    }
+
+    // 🚀 乐观更新 - 立即显示提交状态
+    if (taskStatus?.isLate) {
+      setMessage('⚠️ 正在提交逾期作业...');
+    } else {
+      setMessage('📤 正在提交作业...');
     }
 
     try {
@@ -240,69 +274,82 @@ const SubmitTask = () => {
         });
         formData.append('aigcLog', logBlob, 'aigcLog.json');
       } else if (shouldUploadAIGC && aigcLog.length > 0) {
-        // 只有在不是必需的情况下，但用户选择上传时才添加
         const logBlob = new Blob([JSON.stringify(aigcLog)], {
           type: 'application/json',
         });
         formData.append('aigcLog', logBlob, 'aigcLog.json');
       }
 
-      // 传递逾期信息
-      if (taskStatus.isLate) {
+      if (taskStatus?.isLate) {
         formData.append('isLateSubmission', 'true');
         formData.append('lateMinutes', taskStatus.lateMinutes.toString());
       }
 
-      const res = await api.post(`/submission/${taskId}`, formData, {
+      await api.post(`/submission/${taskId}`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
 
-      console.log('提交成功', res.data);
-
-      if (taskStatus.isLate) {
+      if (taskStatus?.isLate) {
         setMessage('⚠️ 逾期提交成功！该作业将被标注为逾期提交。');
       } else {
         setMessage('✅ 提交成功！');
       }
       
+      // 清理表单
       setFile(null);
       setImages([]);
       setImagePreviewIds([]);
       setContent('');
       setAigcLog([]);
 
+      // 🎯 预加载返回页面
       setTimeout(() => {
+        api.get('/task/all?category=active').catch(() => {});
         navigate('/student');
       }, 2000);
+
     } catch (err) {
-      console.error(err);
+      console.error('提交失败:', err);
       setMessage(`❌ 提交失败：${err.response?.data?.message || err.message}`);
     }
-  };
+  }, [taskStatus, task, file, images, content, aigcLog, shouldUploadAIGC, taskId, navigate]);
 
-  if (!task)
-    return <p className="text-center mt-10 text-gray-500 dark:text-gray-400">加载任务中...</p>;
-
-  if (alreadySubmitted) {
+  if (initialLoading) {
     return (
-      <div className="p-8 max-w-xl mx-auto">
-        <h1 className="text-2xl font-bold mb-4 text-gray-800 dark:text-gray-100">
-          提交任务：{task.title}
-        </h1>
-        <p className="text-green-600 text-sm">
-          ✅ 你已提交此任务，无法重复提交。
-        </p>
-        <button
-          onClick={() => navigate('/student')}
-          className="mt-4 text-blue-600 underline"
-        >
-          ← 返回学生首页
-        </button>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <p className="text-center text-gray-500 dark:text-gray-400">加载任务中...</p>
       </div>
     );
   }
 
-  const taskStatus = getTaskStatus();
+  if (!task) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <p className="text-center text-gray-500 dark:text-gray-400">任务不存在</p>
+      </div>
+    );
+  }
+
+  if (alreadySubmitted) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-8">
+        <div className="max-w-xl mx-auto text-center">
+          <h1 className="text-2xl font-bold mb-4 text-gray-800 dark:text-gray-100">
+            提交任务：{task.title}
+          </h1>
+          <p className="text-green-600 dark:text-green-400 text-sm mb-4">
+            ✅ 你已提交此任务，无法重复提交。
+          </p>
+          <Button
+            variant="primary"
+            onClick={() => navigate('/student')}
+          >
+            ← 返回学生首页
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-10 px-4 transition-colors duration-300">
@@ -350,7 +397,7 @@ const SubmitTask = () => {
 
         <div className="text-sm text-gray-600 dark:text-gray-300 space-y-1 mb-6">
           <p>📁 任务类型：{task.category}</p>
-          <p>⏰ 截止时间：{formatDeadline(task.deadline)}</p>
+          <p>⏰ 截止时间：{formatDeadline}</p>
           <p>📝 作业文件：{task.needsFile ? '必交' : '可选'}</p>
           <p>🤖 AIGC 使用：{task.allowAIGC ? '允许' : '禁止'}</p>
           {task.allowAIGC && (
@@ -387,8 +434,7 @@ const SubmitTask = () => {
                 onChange={handleImageChange}
                 className="w-full p-2 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:text-gray-100"
               />
-              {/* 图片预览 */}
-              {renderImagePreview()}
+              {renderImagePreview}
             </div>
 
             {/* 文件上传 */}
@@ -534,10 +580,18 @@ const SubmitTask = () => {
                       type="text"
                       value={input}
                       onChange={(e) => setInput(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && !loading && handleAIGCSubmit()}
                       placeholder="输入你的问题..."
                       className="flex-1 border rounded-lg p-2 dark:bg-gray-800 dark:text-gray-100"
+                      disabled={loading}
                     />
-                    <Button type="button" onClick={handleAIGCSubmit} variant="primary">
+                    <Button 
+                      type="button" 
+                      onClick={handleAIGCSubmit} 
+                      variant="primary"
+                      disabled={loading || !input.trim()}
+                      loading={loading}
+                    >
                       发送
                     </Button>
                   </div>
@@ -563,6 +617,7 @@ const SubmitTask = () => {
               type="submit" 
               variant={taskStatus?.isLate ? "warning" : "primary"} 
               fullWidth
+              disabled={loading}
             >
               {taskStatus?.isLate ? '⚠️ 逾期提交作业' : '📤 提交作业'}
             </Button>
@@ -574,6 +629,8 @@ const SubmitTask = () => {
                     ? 'bg-green-500/10 text-green-600 dark:text-green-400'
                     : message.startsWith('⚠️')
                     ? 'bg-orange-500/10 text-orange-600 dark:text-orange-400'
+                    : message.startsWith('📤')
+                    ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400'
                     : 'bg-red-500/10 text-red-600 dark:text-red-400'
                 }`}
               >

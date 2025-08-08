@@ -1,6 +1,6 @@
 //client/src/pages/TeacherDashboard.jsx
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/axiosInstance';
 import Button from '../components/Button';
@@ -22,16 +22,18 @@ const TeacherDashboard = () => {
     classIds: [],
   });
   const [message, setMessage] = useState('');
+  const [loading, setLoading] = useState(true);
 
   const [confirmDialog, setConfirmDialog] = useState({
-  isOpen: false,
-  title: '',
-  message: '',
-  onConfirm: null,
-  confirmText: '确认',
-  confirmVariant: 'danger'
-});
-  // 📌 新增：任务分类状态
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: null,
+    confirmText: '确认',
+    confirmVariant: 'danger'
+  });
+
+  // 任务相关状态
   const [tasks, setTasks] = useState({
     active: [],
     archived: [],
@@ -41,59 +43,95 @@ const TeacherDashboard = () => {
   const [selectedTasks, setSelectedTasks] = useState(new Set());
   const [showBatchModal, setShowBatchModal] = useState(false);
   const [batchOperation, setBatchOperation] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [batchLoading, setBatchLoading] = useState(false);
   
   const navigate = useNavigate();
   const [myClasses, setMyClasses] = useState([]);
 
-  useEffect(() => {
-    const fetchUserAndData = async () => {
-      try {
-        const res = await api.get('/user/profile');
-        if (res.data.role !== 'teacher') return navigate('/');
-        setUser(res.data);
+  // 🚀 并发获取所有初始数据
+  const fetchInitialData = useCallback(async () => {
+    try {
+      setLoading(true);
+      
+      // 并行请求所有关键数据
+      const promises = [
+        api.get('/user/profile'),
+        api.get('/class/my-classes'),
+        api.get('/task/mine?category=active'),
+        api.get('/task/mine?category=archived'),
+        api.get('/task/mine?category=deleted')
+      ];
 
-        // 获取班级
-        const classRes = await api.get('/class/my-classes');
-        if (classRes.data.success) {
-          setMyClasses(classRes.data.classes);
+      const results = await Promise.allSettled(promises);
+      
+      // 处理用户信息
+      if (results[0].status === 'fulfilled') {
+        const userData = results[0].value.data;
+        if (userData.role !== 'teacher') {
+          navigate('/');
+          return;
         }
-
-        // 获取任务
-        await fetchTasks();
-      } catch {
-        navigate('/');
+        setUser(userData);
       }
-    };
-    fetchUserAndData();
+
+      // 处理班级数据
+      if (results[1].status === 'fulfilled' && results[1].value.data.success) {
+        setMyClasses(results[1].value.data.classes);
+      }
+
+      // 处理任务数据
+      const taskResults = {
+        active: results[2].status === 'fulfilled' ? results[2].value.data : [],
+        archived: results[3].status === 'fulfilled' ? results[3].value.data : [],
+        deleted: results[4].status === 'fulfilled' ? results[4].value.data : []
+      };
+      
+      setTasks(taskResults);
+
+    } catch (err) {
+      console.error('获取初始数据失败:', err);
+      navigate('/');
+    } finally {
+      setLoading(false);
+    }
   }, [navigate]);
 
-  // 📌 新增：获取任务函数
-  const fetchTasks = async (category = 'active') => {
+  useEffect(() => {
+    fetchInitialData();
+  }, [fetchInitialData]);
+
+  // 📌 获取任务函数 - 优化为只在需要时请求
+  const fetchTasks = useCallback(async (category = 'active') => {
     try {
       const res = await api.get(`/task/mine?category=${category}`);
       setTasks(prev => ({ ...prev, [category]: res.data }));
     } catch (err) {
       console.error('获取任务失败:', err);
     }
-  };
+  }, []);
 
-  // 📌 新增：切换任务分类
-  const handleCategoryChange = async (category) => {
+  // 📌 切换任务分类 - 延迟加载策略
+  const handleCategoryChange = useCallback(async (category) => {
     setCurrentCategory(category);
     setSelectedTasks(new Set());
-    await fetchTasks(category);
-  };
+    
+    // 如果该分类数据为空，才重新请求
+    if (tasks[category].length === 0) {
+      await fetchTasks(category);
+    }
+  }, [tasks, fetchTasks]);
 
-  const handleChange = (e) => {
+  // 🚀 优化表单处理 - 合并状态更新
+  const handleChange = useCallback((e) => {
     const { name, value, type, checked } = e.target;
-    setForm((prev) => ({
+    setForm(prev => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value,
     }));
-  };
+  }, []);
 
-  const handleSubmit = async (e) => {
+  // 🎯 优化任务提交 - 添加乐观更新
+  const handleSubmit = useCallback(async (e) => {
     e.preventDefault();
     setMessage('');
     
@@ -101,19 +139,33 @@ const TeacherDashboard = () => {
       return setMessage('❌ 必须先允许使用AIGC，才能要求上传AIGC记录。');
     }
 
-    if (!form.deadline) {
-      return setMessage('❌ 请设置截止日期。');
-    }
-    if (!form.deadlineTime) {
-      return setMessage('❌ 请设置截止时间。');
+    if (!form.deadline || !form.deadlineTime) {
+      return setMessage('❌ 请设置完整的截止时间。');
     }
 
     const deadlineDateTime = new Date(`${form.deadline}T${form.deadlineTime}`);
-    const now = new Date();
-    
-    if (deadlineDateTime <= now) {
+    if (deadlineDateTime <= new Date()) {
       return setMessage('❌ 截止时间必须晚于当前时间。');
     }
+
+    // 🚀 乐观更新 - 立即显示成功状态
+    const tempTask = {
+      _id: `temp_${Date.now()}`,
+      title: form.title,
+      category: form.category,
+      deadline: deadlineDateTime.toISOString(),
+      createdAt: new Date().toISOString(),
+      isArchived: false,
+      isDeleted: false,
+      ...form
+    };
+
+    // 立即更新UI
+    setTasks(prev => ({
+      ...prev,
+      active: [tempTask, ...prev.active]
+    }));
+    setMessage('✅ 任务发布成功！');
 
     try {
       const submitData = {
@@ -122,8 +174,17 @@ const TeacherDashboard = () => {
       };
       delete submitData.deadlineTime;
 
-      await api.post('/task', submitData);
-      setMessage('✅ 任务发布成功！');
+      const response = await api.post('/task', submitData);
+      
+      // 替换临时任务为真实任务
+      setTasks(prev => ({
+        ...prev,
+        active: prev.active.map(task => 
+          task._id === tempTask._id ? response.data.task : task
+        )
+      }));
+
+      // 重置表单
       setForm({
         title: '',
         category: '课堂练习',
@@ -136,19 +197,70 @@ const TeacherDashboard = () => {
         classIds: [],
       });
 
-      // 刷新活跃任务列表
-      await fetchTasks('active');
     } catch (err) {
+      // 失败时回滚UI
+      setTasks(prev => ({
+        ...prev,
+        active: prev.active.filter(task => task._id !== tempTask._id)
+      }));
       console.error(err);
       setMessage('❌ 发布失败，请检查字段');
     }
+  }, [form]);
 
-  };
-
-  // 📌 新增：任务操作函数
-  const handleTaskOperation = async (taskId, operation, options = {}) => {
+  // 📌 任务操作函数 - 添加乐观更新
+  const handleTaskOperation = useCallback(async (taskId, operation, options = {}) => {
     try {
-      setLoading(true);
+      setBatchLoading(true);
+      
+      // 🚀 乐观更新 - 立即更新UI状态
+      const updateTasksOptimistically = (taskId, operation) => {
+        setTasks(prev => {
+          const newTasks = { ...prev };
+          
+          // 从当前分类中找到任务
+          let sourceCategory = currentCategory;
+          let taskToMove = null;
+          
+          // 先找到任务
+          for (const [category, taskList] of Object.entries(newTasks)) {
+            const taskIndex = taskList.findIndex(t => t._id === taskId);
+            if (taskIndex !== -1) {
+              taskToMove = taskList[taskIndex];
+              sourceCategory = category;
+              break;
+            }
+          }
+          
+          if (!taskToMove) return prev;
+          
+          // 执行乐观更新
+          switch (operation) {
+            case 'archive':
+              newTasks.active = newTasks.active.filter(t => t._id !== taskId);
+              newTasks.archived = [{ ...taskToMove, isArchived: true }, ...newTasks.archived];
+              break;
+            case 'unarchive':
+              newTasks.archived = newTasks.archived.filter(t => t._id !== taskId);
+              newTasks.active = [{ ...taskToMove, isArchived: false }, ...newTasks.active];
+              break;
+            case 'soft_delete':
+              newTasks[sourceCategory] = newTasks[sourceCategory].filter(t => t._id !== taskId);
+              newTasks.deleted = [{ ...taskToMove, isDeleted: true }, ...newTasks.deleted];
+              break;
+            case 'restore':
+              newTasks.deleted = newTasks.deleted.filter(t => t._id !== taskId);
+              newTasks.active = [{ ...taskToMove, isDeleted: false }, ...newTasks.active];
+              break;
+          }
+          
+          return newTasks;
+        });
+      };
+
+      // 立即更新UI
+      updateTasksOptimistically(taskId, operation);
+      
       let endpoint = '';
       let method = 'POST';
       
@@ -180,27 +292,27 @@ const TeacherDashboard = () => {
       }
 
       await api(config);
-      
-      // 刷新当前分类的任务列表
-      await fetchTasks(currentCategory);
       toast.success('✅ 操作成功');
+      
     } catch (err) {
       console.error('操作失败:', err);
       toast.error(`❌ 操作失败：${err.response?.data?.message || err.message}`);
+      // 失败时重新获取数据
+      await fetchTasks(currentCategory);
     } finally {
-      setLoading(false);
+      setBatchLoading(false);
     }
-  };
+  }, [currentCategory, fetchTasks]);
 
-  // 📌 新增：批量操作
-  const handleBatchOperation = async () => {
+  // 📌 批量操作
+  const handleBatchOperation = useCallback(async () => {
     if (selectedTasks.size === 0) {
       setMessage('❌ 请选择要操作的任务');
       return;
     }
 
     try {
-      setLoading(true);
+      setBatchLoading(true);
       const taskIds = Array.from(selectedTasks);
       
       await api.post('/task/batch', {
@@ -216,12 +328,12 @@ const TeacherDashboard = () => {
     } catch (err) {
       setMessage(`❌ 批量操作失败：${err.response?.data?.message || err.message}`);
     } finally {
-      setLoading(false);
+      setBatchLoading(false);
     }
-  };
+  }, [selectedTasks, batchOperation, currentCategory, fetchTasks]);
 
-  // 📌 新增：切换任务选择
-  const toggleTaskSelection = (taskId) => {
+  // 📌 任务选择相关函数
+  const toggleTaskSelection = useCallback((taskId) => {
     const newSelection = new Set(selectedTasks);
     if (newSelection.has(taskId)) {
       newSelection.delete(taskId);
@@ -229,19 +341,19 @@ const TeacherDashboard = () => {
       newSelection.add(taskId);
     }
     setSelectedTasks(newSelection);
-  };
+  }, [selectedTasks]);
 
-  // 📌 新增：全选/取消全选
-  const toggleSelectAll = () => {
+  const toggleSelectAll = useCallback(() => {
     const currentTasks = tasks[currentCategory] || [];
     if (selectedTasks.size === currentTasks.length) {
       setSelectedTasks(new Set());
     } else {
       setSelectedTasks(new Set(currentTasks.map(task => task._id)));
     }
-  };
+  }, [tasks, currentCategory, selectedTasks.size]);
 
-  const formatDeadline = (deadline) => {
+  // 🎯 优化时间格式化 - 使用 useMemo
+  const formatDeadline = useMemo(() => (deadline) => {
     const date = new Date(deadline);
     return date.toLocaleString('zh-CN', {
       year: 'numeric',
@@ -250,9 +362,9 @@ const TeacherDashboard = () => {
       hour: '2-digit',
       minute: '2-digit',
     });
-  };
+  }, []);
 
-  const getTaskStatus = (deadline) => {
+  const getTaskStatus = useCallback((deadline) => {
     const now = new Date();
     const deadlineDate = new Date(deadline);
     
@@ -272,12 +384,26 @@ const TeacherDashboard = () => {
         return { status: 'urgent', text: `还有${minutes}分钟`, color: 'text-red-600 dark:text-red-400' };
       }
     }
-  };
+  }, []);
 
-  if (!user)
-    return <p className="text-center mt-10 text-gray-500">加载中...</p>;
+  // 🚀 提前计算当前任务列表
+  const currentTasks = useMemo(() => tasks[currentCategory] || [], [tasks, currentCategory]);
 
-  const currentTasks = tasks[currentCategory] || [];
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <p className="text-center text-gray-500">加载中...</p>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <p className="text-center text-gray-500">获取用户信息中...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-10 px-4 transition-colors duration-300">
@@ -449,7 +575,7 @@ const TeacherDashboard = () => {
           </form>
         </div>
 
-        {/* 📌 新增：任务管理区域 */}
+        {/* 任务管理区域 */}
         <div>
           {/* 任务分类标签 */}
           <div className="flex flex-wrap items-center justify-between mb-6">
@@ -620,7 +746,7 @@ const TeacherDashboard = () => {
                                   confirmText: '归档',
                                   confirmVariant: 'primary'
                                 })}
-                                disabled={loading}
+                                disabled={batchLoading}
                               >
                                 📦 归档
                               </Button>
@@ -639,7 +765,7 @@ const TeacherDashboard = () => {
                                   confirmText: '删除',
                                   confirmVariant: 'danger'
                                 })}
-                                disabled={loading}
+                                disabled={batchLoading}
                               >
                                 🗑️ 删除
                               </Button>
@@ -652,7 +778,7 @@ const TeacherDashboard = () => {
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => handleTaskOperation(task._id, 'unarchive')}
-                                disabled={loading}
+                                disabled={batchLoading}
                               >
                                 📤 恢复
                               </Button>
@@ -670,7 +796,7 @@ const TeacherDashboard = () => {
                                     toast.error(`❌ 权限设置失败：${err.response?.data?.message || err.message}`);
                                   }
                                 }}
-                                disabled={loading}
+                                disabled={batchLoading}
                               >
                                 {task.allowStudentViewWhenArchived ? '🔒 限制学生查看' : '🔓 开放学生查看'}
                               </Button>
@@ -678,7 +804,7 @@ const TeacherDashboard = () => {
                                 variant="danger"
                                 size="sm"
                                 onClick={() => handleTaskOperation(task._id, 'soft_delete')}
-                                disabled={loading}
+                                disabled={batchLoading}
                               >
                                 🗑️ 删除
                               </Button>
@@ -691,7 +817,7 @@ const TeacherDashboard = () => {
                                 variant="secondary"
                                 size="sm"
                                 onClick={() => handleTaskOperation(task._id, 'restore')}
-                                disabled={loading}
+                                disabled={batchLoading}
                               >
                                 🔄 恢复
                               </Button>
@@ -709,7 +835,7 @@ const TeacherDashboard = () => {
                                   confirmText: '永久删除',
                                   confirmVariant: 'danger'
                                 })}
-                                disabled={loading}
+                                disabled={batchLoading}
                               >
                                 💀 永久删除
                               </Button>
@@ -725,7 +851,7 @@ const TeacherDashboard = () => {
           )}
         </div>
 
-        {/* 📌 新增：批量操作确认模态框 */}
+        {/* 批量操作确认模态框 */}
         <AnimatePresence>
           {showBatchModal && (
             <motion.div
@@ -755,14 +881,14 @@ const TeacherDashboard = () => {
                   <Button
                     variant="secondary"
                     onClick={() => setShowBatchModal(false)}
-                    disabled={loading}
+                    disabled={batchLoading}
                   >
                     取消
                   </Button>
                   <Button
                     variant={batchOperation === 'soft_delete' ? 'danger' : 'primary'}
                     onClick={handleBatchOperation}
-                    loading={loading}
+                    loading={batchLoading}
                   >
                     确认{batchOperation === 'archive' ? '归档' :
                            batchOperation === 'unarchive' ? '恢复' :
@@ -774,18 +900,18 @@ const TeacherDashboard = () => {
           )}
         </AnimatePresence>
       </div>
-          <ConfirmDialog
-            isOpen={confirmDialog.isOpen}
-            onClose={() => setConfirmDialog(prev => ({ ...prev, isOpen: false }))}
-            onConfirm={confirmDialog.onConfirm}
-            title={confirmDialog.title}
-            message={confirmDialog.message}
-            confirmText={confirmDialog.confirmText}
-            confirmVariant={confirmDialog.confirmVariant}
-            loading={loading}
-          />
+      
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        onClose={() => setConfirmDialog(prev => ({ ...prev, isOpen: false }))}
+        onConfirm={confirmDialog.onConfirm}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        confirmText={confirmDialog.confirmText}
+        confirmVariant={confirmDialog.confirmVariant}
+        loading={batchLoading}
+      />
     </div>
-    
   );
 };
 

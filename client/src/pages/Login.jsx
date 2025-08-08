@@ -1,33 +1,78 @@
-import { useState } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import axios from '../api/axiosInstance';
 import { useNavigate } from 'react-router-dom';
 import Button from '../components/Button';
 
 const Login = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  // 🚀 合并状态，减少重渲染
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+    error: '',
+    loading: false
+  });
+  
   const navigate = useNavigate();
 
-  const handleSubmit = async (e) => {
+  // 🎯 优化表单处理，使用 useCallback 避免重复创建函数
+  const handleChange = useCallback((e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ 
+      ...prev, 
+      [name]: value,
+      error: '' // 清除错误信息
+    }));
+  }, []);
+
+  // 🚀 优化提交处理
+  const handleSubmit = useCallback(async (e) => {
     e.preventDefault();
-    setError('');
+    
+    if (formData.loading) return; // 防止重复提交
+    
+    setFormData(prev => ({ ...prev, error: '', loading: true }));
+    
     try {
-      const res = await axios.post('/auth/login', { email, password });
+      const res = await axios.post('/auth/login', {
+        email: formData.email,
+        password: formData.password
+      });
+      
       const { token, role } = res.data;
 
       localStorage.setItem('token', token);
       localStorage.setItem('role', role);
 
+      // 🎯 预加载下一页资源
       if (role === 'teacher') {
+        // 预加载教师仪表盘关键API
+        axios.get('/user/profile').catch(() => {});
+        axios.get('/task/mine?category=active').catch(() => {});
         navigate('/teacher');
       } else {
+        // 预加载学生仪表盘关键API
+        axios.get('/user/profile').catch(() => {});
+        axios.get('/task/all?category=active').catch(() => {});
         navigate('/student');
       }
     } catch (err) {
-      setError(err.response?.data?.message || '登录失败');
+      setFormData(prev => ({
+        ...prev,
+        error: err.response?.data?.message || '登录失败',
+        loading: false
+      }));
     }
-  };
+  }, [formData.email, formData.password, formData.loading, navigate]);
+
+  // 🎯 记住按钮配置，避免每次渲染重新创建
+  const buttonProps = useMemo(() => ({
+    type: "submit",
+    variant: "primary",
+    size: "md",
+    fullWidth: true,
+    loading: formData.loading,
+    disabled: !formData.email || !formData.password
+  }), [formData.loading, formData.email, formData.password]);
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
@@ -43,10 +88,12 @@ const Login = () => {
         <form onSubmit={handleSubmit} className="space-y-4">
           <input
             type="email"
+            name="email"
             placeholder="邮箱"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            value={formData.email}
+            onChange={handleChange}
             required
+            autoComplete="username"
             className="w-full px-4 py-2 rounded-xl border
                       bg-white/70 dark:bg-gray-700/70
                       text-gray-900 dark:text-gray-100
@@ -58,10 +105,12 @@ const Login = () => {
 
           <input
             type="password"
+            name="password"
             placeholder="密码"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            value={formData.password}
+            onChange={handleChange}
             required
+            autoComplete="current-password"
             className="w-full px-4 py-2 rounded-xl border
                       bg-white/70 dark:bg-gray-700/70
                       text-gray-900 dark:text-gray-100
@@ -71,21 +120,16 @@ const Login = () => {
                       transition"
           />
 
-          {error && (
+          {formData.error && (
             <p className="text-red-500 dark:text-red-400 text-sm text-center
                           bg-red-50/50 dark:bg-red-900/30 
                           rounded-lg py-1 mt-2">
-              {error}
+              {formData.error}
             </p>
           )}
 
-          <Button
-            type="submit"
-            variant="primary"
-            size="md"
-            fullWidth
-          >
-            登录
+          <Button {...buttonProps}>
+            {formData.loading ? '登录中...' : '登录'}
           </Button>
         </form>
 
