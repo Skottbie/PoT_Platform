@@ -11,11 +11,11 @@ export default defineConfig({
     // 预热经常访问的文件
     warmup: {
       clientFiles: [
-        './src/main',
-        './src/App', 
-        './src/pages/Login',
-        './src/pages/StudentDashboard',
-        './src/pages/TeacherDashboard'
+        './src/main.jsx',
+        './src/App.jsx', 
+        './src/pages/Login.jsx',
+        './src/pages/StudentDashboard.jsx',
+        './src/pages/TeacherDashboard.jsx'
       ]
     }
   },
@@ -39,15 +39,29 @@ export default defineConfig({
           // 工具库 - 更新频率中等
           'vendor-utils': ['axios', 'papaparse'],
           
-          // 🚀 新增：关键页面预分包
+          // 🚀 修复：使用正确的路径格式进行页面分包
           'pages-auth': [
-            './src/pages/Login',
-            './src/pages/Register'
+            '/src/pages/Login.jsx',
+            '/src/pages/Register.jsx'
           ],
           'pages-dashboard': [
-            './src/pages/StudentDashboard', 
-            './src/pages/TeacherDashboard'
+            '/src/pages/StudentDashboard.jsx', 
+            '/src/pages/TeacherDashboard.jsx'
           ]
+        },
+        // 🔧 确保所有 JS 文件都有正确的扩展名
+        entryFileNames: 'assets/[name]-[hash].js',
+        chunkFileNames: 'assets/[name]-[hash].js',
+        assetFileNames: (assetInfo) => {
+          const info = assetInfo.name.split('.');
+          const ext = info[info.length - 1];
+          if (/png|jpe?g|svg|gif|tiff|bmp|ico/i.test(ext)) {
+            return `assets/images/[name]-[hash][extname]`;
+          }
+          if (/css/i.test(ext)) {
+            return `assets/css/[name]-[hash][extname]`;
+          }
+          return `assets/[name]-[hash][extname]`;
         }
       }
     },
@@ -85,7 +99,10 @@ export default defineConfig({
     reportCompressedSize: false, // 构建时跳过大小报告，提升构建速度
     
     // 🚀 现代浏览器优化
-    target: ['es2015', 'chrome79', 'safari13']
+    target: ['es2015', 'chrome79', 'safari13'],
+    
+    // 🔧 确保输出目录清理
+    emptyOutDir: true
   },
   
   // 🎯 预加载优化
@@ -108,6 +125,8 @@ export default defineConfig({
     // 最小化标识符名称
     minifyIdentifiers: true,
     minifySyntax: true,
-    minifyWhitespace: true
+    minifyWhitespace: true,
+    // 🔧 确保 JSX 文件正确转换
+    jsx: 'automatic'
   }
 })
