@@ -1,4 +1,4 @@
-// src/pages/SubmitTask.jsx
+// src/pages/SubmitTask.jsx - 修复任务描述显示
 
 import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -338,7 +338,7 @@ const SubmitTask = () => {
             提交任务：{task.title}
           </h1>
 
-          {/* 📌 新增：显示任务描述 */}
+          {/* 📌 显示任务描述 */}
           {task.description && (
             <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-xl">
               <h3 className="text-sm font-semibold text-blue-800 dark:text-blue-200 mb-2">
@@ -381,6 +381,18 @@ const SubmitTask = () => {
         <h1 className="text-2xl font-bold mb-4 text-gray-800 dark:text-gray-100">
           提交任务：{task.title}
         </h1>
+
+        {/* 📌 添加任务描述显示 */}
+        {task.description && (
+          <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-xl">
+            <h3 className="text-sm font-semibold text-blue-800 dark:text-blue-200 mb-2">
+              📋 任务说明
+            </h3>
+            <p className="text-blue-700 dark:text-blue-300 text-sm leading-relaxed whitespace-pre-wrap">
+              {task.description}
+            </p>
+          </div>
+        )}
 
         {/* 任务状态提醒 */}
         {taskStatus && (

@@ -6,6 +6,7 @@ import api from '../api/axiosInstance';
 import Button from '../components/Button';
 import { motion, AnimatePresence } from 'framer-motion';
 import LazyImageGrid from '../components/LazyImageGrid';
+import toast from 'react-hot-toast'; // 📌 使用 toast 替代 alert
 
 const TeacherTaskSubmissions = () => {
   const { taskId } = useParams();
@@ -22,10 +23,11 @@ const TeacherTaskSubmissions = () => {
   });
   const [feedbackForm, setFeedbackForm] = useState({
     content: '',
-    rating: null
+    rating: 0 // 📌 修复：初始值改为 0，表示未评分
   });
   const [submittingFeedback, setSubmittingFeedback] = useState(false);
 
+  // 📌 修复：移除重复的函数定义，只保留一个
   useEffect(() => {
     const fetchTaskAndSubmissions = async () => {
       try {
@@ -38,6 +40,7 @@ const TeacherTaskSubmissions = () => {
         setSubmissions(res.data);
       } catch (err) {
         console.error('获取数据失败', err);
+        toast.error('获取数据失败'); // 📌 使用 toast
         navigate('/');
       } finally {
         setLoading(false);
@@ -46,6 +49,16 @@ const TeacherTaskSubmissions = () => {
     fetchTaskAndSubmissions();
   }, [taskId, navigate]);
 
+  // 📌 单独的刷新数据函数
+  const refreshData = async () => {
+    try {
+      const res = await api.get(`/submission/by-task/${taskId}`);
+      setSubmissions(res.data);
+    } catch (err) {
+      console.error('刷新数据失败:', err);
+      toast.error('刷新数据失败');
+    }
+  };
 
   //反馈处理函数
   const openFeedbackModal = (submission) => {
@@ -56,10 +69,10 @@ const TeacherTaskSubmissions = () => {
       currentFeedback: submission.feedback,
     });
 
-    // 如果已有反馈，填入表单；否则初始化为空
+    // 📌 修复：正确处理星星评分的初始状态
     setFeedbackForm({
       content: submission.feedback?.content || '',
-      rating: submission.feedback?.rating ?? 0, // 保持 0 作为未评分的默认值
+      rating: submission.feedback?.rating || 0, // 如果没有评分，显示 0 星
     });
   };
 
@@ -80,7 +93,7 @@ const TeacherTaskSubmissions = () => {
     e.preventDefault();
 
     if (!feedbackForm.content.trim()) {
-      alert('请输入反馈内容');
+      toast.error('请输入反馈内容'); // 📌 使用 toast
       return;
     }
 
@@ -93,40 +106,73 @@ const TeacherTaskSubmissions = () => {
       });
 
       if (res.data.success) {
-        alert('反馈提交成功！');
+        toast.success('反馈提交成功！'); // 📌 使用 toast
         closeFeedbackModal();
-        // 刷新提交列表
-        fetchTaskAndSubmissions();
+        // 📌 修复：调用正确的刷新函数
+        await refreshData();
       } else {
-        alert('反馈提交失败：' + (res.data.message || '未知错误'));
+        toast.error('反馈提交失败：' + (res.data.message || '未知错误'));
       }
     } catch (err) {
       console.error('提交反馈失败:', err);
-      alert('反馈提交失败：' + (err.response?.data?.message || '网络错误'));
+      toast.error('反馈提交失败：' + (err.response?.data?.message || '网络错误'));
     } finally {
       setSubmittingFeedback(false);
     }
   };
 
-const handleDeleteFeedback = async (submissionId) => {
-  if (!confirm('确定要删除这条反馈吗？')) {
-    return;
-  }
+  const handleDeleteFeedback = async (submissionId) => {
+    // 📌 使用自定义确认弹窗替代原生 confirm
+    const confirmDelete = () => {
+      return new Promise((resolve) => {
+        toast((t) => (
+          <div className="flex flex-col gap-3">
+            <p>确定要删除这条反馈吗？</p>
+            <div className="flex gap-2 justify-end">
+              <button
+                className="px-3 py-1 bg-gray-200 rounded text-sm"
+                onClick={() => {
+                  toast.dismiss(t.id);
+                  resolve(false);
+                }}
+              >
+                取消
+              </button>
+              <button
+                className="px-3 py-1 bg-red-500 text-white rounded text-sm"
+                onClick={() => {
+                  toast.dismiss(t.id);
+                  resolve(true);
+                }}
+              >
+                删除
+              </button>
+            </div>
+          </div>
+        ), {
+          duration: Infinity,
+          style: { maxWidth: '300px' }
+        });
+      });
+    };
 
-  try {
-    const res = await api.delete(`/submission/${submissionId}/feedback`);
-    
-    if (res.data.success) {
-      alert('反馈已删除！');
-      fetchTaskAndSubmissions();
-    } else {
-      alert('删除失败：' + (res.data.message || '未知错误'));
+    const confirmed = await confirmDelete();
+    if (!confirmed) return;
+
+    try {
+      const res = await api.delete(`/submission/${submissionId}/feedback`);
+      
+      if (res.data.success) {
+        toast.success('反馈已删除！');
+        await refreshData(); // 📌 使用正确的刷新函数
+      } else {
+        toast.error('删除失败：' + (res.data.message || '未知错误'));
+      }
+    } catch (err) {
+      console.error('删除反馈失败:', err);
+      toast.error('删除失败：' + (err.response?.data?.message || '网络错误'));
     }
-  } catch (err) {
-    console.error('删除反馈失败:', err);
-    alert('删除失败：' + (err.response?.data?.message || '网络错误'));
-  }
-};
+  };
 
   // 格式化截止时间
   const formatDeadline = (deadline) => {
@@ -172,7 +218,7 @@ const handleDeleteFeedback = async (submissionId) => {
       window.URL.revokeObjectURL(blobUrl);
     } catch (error) {
       console.error('下载失败:', error);
-      alert('文件下载失败，请重试。');
+      toast.error('文件下载失败，请重试。');
     }
   };
 
@@ -189,7 +235,7 @@ const handleDeleteFeedback = async (submissionId) => {
             window.open(blobUrl, '_blank');
         } catch (error) {
             console.error('预览失败:', error);
-            alert('文件预览失败，请重试。');
+            toast.error('文件预览失败，请重试。');
         }
     };
   
@@ -316,7 +362,7 @@ const handleDeleteFeedback = async (submissionId) => {
             {task && (
               <div className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
                 <p><strong>任务：</strong>{task.title}</p>
-                {/* 📌 新增：显示任务描述 */}
+                {/* 📌 显示任务描述 */}
                 {task.description && (
                   <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 mt-2">
                     <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
@@ -532,6 +578,7 @@ const handleDeleteFeedback = async (submissionId) => {
                           }));
                         }}
                         className={`text-2xl transition-colors ${
+                          // 📌 修复：正确的星星显示逻辑
                           feedbackForm.rating >= star && feedbackForm.rating !== 0
                             ? 'text-yellow-500'
                             : 'text-gray-300 hover:text-yellow-400'
@@ -541,6 +588,10 @@ const handleDeleteFeedback = async (submissionId) => {
                       </button>
                     ))}
                   </div>
+                  {/* 📌 添加评分状态显示 */}
+                  <p className="text-xs text-gray-500 mt-1">
+                    {feedbackForm.rating === 0 ? '未评分' : `${feedbackForm.rating} 星`}
+                  </p>
                 </div>
 
                 {/* 反馈内容 */}

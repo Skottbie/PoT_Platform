@@ -1,3 +1,4 @@
+//server/models/ClassModel.js
 const mongoose = require('mongoose');
 
 const classSchema = new mongoose.Schema({

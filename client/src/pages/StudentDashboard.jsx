@@ -282,10 +282,20 @@ const StudentDashboard = () => {
                   className={getTaskCardStyle(taskStatus)}
                 >
                   <div className="flex justify-between items-start mb-3">
-                    <h3 className="text-xl font-bold text-gray-800 dark:text-gray-100">
-                      {task.title}
-                    </h3>
-                    <span className={`text-sm font-medium ${taskStatus.color}`}>
+                    <div className="flex-1">
+                      <h3 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-2">
+                        {task.title}
+                      </h3>
+                      {/* 📌 新增：显示任务描述 */}
+                      {task.description && (
+                        <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 mb-3 border border-blue-200 dark:border-blue-700">
+                          <p className="text-sm text-blue-800 dark:text-blue-200 whitespace-pre-wrap">
+                            📋 {task.description}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                    <span className={`text-sm font-medium ${taskStatus.color} ml-4 flex-shrink-0`}>
                       {taskStatus.text}
                     </span>
                   </div>

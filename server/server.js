@@ -21,7 +21,9 @@ const allowedOrigins = [
   'https://pot-platform.vercel.app',
   'https://potacademy.net',
   'https://www.potacademy.net',
-  'https://api.potacademy.net'
+  'https://api.potacademy.net',
+  'http://8.148.185.84',
+  'http://8.148.185.84:80'
 ];
 
 dotenv.config();

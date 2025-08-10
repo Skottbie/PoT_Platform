@@ -23,7 +23,18 @@ const LazyImage = ({
 
   // 生成图片URL (直接使用完整URL，避免axios baseURL影响)
   const getImageUrl = useCallback((type, params = {}) => {
-    const baseUrl = `https://api.potacademy.net/api/download/${imageId}`;
+    // 获取API基础路径，如果是/api则直接用/download
+    const getDownloadUrl = (imageId) => {
+      const apiBase = import.meta.env.VITE_API_BASE_URL || 'https://api.potacademy.net/api';
+      if (apiBase === '/api') {
+        // 本地环境，直接用/download，会被Nginx代理到后端
+        return `/download/${imageId}`;
+      } else {
+        // 生产环境，使用完整URL
+        return `${apiBase}/download/${imageId}`;
+      }
+    };
+    const baseUrl = getDownloadUrl(imageId);
     switch (type) {
       case 'thumbnail':
         return `${baseUrl}/thumbnail?size=${params.size || thumbnailSize}`;
