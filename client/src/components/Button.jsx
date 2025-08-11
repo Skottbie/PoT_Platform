@@ -12,77 +12,74 @@ export default function Button({
   className = '',
   ...props
 }) {
-  const baseStyles =
-    'inline-flex items-center justify-center font-medium rounded-xl transition-all duration-300 select-none';
+  const baseStyles = `
+    inline-flex items-center justify-center font-medium rounded-xl 
+    transition-all duration-200 select-none relative overflow-hidden
+    active:scale-95 disabled:active:scale-100
+    focus:outline-none focus:ring-2 focus:ring-offset-2
+    touch-manipulation
+  `;
+
   const sizeStyles = {
-    sm: 'px-3 py-1 text-sm',
-    md: 'px-4 py-2 text-base',
-    lg: 'px-6 py-3 text-lg',
+    sm: 'px-3 py-2 text-sm min-h-[36px]',
+    md: 'px-4 py-2.5 text-base min-h-[40px]', // 调整中等尺寸
+    lg: 'px-6 py-3 text-lg min-h-[44px]', // 调整大尺寸
   };
 
-const variantStyles = {
-  primary: `
-    bg-gradient-to-r from-blue-400 to-purple-500
-    text-white
-    shadow-md shadow-blue-500/20
-    ring-1 ring-white/20
-    backdrop-blur-lg
-    hover:brightness-110 hover:shadow-lg hover:shadow-purple-500/30
-    active:scale-95
-    transition-all
-    disabled:opacity-50 disabled:cursor-not-allowed
-  `,
-  secondary: `
-    bg-white/20 dark:bg-white/10
-    text-gray-900 dark:text-gray-200
-    shadow-sm shadow-black/10 dark:shadow-white/5
-    ring-1 ring-black/10 dark:ring-white/10
-    backdrop-blur-xl
-    hover:bg-white/30 dark:hover:bg-white/20
-    hover:shadow-md hover:scale-[1.02]
-    active:scale-95
-    transition-all
-    disabled:opacity-50 disabled:cursor-not-allowed
-  `,
-  danger: `
-    bg-gradient-to-r from-rose-400 to-red-500
-    text-white
-    shadow-md shadow-red-500/30
-    ring-1 ring-white/20
-    backdrop-blur-lg
-    hover:brightness-110 hover:shadow-lg hover:shadow-red-500/40
-    active:scale-95
-    transition-all
-    disabled:opacity-50 disabled:cursor-not-allowed
-  `,
-  ghost: `
-  bg-white/5 dark:bg-white/5
-  text-gray-700 dark:text-gray-200
-  border border-gray-300/40 dark:border-gray-600/40
-  shadow-sm
-  backdrop-blur-sm
-  hover:bg-white/10 dark:hover:bg-white/10
-  hover:border-gray-400/60 dark:hover:border-gray-500/60
-  hover:text-gray-900 dark:hover:text-white
-  hover:shadow-md
-  active:scale-95
-  disabled:opacity-50 disabled:cursor-not-allowed
-  transition-all duration-200
-`,
-  warning: `
-  bg-gradient-to-r from-orange-500 to-amber-600
-  text-white
-  shadow-md shadow-orange-500/25
-  ring-1 ring-white/20
-  backdrop-blur-lg
-  hover:brightness-110 hover:shadow-lg hover:shadow-orange-500/35
-  active:scale-95
-  transition-all
-  disabled:opacity-50 disabled:cursor-not-allowed
-`,
-};
-
-
+  // 其他代码保持不变...
+  const variantStyles = {
+    primary: `
+      bg-gradient-to-r from-blue-500 to-purple-600
+      text-white font-semibold
+      shadow-lg shadow-blue-500/25
+      hover:shadow-xl hover:shadow-purple-500/30
+      focus:ring-blue-500/50
+      border-0
+      before:absolute before:inset-0 before:bg-gradient-to-r 
+      before:from-blue-400 before:to-purple-500 before:opacity-0 
+      before:transition-opacity before:duration-200
+      hover:before:opacity-100
+      disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:before:opacity-0
+    `,
+    secondary: `
+      bg-white/90 dark:bg-gray-800/90
+      text-gray-700 dark:text-gray-200 font-medium
+      border border-gray-200 dark:border-gray-700
+      shadow-md shadow-gray-900/5
+      backdrop-blur-xl
+      hover:bg-white dark:hover:bg-gray-700
+      hover:shadow-lg
+      focus:ring-gray-500/50
+      disabled:opacity-50 disabled:cursor-not-allowed
+    `,
+    danger: `
+      bg-gradient-to-r from-red-500 to-rose-600
+      text-white font-semibold
+      shadow-lg shadow-red-500/25
+      hover:shadow-xl hover:shadow-rose-500/30
+      focus:ring-red-500/50
+      border-0
+      disabled:opacity-50 disabled:cursor-not-allowed
+    `,
+    ghost: `
+      bg-transparent
+      text-gray-600 dark:text-gray-300 font-medium
+      border border-gray-300/50 dark:border-gray-600/50
+      hover:bg-gray-50 dark:hover:bg-gray-800/50
+      hover:border-gray-400 dark:hover:border-gray-500
+      focus:ring-gray-500/50
+      disabled:opacity-50 disabled:cursor-not-allowed
+    `,
+    warning: `
+      bg-gradient-to-r from-orange-500 to-amber-600
+      text-white font-semibold
+      shadow-lg shadow-orange-500/25
+      hover:shadow-xl hover:shadow-amber-500/30
+      focus:ring-orange-500/50
+      border-0
+      disabled:opacity-50 disabled:cursor-not-allowed
+    `,
+  };
 
   return (
     <button
@@ -97,9 +94,13 @@ const variantStyles = {
       {...props}
     >
       {loading && (
-        <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></span>
+        <div className="absolute inset-0 flex items-center justify-center bg-inherit">
+          <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin" />
+        </div>
       )}
-      {children}
+      <span className={loading ? 'opacity-0' : 'opacity-100'}>
+        {children}
+      </span>
     </button>
   );
 }

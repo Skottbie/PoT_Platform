@@ -1,5 +1,4 @@
-// src/pages/JoinClass.jsx
-
+// src/pages/JoinClass.jsx - 修复布局问题
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/axiosInstance';
@@ -31,7 +30,7 @@ const JoinClass = () => {
       if (res.data.success) {
         setSuccessMsg('🎉 加入成功！');
         setTimeout(() => {
-          navigate('/student'); // 推荐跳转学生仪表盘
+          navigate('/student');
         }, 1500);
       } else {
         setError(res.data.message || '加入失败');
@@ -45,92 +44,104 @@ const JoinClass = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center px-4 py-10">
-      {/* 返回仪表盘按钮 */}
-      <Button
-        variant="secondary"
-        size="sm"
-        className="absolute top-6 left-6"
-        onClick={() => navigate('/student')}
-      >
-        👈 返回仪表盘
-      </Button>
-
-      <div className="bg-white/70 dark:bg-gray-800/70
-                backdrop-blur-xl p-8 rounded-2xl
-                shadow-xl w-full max-w-md relative
-                border border-gray-200/50 dark:border-gray-700/50
-                transition-all duration-300">
-        <h1 className="text-2xl font-bold text-center text-blue-700 dark:text-blue-400 mb-6">
-          🔑 加入班级
-        </h1>
-
-        {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
-        {successMsg && <p className="text-green-600 dark:text-green-400 text-sm mb-4">{successMsg}</p>}
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <input
-            type="text"
-            name="inviteCode"
-            placeholder="邀请码"
-            value={formData.inviteCode}
-            onChange={handleChange}
-            required
-            className="w-full px-4 py-2 border rounded-xl
-                      bg-white/70 dark:bg-gray-700/70
-                      border-gray-300 dark:border-gray-600
-                      text-gray-900 dark:text-gray-100
-                      shadow-sm backdrop-blur-sm
-                      focus:outline-none focus:ring-2 focus:ring-blue-400
-                      transition"
-          />
-          <input
-            type="text"
-            name="studentId"
-            placeholder="学号"
-            value={formData.studentId}
-            onChange={handleChange}
-            required
-            className="w-full px-4 py-2 border rounded-xl
-                      bg-white/70 dark:bg-gray-700/70
-                      border-gray-300 dark:border-gray-600
-                      text-gray-900 dark:text-gray-100
-                      shadow-sm backdrop-blur-sm
-                      focus:outline-none focus:ring-2 focus:ring-blue-400
-                      transition"
-          />
-          <input
-            type="text"
-            name="name"
-            placeholder="姓名"
-            value={formData.name}
-            onChange={handleChange}
-            required
-            className="w-full px-4 py-2 border rounded-xl
-                      bg-white/70 dark:bg-gray-700/70
-                      border-gray-300 dark:border-gray-600
-                      text-gray-900 dark:text-gray-100
-                      shadow-sm backdrop-blur-sm
-                      focus:outline-none focus:ring-2 focus:ring-blue-400
-                      transition"
-          />
-
-          {/* 提交按钮 */}
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 px-4 py-6">
+      <div className="max-w-md mx-auto">
+        {/* 返回按钮 */}
+        <div className="mb-6">
           <Button
-            type="submit"
-            variant="primary"
-            size="md"
-            fullWidth
-            disabled={loading}
+            variant="secondary"
+            size="sm"
+            onClick={() => navigate('/student')}
+            className="w-full sm:w-auto"
           >
-            {loading ? '正在提交...' : '加入班级'}
+            👈 返回学生首页
           </Button>
+        </div>
 
-        </form>
-      </div>
-    </div>
-  );
+        {/* 主卡片 */}
+        <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-xl border border-gray-200/50 dark:border-gray-700/50 p-6">
+          <h1 className="text-2xl font-bold text-center text-blue-700 dark:text-blue-400 mb-6">
+            🔑 加入班级
+          </h1>
+
+          {error && <p className="text-red-500 text-sm mb-4 p-3 bg-red-50 dark:bg-red-900/20 rounded-lg">{error}</p>}
+          {successMsg && <p className="text-green-600 dark:text-green-400 text-sm mb-4 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">{successMsg}</p>}
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                邀请码
+              </label>
+              <input
+                type="text"
+                name="inviteCode"
+                placeholder="请输入班级邀请码"
+                value={formData.inviteCode}
+                onChange={handleChange}
+                required
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600
+                          bg-gray-50/50 dark:bg-gray-700/50 text-gray-900 dark:text-gray-100
+                         placeholder-gray-500 dark:placeholder-gray-400
+                         focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+                         transition-all duration-200 text-base"
+             />
+           </div>
+
+           <div>
+             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+               学号
+             </label>
+             <input
+               type="text"
+               name="studentId"
+               placeholder="请输入您的学号"
+               value={formData.studentId}
+               onChange={handleChange}
+               required
+               className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600
+                         bg-gray-50/50 dark:bg-gray-700/50
+                         text-gray-900 dark:text-gray-100
+                         placeholder-gray-500 dark:placeholder-gray-400
+                         focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+                         transition-all duration-200 text-base"
+             />
+           </div>
+
+           <div>
+             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+               姓名
+             </label>
+             <input
+               type="text"
+               name="name"
+               placeholder="请输入您的姓名"
+               value={formData.name}
+               onChange={handleChange}
+               required
+               className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600
+                         bg-gray-50/50 dark:bg-gray-700/50
+                         text-gray-900 dark:text-gray-100
+                         placeholder-gray-500 dark:placeholder-gray-400
+                         focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+                         transition-all duration-200 text-base"
+             />
+           </div>
+
+           <Button
+             type="submit"
+             variant="primary"
+             size="lg"
+             fullWidth
+             loading={loading}
+             disabled={loading}
+           >
+             {loading ? '正在加入...' : '加入班级'}
+           </Button>
+         </form>
+       </div>
+     </div>
+   </div>
+ );
 };
 
 export default JoinClass;
-

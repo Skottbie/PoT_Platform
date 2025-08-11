@@ -209,14 +209,16 @@ const CreateClass = () => {
                       p-8 rounded-2xl shadow-lg transition-colors duration-300">
 
         {/* 返回仪表盘按钮 */}
-        <Button
-          variant="secondary"
-          size="sm"
-          className="absolute top-4 right-4"
-          onClick={() => navigate('/teacher')}
-        >
-          👈 返回仪表盘
-        </Button>
+        <div className="flex justify-end mb-4 md:absolute md:top-4 md:right-4">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => navigate('/teacher')}
+            className="w-full md:w-auto"
+          >
+            👈 返回仪表盘
+          </Button>
+        </div>
 
         <h1 className="text-2xl font-bold mb-6 text-gray-800 dark:text-gray-100">
           📘 创建新班级

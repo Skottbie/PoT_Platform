@@ -2,6 +2,92 @@
 @tailwind components;
 @tailwind utilities;
 
+/* 移动端优化基础样式 */
+@layer base {
+  html {
+    /* 防止iOS缩放 */
+    -webkit-text-size-adjust: 100%;
+    /* 优化触控滚动 */
+    -webkit-overflow-scrolling: touch;
+    /* 优化字体渲染 */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    /* 防止过度滚动 */
+    overscroll-behavior: none;
+    /* 优化触控反馈 */
+    touch-action: manipulation;
+  }
+
+  /* 优化移动端输入框体验 */
+  input[type="text"], input[type="email"], input[type="password"], textarea, select {
+    /* 防止iOS的阴影和圆角 */
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    /* 优化输入框字体大小，防止缩放 */
+    font-size: 16px;
+  }
+
+  /* 保持复选框和单选框的原生样式 */
+  input[type="checkbox"], input[type="radio"] {
+    -webkit-appearance: auto;
+    -moz-appearance: auto;
+    appearance: auto;
+  }
+
+  /* 优化按钮点击体验 */
+  button, [role="button"] {
+    touch-action: manipulation;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  /* 复选框的基础样式重置 */
+  input[type="checkbox"] {
+    width: 1rem;
+    height: 1rem;
+    accent-color: #3b82f6;
+    cursor: pointer;
+    margin: 0;
+    vertical-align: middle;
+  }
+
+  /* 禁用文本选择在不需要的地方 */
+  .no-select {
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+  }
+}
+
+/* 自定义滚动条 */
+@layer utilities {
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(156 163 175) transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: rgb(156 163 175);
+    border-radius: 2px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background-color: rgb(107 114 128);
+  }
+}
+
 /* 文本截断样式 */
 .line-clamp-2 {
   display: -webkit-box;
@@ -15,4 +101,122 @@
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+/* 动画关键帧 */
+@keyframes gradient-slide {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.animate-gradient-slide {
+  background-size: 200% 200%;
+  animation: gradient-slide 6s ease infinite;
+}
+
+.animate-pulse-slow {
+  animation: pulse 2.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* 移动端安全区域适配 */
+.mobile-safe-top {
+  padding-top: max(1rem, env(safe-area-inset-top));
+}
+
+.mobile-safe-bottom {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}
+
+.fullscreen-safe {
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+
+/* 移动端暗色模式优化 */
+@media (prefers-color-scheme: dark) {
+  html, body {
+    background-color: #0f172a !important;
+    color: #e2e8f0 !important;
+  }
+
+  input, textarea, select, button {
+    background-color: #1e293b !important;
+    color: #e2e8f0 !important;
+    border-color: #334155 !important;
+  }
+
+  ::placeholder {
+    color: #64748b !important;
+    opacity: 1 !important;
+ }
+
+ /* 确保复选框在暗色模式下正常显示 */
+ .dark input[type="checkbox"] {
+   accent-color: #60a5fa;
+ }
+
+ /* 优化移动端暗色模式下的对比度 */
+ .dark input:focus,
+ .dark textarea:focus,
+ .dark select:focus {
+   ring-color: #3b82f6 !important;
+   border-color: #3b82f6 !important;
+ }
+}
+
+/* 移动端专用样式 */
+@media (max-width: 768px) {
+ /* 优化移动端间距 */
+ .mobile-padding {
+   padding-left: 1rem;
+   padding-right: 1rem;
+ }
+
+ /* 移动端卡片优化 */
+ .mobile-card {
+   border-radius: 1rem;
+   margin: 0.5rem;
+   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+ }
+
+ /* 移动端按钮优化 */
+ .mobile-button {
+   min-height: 44px;
+   padding: 0.75rem 1rem;
+   font-size: 1rem;
+ }
+
+ /* 移动端表单优化 */
+ .mobile-form-input {
+   padding: 1rem;
+   font-size: 16px; /* 防止iOS缩放 */
+   border-radius: 0.75rem;
+ }
+}
+
+/* 触摸设备优化 */
+@media (hover: none) and (pointer: coarse) {
+ /* 移除hover效果在触摸设备上 */
+ .hover\:scale-105:hover {
+   transform: none;
+ }
+ 
+ /* 增强触摸反馈 */
+ button:active,
+ [role="button"]:active {
+   transform: scale(0.95);
+   transition: transform 0.1s ease;
+ }
+}
+
+/* 高分辨率屏幕优化 */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+ .sharp-image {
+   image-rendering: -webkit-optimize-contrast;
+   image-rendering: crisp-edges;
+ }
 }
