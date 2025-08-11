@@ -125,7 +125,7 @@ const Login = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        {/* Logo和标题区域 - 重新设计 */}
+        {/* Logo和标题区域 - 重新设计*/}
         <motion.div
           className="text-center mb-8"
           initial={{ opacity: 0, y: -20 }}
@@ -133,19 +133,48 @@ const Login = () => {
           transition={{ delay: 0.2 }}
         >
           <div className="flex items-center justify-center mb-6">
-            <ProgressiveLogo
-              size={isMobile ? "large" : "large"}
-              className="mr-3 rounded-xl shadow-lg"
-              priority={true}
-            />
-            <div className="text-left">
-              <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            <div className="relative">
+              {/* Logo容器 - 去除边框，添加微妙的发光效果 */}
+              <div className="relative p-1">
+                <ProgressiveLogo
+                  size={isMobile ? "large" : "large"}
+                  className="w-16 h-16 sm:w-20 sm:h-20 
+                            drop-shadow-2xl
+                            hover:scale-110 hover:drop-shadow-[0_0_20px_rgba(59,130,246,0.4)]
+                            transition-all duration-500 ease-out
+                            filter hover:brightness-110"
+                  priority={true}
+                />
+                {/* 背景光晕效果 */}
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-purple-500/20 
+                                rounded-full blur-xl scale-150 opacity-0 
+                                group-hover:opacity-100 transition-opacity duration-500" />
+              </div>
+            </div>
+            
+            {/* 标题区域 - 更现代的排版 */}
+            <div className="ml-4 text-left">
+              <h1 className="text-3xl sm:text-4xl font-extrabold 
+                            bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 
+                            bg-clip-text text-transparent 
+                            tracking-tight leading-tight
+                            animate-gradient-slide">
                 PoTAcademy
               </h1>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+              <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 
+                            font-medium tracking-wide mt-1
+                            bg-gradient-to-r from-gray-600 to-gray-500 dark:from-gray-400 dark:to-gray-500
+                            bg-clip-text text-transparent">
                 AI时代教学新范式
               </p>
             </div>
+          </div>
+          
+          {/* 可选：添加装饰性元素 */}
+          <div className="flex justify-center items-center space-x-2 opacity-60">
+            <div className="w-8 h-px bg-gradient-to-r from-transparent via-blue-500 to-transparent"></div>
+            <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+            <div className="w-8 h-px bg-gradient-to-r from-transparent via-purple-500 to-transparent"></div>
           </div>
         </motion.div>
 
