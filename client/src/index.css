@@ -2,108 +2,107 @@
 @tailwind components;
 @tailwind utilities;
 
-/* 移动端优化基础样式 */
+/* 🎯 引入移动端优化样式 */
+@import './styles/mobile.css';
+
+/* 移动端优化基础样式 - 保留原有的但增强 */
 @layer base {
-  html {
-    /* 防止iOS缩放 */
-    -webkit-text-size-adjust: 100%;
-    /* 优化触控滚动 */
-    -webkit-overflow-scrolling: touch;
-    /* 优化字体渲染 */
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
+  #root {
+    max-width: 100vw;
+    margin: 0 auto;
+    text-align: left; /* 改为左对齐，更适合移动端 */
+    min-height: 100vh;
+    min-height: 100dvh; /* 现代浏览器动态视口高度 */
   }
 
-  body {
-    /* 防止过度滚动 */
-    overscroll-behavior: none;
-    /* 优化触控反馈 */
-    touch-action: manipulation;
+  .logo {
+    height: 6em;
+    padding: 1.5em;
+    will-change: filter;
+    transition: filter 300ms ease-out;
+  }
+  
+  .logo:hover {
+    filter: drop-shadow(0 0 2em #646cffaa);
+  }
+  
+  .logo.react:hover {
+    filter: drop-shadow(0 0 2em #61dafbaa);
   }
 
-  /* 优化移动端输入框体验 */
-  input[type="text"], input[type="email"], input[type="password"], textarea, select {
-    /* 防止iOS的阴影和圆角 */
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    appearance: none;
-    /* 优化输入框字体大小，防止缩放 */
-    font-size: 16px;
+  @keyframes logo-spin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
   }
 
-  /* 保持复选框和单选框的原生样式 */
-  input[type="checkbox"], input[type="radio"] {
-    -webkit-appearance: auto;
-    -moz-appearance: auto;
-    appearance: auto;
+  @media (prefers-reduced-motion: no-preference) {
+    a:nth-of-type(2) .logo {
+      animation: logo-spin infinite 20s linear;
+    }
   }
 
-  /* 优化按钮点击体验 */
-  button, [role="button"] {
-    touch-action: manipulation;
-    user-select: none;
-    -webkit-user-select: none;
+  .card {
+    padding: 2em;
   }
 
-  /* 复选框的基础样式重置 */
-  input[type="checkbox"] {
-    width: 1rem;
-    height: 1rem;
-    accent-color: #3b82f6;
-    cursor: pointer;
-    margin: 0;
-    vertical-align: middle;
-  }
-
-  /* 禁用文本选择在不需要的地方 */
-  .no-select {
-    user-select: none;
-    -webkit-user-select: none;
-    -webkit-touch-callout: none;
+  .read-the-docs {
+    color: #888;
   }
 }
 
-/* 自定义滚动条 */
-@layer utilities {
-  .scrollbar-thin {
-    scrollbar-width: thin;
-    scrollbar-color: rgb(156 163 175) transparent;
+/* 🎯 增强的暗色模式样式 */
+@media (prefers-color-scheme: dark) {
+  html, body {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%) !important;
+    color: #e2e8f0 !important;
+    -webkit-appearance: none !important;
   }
 
-  .scrollbar-thin::-webkit-scrollbar {
-    width: 4px;
+  input, textarea, select, button {
+    background-color: rgba(30, 41, 59, 0.8) !important;
+    color: #e2e8f0 !important;
+    border: 1px solid rgba(51, 65, 85, 0.6) !important;
+    -webkit-appearance: none !important;
+    appearance: none !important;
+    box-shadow: none !important;
+    backdrop-filter: blur(8px) !important;
   }
 
-  .scrollbar-thin::-webkit-scrollbar-track {
-    background: transparent;
+  ::placeholder {
+    color: #64748b !important;
+    opacity: 1 !important;
   }
 
-  .scrollbar-thin::-webkit-scrollbar-thumb {
-    background-color: rgb(156 163 175);
-    border-radius: 2px;
+  /* 确保复选框在暗色模式下正常显示 */
+  .dark input[type="checkbox"] {
+    accent-color: #60a5fa;
+    background-color: rgba(55, 65, 81, 0.8);
   }
 
-  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-    background-color: rgb(107 114 128);
+  /* 优化移动端暗色模式下的对比度 */
+  .dark input:focus,
+  .dark textarea:focus,
+  .dark select:focus {
+    ring-color: #3b82f6 !important;
+    border-color: #3b82f6 !important;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3) !important;
+  }
+
+  /* 暗色模式下的滚动条 */
+  ::-webkit-scrollbar-thumb {
+    background-color: rgba(156, 163, 175, 0.6);
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(156, 163, 175, 0.8);
   }
 }
 
-/* 文本截断样式 */
-.line-clamp-2 {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.line-clamp-3 {
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-/* 动画关键帧 */
+/* 🎯 增强的动画关键帧 */
 @keyframes gradient-slide {
   0% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }
@@ -119,120 +118,268 @@
   animation: pulse 2.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
-/* 移动端安全区域适配 */
-.mobile-safe-top {
-  padding-top: max(1rem, env(safe-area-inset-top));
-}
-
-.mobile-safe-bottom {
-  padding-bottom: max(1rem, env(safe-area-inset-bottom));
-}
-
-.fullscreen-safe {
-  padding-top: env(safe-area-inset-top);
-  padding-bottom: env(safe-area-inset-bottom);
-  padding-left: env(safe-area-inset-left);
-  padding-right: env(safe-area-inset-right);
-}
-
-
-/* 移动端暗色模式优化 */
-@media (prefers-color-scheme: dark) {
-  html, body {
-    background-color: #0f172a !important;
-    color: #e2e8f0 !important;
+/* 🎯 移动端专用动画增强 */
+@keyframes mobile-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
   }
-
-  input, textarea, select, button {
-    background-color: #1e293b !important;
-    color: #e2e8f0 !important;
-    border-color: #334155 !important;
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
   }
-
-  ::placeholder {
-    color: #64748b !important;
-    opacity: 1 !important;
- }
-
- /* 确保复选框在暗色模式下正常显示 */
- .dark input[type="checkbox"] {
-   accent-color: #60a5fa;
- }
-
- /* 优化移动端暗色模式下的对比度 */
- .dark input:focus,
- .dark textarea:focus,
- .dark select:focus {
-   ring-color: #3b82f6 !important;
-   border-color: #3b82f6 !important;
- }
 }
 
-/* 移动端专用样式 */
-@media (max-width: 768px) {
- /* 优化移动端间距 */
- .mobile-padding {
-   padding-left: 1rem;
-   padding-right: 1rem;
- }
-
- /* 移动端卡片优化 */
- .mobile-card {
-   border-radius: 1rem;
-   margin: 0.5rem;
-   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
- }
-
- /* 移动端按钮优化 */
- .mobile-button {
-   min-height: 44px;
-   padding: 0.75rem 1rem;
-   font-size: 1rem;
- }
-
- /* 移动端表单优化 */
- .mobile-form-input {
-   padding: 1rem;
-   font-size: 16px; /* 防止iOS缩放 */
-   border-radius: 0.75rem;
- }
+@keyframes mobile-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-/* 触摸设备优化 */
-@media (hover: none) and (pointer: coarse) {
- /* 移除hover效果在触摸设备上 */
- .hover\:scale-105:hover {
-   transform: none;
- }
- 
- /* 增强触摸反馈 */
- button:active,
- [role="button"]:active {
-   transform: scale(0.95);
-   transition: transform 0.1s ease;
- }
+@keyframes shimmer {
+  0% {
+    background-position: -200px 0;
+  }
+  100% {
+    background-position: calc(200px + 100%) 0;
+  }
 }
 
-/* 高分辨率屏幕优化 */
-@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
- .sharp-image {
-   image-rendering: -webkit-optimize-contrast;
-   image-rendering: crisp-edges;
- }
+.animate-mobile-fade-in {
+  animation: mobile-fade-in 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
+.animate-mobile-slide-up {
+  animation: mobile-slide-up 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.animate-shimmer {
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  background-size: 200px 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* 🎯 移动端聊天容器优化 */
 .chat-container {
   transition: height 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  will-change: height;
 }
 
+/* 🎯 现代浏览器视口单位支持 */
 @supports (height: 100dvh) {
   .fullscreen-container {
     height: 100dvh !important;
+    min-height: 100dvh !important;
+  }
+  
+  #root {
+    min-height: 100dvh;
   }
 }
 
+@supports (height: 100svh) {
+  .small-viewport-container {
+    height: 100svh !important;
+  }
+}
+
+@supports (height: 100lvh) {
+  .large-viewport-container {
+    height: 100lvh !important;
+  }
+}
+
+/* 🎯 安全区域增强支持 */
 @supports (padding: max(0px)) {
   .safe-area-bottom {
     padding-bottom: max(1rem, env(safe-area-inset-bottom));
   }
+  
+  .safe-area-top {
+    padding-top: max(1rem, env(safe-area-inset-top));
+  }
+  
+  .safe-area-full {
+    padding-top: max(1rem, env(safe-area-inset-top));
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+    padding-left: max(1rem, env(safe-area-inset-left));
+    padding-right: max(1rem, env(safe-area-inset-right));
+  }
+}
+
+/* 🎯 移动端性能优化 */
+.gpu-accelerated {
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+.mobile-optimized {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* 🎯 移动端表单优化 */
+@media (max-width: 767px) {
+  .mobile-form {
+    padding: 1rem;
+  }
+  
+  .mobile-form input,
+  .mobile-form textarea,
+  .mobile-form select {
+    font-size: 16px; /* 防止iOS缩放 */
+    border-radius: 12px;
+    padding: 12px 16px;
+    min-height: 48px;
+  }
+  
+  .mobile-form button {
+    min-height: 48px;
+    font-size: 16px;
+    border-radius: 12px;
+    padding: 12px 24px;
+  }
+  
+  /* 移动端模态框优化 */
+  .mobile-modal {
+    margin: 1rem;
+    max-height: calc(100vh - 2rem);
+    max-height: calc(100dvh - 2rem);
+    border-radius: 16px;
+  }
+  
+  /* 移动端卡片间距优化 */
+  .mobile-card-grid {
+    gap: 1rem;
+    padding: 1rem;
+  }
+}
+
+/* 🎯 触摸设备优化 */
+@media (hover: none) and (pointer: coarse) {
+  /* 移除hover效果在纯触摸设备上 */
+  .hover\:scale-105:hover {
+    transform: none;
+  }
+  
+  .hover\:shadow-lg:hover {
+    box-shadow: inherit;
+  }
+  
+  /* 增强触摸反馈 */
+  button:active,
+  [role="button"]:active,
+  .btn:active {
+    transform: scale(0.95);
+    transition: transform 0.1s ease;
+  }
+  
+  /* 触摸设备专用样式 */
+  .touch-device-only {
+    display: block !important;
+  }
+  
+  .hover-device-only {
+    display: none !important;
+  }
+}
+
+@media (hover: hover) {
+  .touch-device-only {
+    display: none !important;
+  }
+  
+  .hover-device-only {
+    display: block !important;
+  }
+}
+
+/* 🎯 高分辨率屏幕图片优化 */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .sharp-image {
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+  }
+  
+  .smooth-image {
+    image-rendering: auto;
+  }
+}
+
+/* 🎯 移动端专用工具类 */
+.mobile-text-shadow {
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.mobile-backdrop {
+  backdrop-filter: blur(12px) saturate(180%);
+  -webkit-backdrop-filter: blur(12px) saturate(180%);
+}
+
+.mobile-glass-effect {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(12px) saturate(180%);
+  -webkit-backdrop-filter: blur(12px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.dark .mobile-glass-effect {
+  background: rgba(31, 41, 55, 0.8);
+  border: 1px solid rgba(55, 65, 81, 0.3);
+}
+
+/* 🎯 移动端加载状态 */
+.mobile-skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+.dark .mobile-skeleton {
+  background: linear-gradient(90deg, #374151 25%, #4b5563 50%, #374151 75%);
+  background-size: 200% 100%;
+}
+
+/* 🎯 移动端错误处理 */
+.mobile-error-boundary {
+  padding: 2rem 1rem;
+  text-align: center;
+  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+  border: 1px solid #fecaca;
+  border-radius: 16px;
+  margin: 1rem;
+}
+
+.dark .mobile-error-boundary {
+  background: linear-gradient(135deg, #7f1d1d 0%, #991b1b 100%);
+  border-color: #dc2626;
+}
+
+/* 🎯 移动端可访问性增强 */
+@media (prefers-reduced-motion: reduce) {
+  .respect-motion-preference {
+    animation: none !important;
+    transition: none !important;
+  }
+  
+  .respect-motion-preference * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* 🎯 移动端焦点管理 */
+.mobile-focus-ring {
+  @apply focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2;
+}
+
+.mobile-focus-visible {
+  @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2;
 }
