@@ -220,3 +220,19 @@
    image-rendering: crisp-edges;
  }
 }
+
+.chat-container {
+  transition: height 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+@supports (height: 100dvh) {
+  .fullscreen-container {
+    height: 100dvh !important;
+  }
+}
+
+@supports (padding: max(0px)) {
+  .safe-area-bottom {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+}
