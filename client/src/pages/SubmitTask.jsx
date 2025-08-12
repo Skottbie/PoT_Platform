@@ -12,6 +12,7 @@ import { FormCard, NotificationCard } from '../components/EnhancedMobileCard';
 import { PrimaryButton, SecondaryButton, WarningButton, IconButton } from '../components/EnhancedButton';
 import LazyImageGrid from '../components/LazyImageGrid';
 import { useDeviceDetection, useVirtualKeyboard, useHapticFeedback } from '../hooks/useDeviceDetetion';
+import remarkGfm from 'remark-gfm';
 
 SyntaxHighlighter.registerLanguage('javascript', javascript);
 SyntaxHighlighter.registerLanguage('python', python);
@@ -46,6 +47,273 @@ const SubmitTask = () => {
   // 引用
   const chatBoxRef = useRef(null);
   const textareaRef = useRef(null);
+
+  // 添加完整的 Markdown 组件配置
+  const getMarkdownComponents = (isUserMessage) => ({
+    // 代码块处理
+    code({ inline, className, children, ...props }) {
+      const match = /language-(\w+)/.exec(className || '');
+      return !inline ? (
+        <div className="overflow-x-auto my-3">
+          <SyntaxHighlighter
+            style={github}
+            language={match ? match[1] : 'text'}
+            PreTag="div"
+            className="rounded-lg text-sm"
+            customStyle={{
+              margin: 0,
+              padding: '12px',
+              borderRadius: '8px',
+              fontSize: '14px',
+              lineHeight: '1.5',
+              overflowX: 'auto',
+              backgroundColor: isUserMessage ? 'rgba(59, 130, 246, 0.1)' : '#f6f8fa',
+            }}
+            {...props}
+          >
+            {String(children).replace(/\n$/, '')}
+          </SyntaxHighlighter>
+        </div>
+      ) : (
+        <code className={`px-1.5 py-0.5 rounded text-xs font-mono ${
+          isUserMessage 
+            ? 'bg-blue-400/30 text-white' 
+            : 'bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200'
+        }`}>
+          {children}
+        </code>
+      );
+    },
+
+    // 表格处理
+    table({ children }) {
+      return (
+        <div className="overflow-x-auto my-4 rounded-lg border border-gray-200 dark:border-gray-600">
+          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm">
+            {children}
+          </table>
+        </div>
+      );
+    },
+
+    thead({ children }) {
+      return (
+        <thead className={`${
+          isUserMessage 
+            ? 'bg-blue-500/20' 
+            : 'bg-gray-50 dark:bg-gray-800'
+        }`}>
+          {children}
+        </thead>
+      );
+    },
+
+    tbody({ children }) {
+      return (
+        <tbody className={`${
+          isUserMessage 
+            ? 'bg-blue-500/5' 
+            : 'bg-white dark:bg-gray-900'
+        } divide-y divide-gray-200 dark:divide-gray-700`}>
+          {children}
+        </tbody>
+      );
+    },
+
+    tr({ children }) {
+      return (
+        <tr className={`${
+          isUserMessage 
+            ? 'hover:bg-blue-500/10' 
+            : 'hover:bg-gray-50 dark:hover:bg-gray-800'
+        }`}>
+          {children}
+        </tr>
+      );
+    },
+
+    th({ children }) {
+      return (
+        <th className={`px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider ${
+          isUserMessage 
+            ? 'text-white/90' 
+            : 'text-gray-700 dark:text-gray-300'
+        }`}>
+          {children}
+        </th>
+      );
+    },
+
+    td({ children }) {
+      return (
+        <td className={`px-3 py-2 text-sm ${
+          isUserMessage 
+            ? 'text-white/90' 
+            : 'text-gray-900 dark:text-gray-100'
+        }`}>
+          {children}
+        </td>
+      );
+    },
+
+    // 列表处理
+    ul({ children }) {
+      return (
+        <ul className="list-disc list-inside my-2 space-y-1 text-sm pl-4">
+          {children}
+        </ul>
+      );
+    },
+
+    ol({ children }) {
+      return (
+        <ol className="list-decimal list-inside my-2 space-y-1 text-sm pl-4">
+          {children}
+        </ol>
+      );
+    },
+
+    li({ children }) {
+      return (
+        <li className="text-sm leading-relaxed">
+          {children}
+        </li>
+      );
+    },
+
+    // 标题处理
+    h1({ children }) {
+      return (
+        <h1 className={`text-lg font-bold mt-4 mb-2 ${
+          isUserMessage 
+            ? 'text-white' 
+            : 'text-gray-900 dark:text-gray-100'
+        }`}>
+          {children}
+        </h1>
+      );
+    },
+
+    h2({ children }) {
+      return (
+        <h2 className={`text-base font-bold mt-3 mb-2 ${
+          isUserMessage 
+            ? 'text-white' 
+            : 'text-gray-900 dark:text-gray-100'
+        }`}>
+          {children}
+        </h2>
+      );
+    },
+
+    h3({ children }) {
+      return (
+        <h3 className={`text-sm font-bold mt-3 mb-1 ${
+          isUserMessage 
+            ? 'text-white' 
+            : 'text-gray-900 dark:text-gray-100'
+        }`}>
+          {children}
+        </h3>
+      );
+    },
+
+    // 段落处理
+    p({ children }) {
+      return (
+        <p className="my-2 text-sm leading-relaxed">
+          {children}
+        </p>
+      );
+    },
+
+    // 引用块处理
+    blockquote({ children }) {
+      return (
+        <blockquote className={`border-l-4 pl-4 py-2 my-3 rounded-r-lg ${
+          isUserMessage 
+            ? 'border-white/30 bg-white/10' 
+            : 'border-blue-400 bg-blue-50 dark:bg-blue-900/20'
+        }`}>
+          <div className={`text-sm ${
+            isUserMessage 
+              ? 'text-white/90' 
+              : 'text-blue-800 dark:text-blue-200'
+          }`}>
+            {children}
+          </div>
+        </blockquote>
+      );
+    },
+
+    // 链接处理
+    a({ href, children }) {
+      return (
+        <a 
+          href={href} 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className={`hover:underline font-medium ${
+            isUserMessage 
+              ? 'text-white/90' 
+              : 'text-blue-600 dark:text-blue-400'
+          }`}
+        >
+          {children}
+        </a>
+      );
+    },
+
+    // 强调和加粗
+    strong({ children }) {
+      return (
+        <strong className={`font-semibold ${
+          isUserMessage 
+            ? 'text-white' 
+            : 'text-gray-900 dark:text-gray-100'
+        }`}>
+          {children}
+        </strong>
+      );
+    },
+
+    em({ children }) {
+      return (
+        <em className={`italic ${
+          isUserMessage 
+            ? 'text-white/90' 
+            : 'text-gray-800 dark:text-gray-200'
+        }`}>
+          {children}
+        </em>
+      );
+    },
+
+    // 水平分割线
+    hr() {
+      return (
+        <hr className={`my-4 ${
+          isUserMessage 
+            ? 'border-white/30' 
+            : 'border-gray-300 dark:border-gray-600'
+        }`} />
+      );
+    },
+
+    // 图片处理
+    img({ src, alt }) {
+      return (
+        <img 
+          src={src} 
+          alt={alt} 
+          className="max-w-full h-auto rounded-lg my-2 border border-gray-200 dark:border-gray-600"
+          loading="lazy"
+        />
+      );
+    },
+  });
+
+  
 
   // 🎯 反馈组件隐藏控制
   useEffect(() => {
@@ -601,43 +869,12 @@ const SubmitTask = () => {
                     }`}>
                       <div className="text-base leading-relaxed break-words">
                         <ReactMarkdown
-                          components={{
-                            code({ inline, className, children, ...props }) {
-                              const match = /language-(\w+)/.exec(className || '');
-                              return !inline ? (
-                                <div className="overflow-x-auto my-2">
-                                  <SyntaxHighlighter
-                                    style={github}
-                                    language={match ? match[1] : 'text'}
-                                    PreTag="div"
-                                    className="rounded-lg text-sm"
-                                    customStyle={{
-                                      margin: 0,
-                                      padding: '12px',
-                                      borderRadius: '8px',
-                                      fontSize: '14px',
-                                      lineHeight: '1.5',
-                                      overflowX: 'auto',
-                                    }}
-                                    {...props}
-                                  >
-                                    {String(children).replace(/\n$/, '')}
-                                  </SyntaxHighlighter>
-                                </div>
-                              ) : (
-                                <code className={`px-1.5 py-0.5 rounded text-xs font-mono ${
-                                  msg.role === 'user' 
-                                    ? 'bg-blue-400 text-white' 
-                                    : 'bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200'
-                                }`}>
-                                  {children}
-                                </code>
-                              );
-                            },
-                          }}
+                          components={getMarkdownComponents(msg.role === 'user')}
+                          remarkPlugins={[remarkGfm]}
                         >
                           {msg.content}
                         </ReactMarkdown>
+
                       </div>
                     </div>
                   </div>
@@ -928,7 +1165,7 @@ const SubmitTask = () => {
                   rows={4}
                 />
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  可以输入文字作业、总结、心得等内容
+                  请根据教师要求填写
                 </p>
               </div>
 
@@ -981,7 +1218,7 @@ const SubmitTask = () => {
                       </div>
                       <div>
                         <label className="font-semibold text-gray-700 dark:text-gray-200">
-                          💬 AIGC 对话助手
+                          AIGC对话
                         </label>
                         {task.requireAIGCLog && (
                           <span className="ml-2 text-red-500 text-sm">（必交）</span>
@@ -1053,23 +1290,8 @@ const SubmitTask = () => {
                                   : 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-bl-sm border border-gray-200 dark:border-gray-600'
                               }`}>
                                 <ReactMarkdown
-                                  components={{
-                                    code({ inline, children }) {
-                                      return inline ? (
-                                        <code className={`px-1 py-0.5 rounded text-xs font-mono ${
-                                          msg.role === 'user' 
-                                            ? 'bg-blue-400 text-white' 
-                                            : 'bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200'
-                                        }`}>
-                                          {children}
-                                        </code>
-                                      ) : (
-                                        <pre className="bg-gray-100 dark:bg-gray-800 p-2 rounded text-xs overflow-x-auto">
-                                          <code>{children}</code>
-                                        </pre>
-                                      );
-                                    },
-                                  }}
+                                  components={getMarkdownComponents(msg.role === 'user')}
+                                  remarkPlugins={[remarkGfm]}
                                 >
                                   {msg.content}
                                 </ReactMarkdown>

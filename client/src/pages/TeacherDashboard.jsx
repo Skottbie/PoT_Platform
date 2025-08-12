@@ -750,7 +750,7 @@ const TeacherDashboard = () => {
                   isMobile ? 'text-xl' : 'text-2xl'
                 }`}>
                   <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                    欢迎回来
+                    欢迎回来 
                   </span>
                   <span className="block sm:inline text-gray-700 dark:text-gray-300 mt-1 sm:mt-0">
                     {user.email}
@@ -806,7 +806,7 @@ const TeacherDashboard = () => {
           className="bg-gradient-to-r from-white via-blue-50/30 to-purple-50/30 dark:from-gray-800 dark:via-blue-900/10 dark:to-purple-900/10 rounded-mobile-2xl border border-gray-200/60 dark:border-gray-700/60 backdrop-blur-xl shadow-mobile p-6"
         >
           <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4 flex items-center gap-2">
-            <span className="text-xl">🚀</span>
+            <span className="text-xl">📌</span>
             发布新任务
           </h2>
 
