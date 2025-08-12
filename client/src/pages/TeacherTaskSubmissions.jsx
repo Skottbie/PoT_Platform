@@ -1,4 +1,4 @@
-// client/src/pages/TeacherTaskSubmissions.jsx
+// client/src/pages/TeacherTaskSubmissions.jsx - 修复版本（关键修改部分）
 
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -6,10 +6,9 @@ import api from '../api/axiosInstance';
 import Button from '../components/Button';
 import { motion, AnimatePresence } from 'framer-motion';
 import LazyImageGrid from '../components/LazyImageGrid';
-import toast from 'react-hot-toast'; // 📌 使用 toast 替代 alert
+import toast from 'react-hot-toast';
 import PullToRefreshContainer from '../components/PullToRefreshContainer';
 import useAutoRefresh from '../hooks/useAutoRefresh';
-import { useCallback } from 'react';
 
 const TeacherTaskSubmissions = () => {
   const { taskId } = useParams();
@@ -26,62 +25,11 @@ const TeacherTaskSubmissions = () => {
   });
   const [feedbackForm, setFeedbackForm] = useState({
     content: '',
-    rating: 0 // 📌 修复：初始值改为 0，表示未评分
+    rating: 0
   });
   const [submittingFeedback, setSubmittingFeedback] = useState(false);
 
-  // 📌 修复：移除重复的函数定义，只保留一个
-  useEffect(() => {
-    const fetchTaskAndSubmissions = async () => {
-      try {
-        // 获取任务信息
-        const taskRes = await api.get(`/task/${taskId}`);
-        setTask(taskRes.data);
-
-        // 获取提交记录
-        const res = await api.get(`/submission/by-task/${taskId}`);
-        setSubmissions(res.data);
-      } catch (err) {
-        console.error('获取数据失败', err);
-        toast.error('获取数据失败'); // 📌 使用 toast
-        navigate('/');
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchTaskAndSubmissions();
-  }, [taskId, navigate]);
-
-  // 🔄 下拉刷新处理函数
-  const handlePullRefresh = useCallback(async () => {
-    try {
-      await refreshData();
-      toast.success('刷新成功');
-    } catch (error) {
-      console.error('下拉刷新失败:', error);
-      toast.error('刷新失败，请重试');
-    }
-  }, [refreshData]);
-
-  // ⏰ 自动定时刷新 - 提交页面需要较高频率
-  useAutoRefresh(
-    useCallback(async () => {
-      try {
-        // 静默刷新提交数据
-        await refreshData();
-      } catch (error) {
-        console.error('自动刷新失败:', error);
-      }
-    }, [refreshData]),
-    {
-      interval: 30000,      // 30秒间隔（教师查看提交较频繁）
-      enabled: true,
-      pauseOnHidden: true,
-      pauseOnOffline: true,
-    }
-  );
-
-  // 📌 单独的刷新数据函数
+  // 🔧 修复：将 refreshData 函数定义提前，避免初始化错误
   const refreshData = async () => {
     try {
       const res = await api.get(`/submission/by-task/${taskId}`);
@@ -92,7 +40,57 @@ const TeacherTaskSubmissions = () => {
     }
   };
 
-  //反馈处理函数
+  // 🔧 修复：获取初始数据的函数也要提前定义
+  const fetchTaskAndSubmissions = async () => {
+    try {
+      // 获取任务信息
+      const taskRes = await api.get(`/task/${taskId}`);
+      setTask(taskRes.data);
+
+      // 获取提交记录
+      const res = await api.get(`/submission/by-task/${taskId}`);
+      setSubmissions(res.data);
+    } catch (err) {
+      console.error('获取数据失败', err);
+      toast.error('获取数据失败');
+      navigate('/');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 🔧 修复：现在可以安全地在 useEffect 中使用这些函数
+  useEffect(() => {
+    fetchTaskAndSubmissions();
+  }, [taskId, navigate]);
+
+  // 🔄 下拉刷新处理函数 - 现在可以安全使用 refreshData
+  const handlePullRefresh = async () => {
+    try {
+      await refreshData();
+      toast.success('刷新成功');
+    } catch (error) {
+      console.error('下拉刷新失败:', error);
+      toast.error('刷新失败，请重试');
+    }
+  };
+
+  // ⏰ 自动定时刷新 - 现在可以安全使用 refreshData
+  useAutoRefresh(async () => {
+    try {
+      // 静默刷新提交数据
+      await refreshData();
+    } catch (error) {
+      console.error('自动刷新失败:', error);
+    }
+  }, {
+    interval: 30000,
+    enabled: true,
+    pauseOnHidden: true,
+    pauseOnOffline: true,
+  });
+
+  // 反馈处理函数 - 保持原有逻辑
   const openFeedbackModal = (submission) => {
     setFeedbackModal({
       isOpen: true,
@@ -101,10 +99,9 @@ const TeacherTaskSubmissions = () => {
       currentFeedback: submission.feedback,
     });
 
-    // 📌 修复：正确处理星星评分的初始状态
     setFeedbackForm({
       content: submission.feedback?.content || '',
-      rating: submission.feedback?.rating || 0, // 如果没有评分，显示 0 星
+      rating: submission.feedback?.rating || 0,
     });
   };
 
@@ -117,7 +114,7 @@ const TeacherTaskSubmissions = () => {
     });
     setFeedbackForm({
       content: '',
-      rating: 0, // 重置为 0
+      rating: 0,
     });
   };
 
@@ -125,7 +122,7 @@ const TeacherTaskSubmissions = () => {
     e.preventDefault();
 
     if (!feedbackForm.content.trim()) {
-      toast.error('请输入反馈内容'); // 📌 使用 toast
+      toast.error('请输入反馈内容');
       return;
     }
 
@@ -134,13 +131,13 @@ const TeacherTaskSubmissions = () => {
     try {
       const res = await api.post(`/submission/${feedbackModal.submissionId}/feedback`, {
         content: feedbackForm.content.trim(),
-        rating: feedbackForm.rating === 0 ? null : feedbackForm.rating, // 将 0 转换为 null 以适配后端
+        rating: feedbackForm.rating === 0 ? null : feedbackForm.rating,
       });
 
       if (res.data.success) {
-        toast.success('反馈提交成功！'); // 📌 使用 toast
+        toast.success('反馈提交成功！');
         closeFeedbackModal();
-        // 📌 修复：调用正确的刷新函数
+        // 🔧 修复：使用正确的刷新函数
         await refreshData();
       } else {
         toast.error('反馈提交失败：' + (res.data.message || '未知错误'));
@@ -154,7 +151,7 @@ const TeacherTaskSubmissions = () => {
   };
 
   const handleDeleteFeedback = async (submissionId) => {
-    // 📌 使用自定义确认弹窗替代原生 confirm
+    // 使用自定义确认弹窗替代原生 confirm
     const confirmDelete = () => {
       return new Promise((resolve) => {
         toast((t) => (
@@ -196,7 +193,7 @@ const TeacherTaskSubmissions = () => {
       
       if (res.data.success) {
         toast.success('反馈已删除！');
-        await refreshData(); // 📌 使用正确的刷新函数
+        await refreshData(); // 🔧 使用正确的刷新函数
       } else {
         toast.error('删除失败：' + (res.data.message || '未知错误'));
       }

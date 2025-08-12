@@ -1,4 +1,4 @@
-// src/components/PullToRefreshIndicator.jsx - 下拉刷新指示器
+// src/components/PullToRefreshIndicator.jsx - 简化版
 import { motion, AnimatePresence } from 'framer-motion';
 
 const PullToRefreshIndicator = ({ 
@@ -6,7 +6,7 @@ const PullToRefreshIndicator = ({
   threshold, 
   isRefreshing, 
   canRelease,
-  isPulling 
+  isPulling
 }) => {
   // 计算指示器状态
   const getIndicatorState = () => {
