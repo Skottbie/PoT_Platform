@@ -840,7 +840,7 @@ const SubmitTask = () => {
                   开始与 AI 对话
                 </h3>
                 <p className="text-gray-500 dark:text-gray-400 max-w-md leading-relaxed">
-                  向 AI 提问，获得学习帮助和指导
+                  与AI共建你的Thinking Chain.
                 </p>
               </motion.div>
             )}
@@ -1218,7 +1218,7 @@ const SubmitTask = () => {
                   <div className="flex justify-between items-center mb-4">
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-lg flex items-center justify-center">
-                        <span className="text-white text-sm font-bold">🤖</span>
+                        <span className="text-white text-sm font-bold">💡</span>
                       </div>
                       <div>
                         <label className="font-semibold text-gray-700 dark:text-gray-200">
@@ -1269,8 +1269,8 @@ const SubmitTask = () => {
                     {aigcLog.length === 0 ? (
                       <div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">
                         <div className="text-center">
-                          <div className="text-3xl mb-2">🤖</div>
-                          <p className="text-sm">开始对话获得 AI 帮助</p>
+                          <div className="text-3xl mb-2">🧠</div>
+                          <p className="text-sm">开始构建你的Thinking</p>
                         </div>
                       </div>
                     ) : (
