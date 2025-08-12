@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import PullToRefreshContainer from '../components/PullToRefreshContainer';
 import useAutoRefresh from '../hooks/useAutoRefresh';
 import { useCallback } from 'react';
+import toast from 'react-hot-toast';
 
 const EditClassStudents = () => {
   const { classId } = useParams();
@@ -278,13 +279,19 @@ const EditClassStudents = () => {
 
   const handlePullRefresh = useCallback(async () => {
     try {
-      await fetchClassData();
+      const res = await api.get(`/class/${classId}`);
+      if (res.data.success) {
+        const cls = res.data.class;
+        setClassData(cls);
+        const activeStudents = cls.studentList.filter(s => !s.isRemoved);
+        setStudents(activeStudents.map(s => ({ ...s, isModified: false })));
+      }
       toast.success('刷新成功');
     } catch (err) {
       console.error('刷新失败:', err);
       toast.error('刷新失败，请重试');
     }
-  }, [fetchClassData]);
+  }, [classId]); // 🔧 只依赖 classId
 
   // 编辑页面，学生状态可能变化
   useAutoRefresh(handlePullRefresh, {

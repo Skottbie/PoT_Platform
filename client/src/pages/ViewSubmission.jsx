@@ -136,13 +136,18 @@ const ViewSubmission = () => {
 
   const handlePullRefresh = useCallback(async () => {
     try {
-      await fetchSubmissionAndTask();
+      const [taskRes, submissionRes] = await Promise.all([
+        api.get(`/task/${taskId}`),
+        api.get(`/submission/my/${taskId}`)
+      ]);
+      setTask(taskRes.data);
+      setSubmission(submissionRes.data);
       toast.success('刷新成功');
     } catch (err) {
       console.error('刷新失败:', err);
       toast.error('刷新失败，请重试');
     }
-  }, [fetchSubmissionAndTask]);
+  }, [taskId]); // 🔧 只依赖 taskId
 
   // 查看提交页面，主要等待教师反馈
   useAutoRefresh(handlePullRefresh, {

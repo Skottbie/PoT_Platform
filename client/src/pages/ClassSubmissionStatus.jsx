@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import PullToRefreshContainer from '../components/PullToRefreshContainer';
 import useAutoRefresh from '../hooks/useAutoRefresh';
 import { useCallback } from 'react';
+import toast from 'react-hot-toast';
 
 const ClassSubmissionStatus = () => {
   const { taskId } = useParams();
@@ -15,20 +16,19 @@ const ClassSubmissionStatus = () => {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState(null);
   const [expandedClasses, setExpandedClasses] = useState(new Set());
+  const fetchClassStatus = async () => {
+    try {
+      const res = await api.get(`/task/${taskId}/class-status`);
+      setData(res.data);
+    } catch (err) {
+      console.error('获取班级提交情况失败:', err);
+      navigate('/teacher');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchClassStatus = async () => {
-      try {
-        const res = await api.get(`/task/${taskId}/class-status`);
-        setData(res.data);
-      } catch (err) {
-        console.error('获取班级提交情况失败:', err);
-        navigate('/teacher');
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchClassStatus();
   }, [taskId, navigate]);
 
@@ -138,6 +138,15 @@ const ClassSubmissionStatus = () => {
       toast.error('刷新失败，请重试');
     }
   }, [taskId]);
+
+  const handleAutoRefresh = useCallback(async () => {
+    try {
+      const res = await api.get(`/task/${taskId}/class-status`);
+      setData(res.data);
+    } catch (err) {
+      console.error('自动刷新失败:', err);
+    }
+  }, [taskId]); 
 
   // 班级提交状态需要较频繁更新
   useAutoRefresh(handlePullRefresh, {

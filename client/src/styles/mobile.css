@@ -15,7 +15,7 @@
 
   body {
     /* 防止过度滚动和优化触控 */
-    overscroll-behavior: none;
+    /* overscroll-behavior: none; */
     touch-action: manipulation;
     /* 移动端字体优化 */
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;

@@ -3,9 +3,9 @@
 /* 🔄 下拉刷新容器优化 */
 .pull-to-refresh-container {
   position: relative;
-  overflow: hidden;
+  overflow: auto;
   /* 防止浏览器默认的下拉刷新 */
-  overscroll-behavior: none;
+  overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
   /* 确保触摸事件正常工作 */
   touch-action: pan-y;

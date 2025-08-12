@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import PullToRefreshContainer from '../components/PullToRefreshContainer';
 import useAutoRefresh from '../hooks/useAutoRefresh';
 import { useCallback } from 'react';
+import toast from 'react-hot-toast';
 
 const ClassHistory = () => {
   const { classId } = useParams();
@@ -124,13 +125,18 @@ const ClassHistory = () => {
 
   const handlePullRefresh = useCallback(async () => {
     try {
-      await fetchClassHistory();
+      const res = await api.get(`/class/${classId}/history`);
+      if (res.data.success) {
+        setClassData(res.data.class);
+        setRemovedStudents(res.data.removedStudents);
+        setEditHistory(res.data.editHistory);
+      }
       toast.success('刷新成功');
     } catch (err) {
       console.error('刷新失败:', err);
       toast.error('刷新失败，请重试');
     }
-  }, [fetchClassHistory]);
+  }, [classId]); // 🔧 只依赖 classId
 
   // 历史记录页面，主要关注删除倒计时
   useAutoRefresh(handlePullRefresh, {

@@ -26,11 +26,13 @@ const PullToRefreshContainer = ({
   return (
     <div 
       ref={containerRef}
-      className={`relative overflow-y-auto ${className}`}
+      className={`relative ${className}`}
       style={{ 
         height: '100%',
+        minHeight: '100vh', // 🔧 确保最小高度
         WebkitOverflowScrolling: 'touch',
-        overscrollBehavior: 'none', // 防止浏览器默认下拉刷新
+        touchAction: 'pan-y', // 🔧 允许垂直滚动
+        overscrollBehavior: 'contain', // 🔧 防止过度滚动
       }}
     >
       {/* 下拉刷新指示器 */}
