@@ -1,4 +1,4 @@
-// src/hooks/usePullToRefresh.js - 修复版本
+// src/hooks/usePullToRefresh.js - 完全修复版本
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { HapticFeedback } from '../utils/deviceUtils';
 
@@ -16,50 +16,95 @@ const usePullToRefresh = (onRefresh, options = {}) => {
   const [canRelease, setCanRelease] = useState(false);
   
   const containerRef = useRef(null);
+  const scrollContainerRef = useRef(null); // 真正的滚动容器
   const startY = useRef(0);
   const hasTriggeredHaptic = useRef(false);
   const isPulling = useRef(false);
-  const isScrollingDown = useRef(false); // 🔧 新增：记录滚动方向
 
-  // 🔧 关键修复：检查是否可以开始下拉刷新
+  // 🔧 找到真正的滚动容器
+  const findScrollContainer = useCallback(() => {
+    if (!containerRef.current) return null;
+    
+    // 检查自身是否可滚动
+    const container = containerRef.current;
+    if (container.scrollHeight > container.clientHeight) {
+      return container;
+    }
+    
+    // 查找第一个可滚动的子元素
+    const walker = document.createTreeWalker(
+      container,
+      NodeFilter.SHOW_ELEMENT,
+      {
+        acceptNode: (node) => {
+          if (node === container) return NodeFilter.FILTER_SKIP;
+          
+          const style = window.getComputedStyle(node);
+          const isScrollable = (
+            style.overflowY === 'auto' ||
+            style.overflowY === 'scroll' ||
+            style.overflow === 'auto' ||
+            style.overflow === 'scroll'
+          ) && node.scrollHeight > node.clientHeight;
+          
+          return isScrollable ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP;
+        }
+      }
+    );
+    
+    return walker.nextNode() || container;
+  }, []);
+
+  // 🔧 检查是否在顶部
+  const isAtTop = useCallback(() => {
+    const scrollContainer = scrollContainerRef.current || findScrollContainer();
+    if (!scrollContainer) return false;
+    
+    return scrollContainer.scrollTop <= 5;
+  }, [findScrollContainer]);
+
+  // 🔧 检查是否可以开始下拉刷新
   const canStartPullRefresh = useCallback(() => {
     if (disabled || isRefreshing || !containerRef.current) return false;
-    
-    const scrollTop = containerRef.current.scrollTop;
-    return scrollTop <= 5; // 只有在顶部5px内才允许下拉刷新
-  }, [disabled, isRefreshing]);
+    return isAtTop();
+  }, [disabled, isRefreshing, isAtTop]);
 
   // 处理触摸开始
   const handleTouchStart = useCallback((e) => {
+    // 更新滚动容器引用
+    scrollContainerRef.current = findScrollContainer();
+    
     if (!canStartPullRefresh()) return;
     
     startY.current = e.touches[0].clientY;
     hasTriggeredHaptic.current = false;
     isPulling.current = false;
-    isScrollingDown.current = false;
     
     // 重置状态
     setPullDistance(0);
     setCanRelease(false);
-  }, [canStartPullRefresh]);
+  }, [canStartPullRefresh, findScrollContainer]);
 
-  // 🔧 关键修复：处理触摸移动
+  // 🔧 完全重写触摸移动处理
   const handleTouchMove = useCallback((e) => {
-    if (!containerRef.current) return;
+    if (!containerRef.current || !scrollContainerRef.current) return;
     
     const currentY = e.touches[0].clientY;
     const deltaY = currentY - startY.current;
-    const currentScrollTop = containerRef.current.scrollTop;
     
-    // 🔧 只有在页面顶部且向下拉动时才处理
-    if (currentScrollTop <= 5 && deltaY > 10) {
+    // 检查是否在顶部
+    const currentlyAtTop = isAtTop();
+    
+    // 只有在页面顶部且向下拉动时才处理下拉刷新
+    if (currentlyAtTop && deltaY > 10) {
       if (!canStartPullRefresh()) return;
       
-      // 🔧 关键：只在这种情况下才阻止默认行为
+      // 🔧 关键：阻止默认行为和事件冒泡
       e.preventDefault();
+      e.stopPropagation();
       isPulling.current = true;
       
-      // 计算下拉距离
+      // 计算下拉距离（添加阻尼效果）
       const distance = Math.max(0, deltaY / resistance);
       setPullDistance(distance);
       
@@ -74,8 +119,8 @@ const usePullToRefresh = (onRefresh, options = {}) => {
           hasTriggeredHaptic.current = true;
         }
       }
-    } else if (deltaY < -5) {
-      // 向上滑动，重置状态
+    } else if (deltaY < -5 || !currentlyAtTop) {
+      // 向上滑动或不在顶部时，重置状态
       if (isPulling.current) {
         isPulling.current = false;
         setPullDistance(0);
@@ -83,8 +128,8 @@ const usePullToRefresh = (onRefresh, options = {}) => {
         hasTriggeredHaptic.current = false;
       }
     }
-    // 🔧 关键：其他情况不阻止默认行为，允许正常滚动
-  }, [canStartPullRefresh, threshold, resistance, canRelease, enableHaptic]);
+    // 🔧 其他情况不阻止默认行为，允许正常滚动
+  }, [canStartPullRefresh, threshold, resistance, canRelease, enableHaptic, isAtTop]);
 
   // 处理触摸结束
   const handleTouchEnd = useCallback(async () => {
@@ -135,13 +180,18 @@ const usePullToRefresh = (onRefresh, options = {}) => {
     const container = containerRef.current;
     if (!container) return;
 
-    // 🔧 关键修复：优化滚动行为设置
+    // 🔧 设置容器样式
+    const originalStyle = {
+      overscrollBehavior: container.style.overscrollBehavior,
+      touchAction: container.style.touchAction,
+    };
+    
     container.style.overscrollBehavior = 'contain';
-    container.style.touchAction = 'pan-y'; // 🔧 允许垂直滚动
+    container.style.touchAction = 'pan-y';
 
-    // 🔧 关键修复：使用正确的 passive 设置
+    // 🔧 使用正确的事件选项
     const touchStartOptions = { passive: true };
-    const touchMoveOptions = { passive: false }; // 只对 move 事件禁用 passive
+    const touchMoveOptions = { passive: false }; // 需要能够阻止默认行为
     const touchEndOptions = { passive: true };
 
     container.addEventListener('touchstart', handleTouchStart, touchStartOptions);
@@ -150,14 +200,15 @@ const usePullToRefresh = (onRefresh, options = {}) => {
     container.addEventListener('touchcancel', handleTouchEnd, touchEndOptions);
 
     return () => {
+      // 清理事件监听器
       container.removeEventListener('touchstart', handleTouchStart);
       container.removeEventListener('touchmove', handleTouchMove);
       container.removeEventListener('touchend', handleTouchEnd);
       container.removeEventListener('touchcancel', handleTouchEnd);
       
-      // 🔧 清理样式
-      container.style.overscrollBehavior = '';
-      container.style.touchAction = '';
+      // 恢复原始样式
+      container.style.overscrollBehavior = originalStyle.overscrollBehavior;
+      container.style.touchAction = originalStyle.touchAction;
     };
   }, [handleTouchStart, handleTouchMove, handleTouchEnd]);
 

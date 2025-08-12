@@ -1,4 +1,4 @@
-// src/components/PullToRefreshContainer.jsx - 下拉刷新容器组件
+// src/components/PullToRefreshContainer.jsx - 修复版本
 import { useRef, useEffect } from 'react';
 import usePullToRefresh from '../hooks/usePullToRefresh';
 import PullToRefreshIndicator from './PullToRefreshIndicator';
@@ -29,10 +29,10 @@ const PullToRefreshContainer = ({
       className={`relative ${className}`}
       style={{ 
         height: '100%',
-        minHeight: '100vh', // 🔧 确保最小高度
-        WebkitOverflowScrolling: 'touch',
-        touchAction: 'pan-y', // 🔧 允许垂直滚动
-        overscrollBehavior: 'contain', // 🔧 防止过度滚动
+        minHeight: '100vh',
+        // 🔧 简化样式，让子元素处理滚动
+        position: 'relative',
+        overflow: 'hidden', // 防止外层滚动
       }}
     >
       {/* 下拉刷新指示器 */}
@@ -44,13 +44,16 @@ const PullToRefreshContainer = ({
         isPulling={isPulling}
       />
 
-      {/* 内容容器 */}
+      {/* 内容容器 - 让内容自己处理滚动 */}
       <div 
-        className="relative z-0"
+        className="relative z-0 h-full"
         style={{
           transition: isRefreshing ? 'none' : 'transform 0.3s ease-out',
           transform: `translateY(${isPulling || isRefreshing ? Math.min(pullDistance, threshold) : 0}px)`,
-          minHeight: '100%',
+          height: '100%',
+          // 🔧 确保内容可以正常滚动
+          overflow: 'auto',
+          WebkitOverflowScrolling: 'touch',
         }}
       >
         {children}
