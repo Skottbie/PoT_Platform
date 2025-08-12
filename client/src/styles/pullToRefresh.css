@@ -1,0 +1,245 @@
+/* client/src/styles/pullToRefresh.css - 下拉刷新专用样式 */
+
+/* 🔄 下拉刷新容器优化 */
+.pull-to-refresh-container {
+  position: relative;
+  overflow: hidden;
+  /* 防止浏览器默认的下拉刷新 */
+  overscroll-behavior: none;
+  -webkit-overflow-scrolling: touch;
+  /* 确保触摸事件正常工作 */
+  touch-action: pan-y;
+}
+
+/* 🎯 下拉刷新指示器样式 */
+.pull-refresh-indicator {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(248, 250, 252, 0.95);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(229, 231, 235, 0.5);
+  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.dark .pull-refresh-indicator {
+  background: rgba(15, 23, 42, 0.95);
+  border-bottom-color: rgba(55, 65, 81, 0.5);
+}
+
+/* 🎨 指示器动画 */
+.pull-refresh-spinner {
+  width: 24px;
+  height: 24px;
+  border: 2px solid #e5e7eb;
+  border-top: 2px solid #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.dark .pull-refresh-spinner {
+  border-color: #374151;
+  border-top-color: #60a5fa;
+}
+
+/* 🎯 箭头指示器 */
+.pull-refresh-arrow {
+  transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  color: #6b7280;
+}
+
+.pull-refresh-arrow.ready {
+  color: #10b981;
+  transform: rotate(180deg);
+}
+
+.dark .pull-refresh-arrow {
+  color: #9ca3af;
+}
+
+.dark .pull-refresh-arrow.ready {
+  color: #34d399;
+}
+
+/* 🎨 进度圆环 */
+.pull-refresh-progress {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 32px;
+  height: 32px;
+}
+
+.pull-refresh-progress circle {
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.pull-refresh-progress .bg-circle {
+  stroke: #e5e7eb;
+}
+
+.pull-refresh-progress .progress-circle {
+  stroke: #3b82f6;
+  transform-origin: center;
+  transform: rotate(-90deg);
+  transition: stroke-dasharray 0.1s ease-out;
+}
+
+.dark .pull-refresh-progress .bg-circle {
+  stroke: #374151;
+}
+
+.dark .pull-refresh-progress .progress-circle {
+  stroke: #60a5fa;
+}
+
+/* 🎯 状态文本 */
+.pull-refresh-text {
+  font-size: 14px;
+  font-weight: 500;
+  color: #6b7280;
+  margin-top: 8px;
+  transition: color 0.3s ease;
+}
+
+.pull-refresh-text.ready {
+  color: #10b981;
+}
+
+.pull-refresh-text.refreshing {
+  color: #3b82f6;
+}
+
+.dark .pull-refresh-text {
+  color: #9ca3af;
+}
+
+.dark .pull-refresh-text.ready {
+  color: #34d399;
+}
+
+.dark .pull-refresh-text.refreshing {
+  color: #60a5fa;
+}
+
+/* 🎨 成功指示器 */
+.pull-refresh-success-dot {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 12px;
+  height: 12px;
+  background: #10b981;
+  border: 2px solid #ffffff;
+  border-radius: 50%;
+  animation: success-pulse 0.6s ease-out;
+}
+
+.dark .pull-refresh-success-dot {
+  border-color: #1f2937;
+  background: #34d399;
+}
+
+@keyframes success-pulse {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* 🎯 内容平移动画 */
+.pull-refresh-content {
+  transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  position: relative;
+  z-index: 1;
+}
+
+.pull-refresh-content.pulling {
+  transition: none;
+}
+
+/* 🎨 iOS风格的阻尼效果 */
+.pull-refresh-container.ios-style .pull-refresh-content {
+  transition: transform 0.4s cubic-bezier(0.17, 0.67, 0.35, 1);
+}
+
+/* 🎯 移动端触摸优化 */
+@media (max-width: 768px) {
+  .pull-refresh-indicator {
+    padding: 12px 16px;
+  }
+  
+  .pull-refresh-spinner {
+    width: 20px;
+    height: 20px;
+  }
+  
+  .pull-refresh-text {
+    font-size: 13px;
+    margin-top: 6px;
+  }
+  
+  .pull-refresh-arrow {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+/* 🎯 高对比度模式支持 */
+@media (prefers-contrast: high) {
+  .pull-refresh-indicator {
+    background: rgba(255, 255, 255, 1);
+    border-bottom-width: 2px;
+    border-bottom-color: #000000;
+  }
+  
+  .dark .pull-refresh-indicator {
+    background: rgba(0, 0, 0, 1);
+    border-bottom-color: #ffffff;
+  }
+  
+  .pull-refresh-text {
+    color: #000000;
+    font-weight: 600;
+  }
+  
+  .dark .pull-refresh-text {
+    color: #ffffff;
+  }
+}
+
+/* 🎯 减少动画偏好支持 */
+@media (prefers-reduced-motion: reduce) {
+  .pull-refresh-spinner,
+  .pull-refresh-arrow,
+  .pull-refresh-content,
+  .pull-refresh-indicator {
+    animation: none !important;
+    transition: none !important;
+  }
+  
+  .pull-refresh-progress .progress-circle {
+    transition: none !important;
+  }
+}

@@ -5,6 +5,9 @@ import { useNavigate } from 'react-router-dom';
 import api from '../api/axiosInstance';
 import toast from 'react-hot-toast';
 import Button from '../components/Button';
+import PullToRefreshContainer from '../components/PullToRefreshContainer';
+import useAutoRefresh from '../hooks/useAutoRefresh';
+import { useCallback } from 'react';
 
 const MyClasses = () => {
   const navigate = useNavigate();
@@ -38,7 +41,32 @@ const MyClasses = () => {
     });
   };
 
+  const handlePullRefresh = useCallback(async () => {
+    try {
+      const res = await api.get('/class/my-classes');
+      if (res.data.success) {
+        setClasses(res.data.classes);
+        toast.success('刷新成功');
+      }
+    } catch (err) {
+      console.error('刷新失败:', err);
+      toast.error('刷新失败，请重试');
+    }
+  }, []);
+
+  // 班级列表更新频率较低
+  useAutoRefresh(handlePullRefresh, {
+    interval: 180000, // 3分钟
+    enabled: true,
+    pauseOnHidden: true,
+  });
+
   return (
+    <PullToRefreshContainer 
+      onRefresh={handlePullRefresh}
+      className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8 px-4"
+      disabled={loading}
+    >
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8 px-4">
       <div className="max-w-5xl mx-auto">
         {/* 顶部导航 */}
@@ -183,6 +211,7 @@ const MyClasses = () => {
         )}
       </div>
     </div>
+    </PullToRefreshContainer>
   );
 };
 

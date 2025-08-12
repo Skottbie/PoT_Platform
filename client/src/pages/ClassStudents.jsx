@@ -4,6 +4,9 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../api/axiosInstance';
 import Button from '../components/Button'; 
+import PullToRefreshContainer from '../components/PullToRefreshContainer';
+import useAutoRefresh from '../hooks/useAutoRefresh';
+import { useCallback } from 'react';
 
 const ClassStudents = () => {
   const { classId } = useParams();
@@ -57,7 +60,35 @@ const ClassStudents = () => {
 
   const stats = getStatistics();
 
+  const handlePullRefresh = useCallback(async () => {
+    try {
+      const res = await api.get(`/class/${classId}`);
+      if (res.data.success) {
+        const cls = res.data.class;
+        setClassData(cls);
+        const activeStudents = cls.studentList?.filter(s => !s.isRemoved) || [];
+        setStudents(activeStudents);
+        toast.success('刷新成功');
+      }
+    } catch (err) {
+      console.error('刷新失败:', err);
+      toast.error('刷新失败，请重试');
+    }
+  }, [classId]);
+
+  // 自动刷新
+  useAutoRefresh(handlePullRefresh, {
+    interval: 90000, // 90秒
+    enabled: true,
+    pauseOnHidden: true,
+});
+
   return (
+    <PullToRefreshContainer 
+      onRefresh={handlePullRefresh}
+      className="min-h-screen bg-gray-50 dark:bg-gray-900 px-4 py-6"
+      disabled={loading}
+    >
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 px-4 py-6">
       <div className="max-w-6xl mx-auto">
         {/* 顶部标题 + 操作按钮 */}
@@ -269,6 +300,7 @@ const ClassStudents = () => {
         )}
       </div>
     </div>
+    </PullToRefreshContainer>
   );
 };
 

@@ -10,6 +10,9 @@ import ReactMarkdown from 'react-markdown';
 import { Light as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { github } from 'react-syntax-highlighter/dist/esm/styles/hljs';
 import toast from 'react-hot-toast'; // 📌 使用 toast 替代 alert
+import PullToRefreshContainer from '../components/PullToRefreshContainer';
+import useAutoRefresh from '../hooks/useAutoRefresh';
+import { useCallback } from 'react';
 
 const ViewSubmission = () => {
   const { taskId } = useParams();
@@ -131,7 +134,29 @@ const ViewSubmission = () => {
     );
   }
 
+  const handlePullRefresh = useCallback(async () => {
+    try {
+      await fetchSubmissionAndTask();
+      toast.success('刷新成功');
+    } catch (err) {
+      console.error('刷新失败:', err);
+      toast.error('刷新失败，请重试');
+    }
+  }, [fetchSubmissionAndTask]);
+
+  // 查看提交页面，主要等待教师反馈
+  useAutoRefresh(handlePullRefresh, {
+    interval: 120000, // 2分钟
+    enabled: true,
+    pauseOnHidden: true,
+  });
+
   return (
+    <PullToRefreshContainer 
+      onRefresh={handlePullRefresh}
+      className="min-h-screen bg-gray-50 dark:bg-gray-900 py-4 sm:py-10 px-2 sm:px-4"
+      disabled={loading}
+    >
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-4 sm:py-10 px-2 sm:px-4">
       <div className="max-w-4xl mx-auto">
         {/* 📌 移动端优化：页面头部 */}
@@ -357,6 +382,7 @@ const ViewSubmission = () => {
         </motion.div>
       </div>
     </div>
+    </PullToRefreshContainer>
   );
 };
 

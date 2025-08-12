@@ -5,6 +5,9 @@ import { useParams, useNavigate } from 'react-router-dom';
 import api from '../api/axiosInstance';
 import Button from '../components/Button';
 import { motion, AnimatePresence } from 'framer-motion';
+import PullToRefreshContainer from '../components/PullToRefreshContainer';
+import useAutoRefresh from '../hooks/useAutoRefresh';
+import { useCallback } from 'react';
 
 const ClassHistory = () => {
   const { classId } = useParams();
@@ -119,8 +122,30 @@ const ClassHistory = () => {
     );
   }
 
+  const handlePullRefresh = useCallback(async () => {
+    try {
+      await fetchClassHistory();
+      toast.success('刷新成功');
+    } catch (err) {
+      console.error('刷新失败:', err);
+      toast.error('刷新失败，请重试');
+    }
+  }, [fetchClassHistory]);
+
+  // 历史记录页面，主要关注删除倒计时
+  useAutoRefresh(handlePullRefresh, {
+    interval: 300000, // 5分钟
+    enabled: true,
+    pauseOnHidden: true,
+  });
+
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-6 px-2 sm:py-10 sm:px-4">
+    <PullToRefreshContainer 
+      onRefresh={handlePullRefresh}
+      className="min-h-screen bg-gray-50 dark:bg-gray-900 py-6 px-2 sm:py-10 sm:px-4"
+      disabled={loading}
+    >
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-6 px-2 sm:py-10 sm:px-4">
       <div className="max-w-6xl mx-auto">
         {/* 页面头部 */}
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-6">
@@ -362,6 +387,7 @@ const ClassHistory = () => {
         </AnimatePresence>
       </div>
     </div>
+    </PullToRefreshContainer>
   );
 };
 

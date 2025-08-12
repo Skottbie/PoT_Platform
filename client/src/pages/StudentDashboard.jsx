@@ -7,7 +7,8 @@ import Button from '../components/Button';
 //import MobileCard, { TaskCard } from '../components/MobileCard';
 import { TaskCard } from '../components/EnhancedMobileCard';
 import { PrimaryButton, SecondaryButton, WarningButton, DangerButton } from '../components/EnhancedButton';
-
+import PullToRefreshContainer from '../components/PullToRefreshContainer';
+import useAutoRefresh from '../hooks/useAutoRefresh';
 
 const StudentDashboard = () => {
   const [user, setUser] = useState(null);
@@ -105,6 +106,36 @@ const StudentDashboard = () => {
       }, 2000);
     }
   }, [tasks.active]);
+
+
+  // 🔄 下拉刷新处理函数
+  const handlePullRefresh = useCallback(async () => {
+    try {
+      await fetchUserAndTasks();
+      toast.success('刷新成功');
+    } catch (error) {
+      console.error('下拉刷新失败:', error);
+      toast.error('刷新失败，请重试');
+    }
+  }, [fetchUserAndTasks]);
+
+  // ⏰ 自动定时刷新
+  useAutoRefresh(
+    useCallback(async () => {
+      // 静默刷新，不显示toast
+      try {
+        await fetchUserAndTasks();
+      } catch (error) {
+        console.error('自动刷新失败:', error);
+      }
+    }, [fetchUserAndTasks]),
+    {
+      interval: 60000,      // 60秒间隔
+      enabled: true,
+      pauseOnHidden: true,
+      pauseOnOffline: true,
+    }
+  );
 
   // 📌 切换任务分类
   const handleCategoryChange = useCallback((category) => {
@@ -521,295 +552,301 @@ const StudentDashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 overflow-y-auto">
-      <div className="max-w-4xl mx-auto px-4 py-6">
-        {/* 欢迎区域 */}
-        <motion.div
-          className="mb-6"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
-          <div className="bg-gradient-to-r from-white via-blue-50/30 to-purple-50/30 dark:from-gray-800 dark:via-blue-900/10 dark:to-purple-900/10 rounded-mobile-2xl border border-gray-200/60 dark:border-gray-700/60 backdrop-blur-xl shadow-mobile p-6">
-            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
-              <div className="flex-1 min-w-0">
-                <h1 className={`font-bold mb-2 text-gray-800 dark:text-gray-100 ${
-                  isMobile ? 'text-xl' : 'text-2xl'
-                }`}>
-                  <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                    总裁欢迎回家
-                  </span>
-                  <span className="block sm:inline text-gray-700 dark:text-gray-300 mt-1 sm:mt-0 sm:ml-2">
-                    {user.email}
-                  </span>
-                </h1>
-                
-                {/* 快速统计 */}
-                <div className="flex items-center gap-4 mt-3">
-                  <div className="flex items-center gap-1.5">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                    <span className="text-sm text-gray-600 dark:text-gray-400">
-                      {tasks.active.length} 个当前任务
+    <PullToRefreshContainer 
+      onRefresh={handlePullRefresh}
+      className="min-h-screen bg-gray-50 dark:bg-gray-900"
+      disabled={loading}
+    >
+      <div className="overflow-y-auto">
+        <div className="max-w-4xl mx-auto px-4 py-6">
+          {/* 欢迎区域 */}
+          <motion.div
+            className="mb-6"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            <div className="bg-gradient-to-r from-white via-blue-50/30 to-purple-50/30 dark:from-gray-800 dark:via-blue-900/10 dark:to-purple-900/10 rounded-mobile-2xl border border-gray-200/60 dark:border-gray-700/60 backdrop-blur-xl shadow-mobile p-6">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
+                <div className="flex-1 min-w-0">
+                  <h1 className={`font-bold mb-2 text-gray-800 dark:text-gray-100 ${
+                    isMobile ? 'text-xl' : 'text-2xl'
+                  }`}>
+                    <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                      总裁欢迎回家
                     </span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                    <span className="text-sm text-gray-600 dark:text-gray-400">
-                      {tasks.active.filter(t => t.submitted).length} 个已完成
+                    <span className="block sm:inline text-gray-700 dark:text-gray-300 mt-1 sm:mt-0 sm:ml-2">
+                      {user.email}
                     </span>
+                  </h1>
+                  
+                  {/* 快速统计 */}
+                  <div className="flex items-center gap-4 mt-3">
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                      <span className="text-sm text-gray-600 dark:text-gray-400">
+                        {tasks.active.length} 个当前任务
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                      <span className="text-sm text-gray-600 dark:text-gray-400">
+                        {tasks.active.filter(t => t.submitted).length} 个已完成
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <div className="flex-shrink-0">
-                <PrimaryButton
-                  size={isMobile ? "md" : "md"}
-                  icon="➕"
-                  haptic
-                  onClick={() => navigate('/join-class')}
-                  gradient
-                  className="min-w-[120px]"
-                >
-                  加入班级
-                </PrimaryButton>
+                <div className="flex-shrink-0">
+                  <PrimaryButton
+                    size={isMobile ? "md" : "md"}
+                    icon="➕"
+                    haptic
+                    onClick={() => navigate('/join-class')}
+                    gradient
+                    className="min-w-[120px]"
+                  >
+                    加入班级
+                  </PrimaryButton>
+                </div>
               </div>
             </div>
-          </div>
-        </motion.div>
+          </motion.div>
 
-        {/* 任务分类标签 - 移动端优化 */}
-        <div className="mb-6">
-          <div className={`flex bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl border border-gray-200/60 dark:border-gray-700/60 p-1.5 rounded-mobile-2xl shadow-mobile ${
-            isMobile ? 'gap-1' : 'gap-1'
-          }`}>
-            {[
-              { key: 'active', label: '📋 当前任务', count: tasks.active.length, icon: '📋', color: 'blue' },
-              { key: 'archived', label: '📦 已归档', count: tasks.archived.length, icon: '📦', color: 'gray' }
-            ].map(({ key, label, count, icon, color }) => (
-              <button
-                key={key}
-                onClick={() => handleCategoryChange(key)}
-                className={`flex-1 px-4 py-3 rounded-mobile-xl text-sm font-medium transition-all duration-300 ease-out touch-manipulation ${
-                  currentCategory === key
-                    ? `bg-gradient-to-r ${
-                        color === 'blue' 
-                          ? 'from-blue-500 to-cyan-500 text-white shadow-mobile-lg transform scale-[1.02]' 
-                          : 'from-gray-500 to-slate-500 text-white shadow-mobile-lg transform scale-[1.02]'
-                      }`
-                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100/50 dark:hover:bg-gray-700/50'
-                }`}
+          {/* 任务分类标签 - 移动端优化 */}
+          <div className="mb-6">
+            <div className={`flex bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl border border-gray-200/60 dark:border-gray-700/60 p-1.5 rounded-mobile-2xl shadow-mobile ${
+              isMobile ? 'gap-1' : 'gap-1'
+            }`}>
+              {[
+                { key: 'active', label: '📋 当前任务', count: tasks.active.length, icon: '📋', color: 'blue' },
+                { key: 'archived', label: '📦 已归档', count: tasks.archived.length, icon: '📦', color: 'gray' }
+              ].map(({ key, label, count, icon, color }) => (
+                <button
+                  key={key}
+                  onClick={() => handleCategoryChange(key)}
+                  className={`flex-1 px-4 py-3 rounded-mobile-xl text-sm font-medium transition-all duration-300 ease-out touch-manipulation ${
+                    currentCategory === key
+                      ? `bg-gradient-to-r ${
+                          color === 'blue' 
+                            ? 'from-blue-500 to-cyan-500 text-white shadow-mobile-lg transform scale-[1.02]' 
+                            : 'from-gray-500 to-slate-500 text-white shadow-mobile-lg transform scale-[1.02]'
+                        }`
+                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100/50 dark:hover:bg-gray-700/50'
+                  }`}
+                >
+                  <div className="flex items-center justify-center gap-2">
+                    {isMobile ? (
+                      <div className="flex flex-col items-center gap-1">
+                        <span className="text-lg">{icon}</span>
+                        <span className="text-xs font-semibold">({count})</span>
+                      </div>
+                    ) : (
+                      <>
+                        <span>{label}</span>
+                        <span className={`inline-flex items-center justify-center w-6 h-6 text-xs font-bold rounded-full ${
+                          currentCategory === key
+                            ? 'bg-white/20 text-white'
+                            : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
+                        }`}>
+                          {count}
+                        </span>
+                      </>
+                    )}
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* 任务列表 */}
+          <AnimatePresence mode="wait">
+            {currentTasks.length === 0 ? (
+              <motion.div
+                key="empty"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="text-center py-10"
               >
-                <div className="flex items-center justify-center gap-2">
-                  {isMobile ? (
-                    <div className="flex flex-col items-center gap-1">
-                      <span className="text-lg">{icon}</span>
-                      <span className="text-xs font-semibold">({count})</span>
-                    </div>
-                  ) : (
-                    <>
-                      <span>{label}</span>
-                      <span className={`inline-flex items-center justify-center w-6 h-6 text-xs font-bold rounded-full ${
-                        currentCategory === key
-                          ? 'bg-white/20 text-white'
-                          : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
-                      }`}>
-                        {count}
-                      </span>
-                    </>
-                  )}
+                <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center">
+                  <span className="text-gray-400 dark:text-gray-500 text-2xl">📋</span>
                 </div>
-              </button>
-            ))}
-          </div>
-        </div>
+                <p className="text-gray-500 dark:text-gray-400">
+                  {currentCategory === 'active' ? '暂无当前任务' : '暂无归档任务'}
+                </p>
+              </motion.div>
+            ) : (
+              <motion.div
+                key="tasks"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="space-y-4"
+              >
+                {currentTasks.map((task, index) =>
+                  isMobile ? (
+                    <motion.div
+                      key={task._id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.05 }}
+                    >
+                      {renderMobileTaskCard(task)}
+                    </motion.div>
+                  ) : (
+                    // 保持原有的桌面端渲染逻辑
+                    <motion.div
+                      key={task._id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className={getTaskCardStyle(getTaskStatus(task))}
+                    >
+                      <div className="flex justify-between items-start mb-3">
+                        <div className="flex-1">
+                          <h3 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-2">
+                            {task.title}
+                          </h3>
+                          {task.description && (
+                            <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 mb-3 border border-blue-200 dark:border-blue-700">
+                              <p className="text-sm text-blue-800 dark:text-blue-200 whitespace-pre-wrap">
+                                📋 {task.description}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                        <span className={`text-sm font-medium ${getTaskStatus(task).color} ml-4 flex-shrink-0`}>
+                          {getTaskStatus(task).text}
+                        </span>
+                      </div>
 
-        {/* 任务列表 */}
-        <AnimatePresence mode="wait">
-          {currentTasks.length === 0 ? (
-            <motion.div
-              key="empty"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="text-center py-10"
-            >
-              <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center">
-                <span className="text-gray-400 dark:text-gray-500 text-2xl">📋</span>
-              </div>
-              <p className="text-gray-500 dark:text-gray-400">
-                {currentCategory === 'active' ? '暂无当前任务' : '暂无归档任务'}
-              </p>
-            </motion.div>
-          ) : (
-            <motion.div
-              key="tasks"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="space-y-4"
-            >
-              {currentTasks.map((task, index) =>
-                isMobile ? (
-                  <motion.div
-                    key={task._id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.05 }}
-                  >
-                    {renderMobileTaskCard(task)}
-                  </motion.div>
-                ) : (
-                  // 保持原有的桌面端渲染逻辑
-                  <motion.div
-                    key={task._id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className={getTaskCardStyle(getTaskStatus(task))}
-                  >
-                    <div className="flex justify-between items-start mb-3">
-                      <div className="flex-1">
-                        <h3 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-2">
-                          {task.title}
-                        </h3>
-                        {task.description && (
-                          <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 mb-3 border border-blue-200 dark:border-blue-700">
-                            <p className="text-sm text-blue-800 dark:text-blue-200 whitespace-pre-wrap">
-                              📋 {task.description}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div className="space-y-2">
+                          <p className="text-sm text-gray-500 dark:text-gray-400">
+                            📂 分类：{task.category}
+                          </p>
+                          <p className="text-sm text-gray-500 dark:text-gray-400">
+                            📝 作业文件：{task.needsFile ? '必交' : '可选'}
+                          </p>
+                          <p className="text-sm text-gray-500 dark:text-gray-400">
+                            🤖 AIGC 使用：{task.allowAIGC ? '允许' : '禁止'}
+                          </p>
+                          {task.allowAIGC && (
+                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                              📋 AIGC 日志：{task.requireAIGCLog ? '必交' : '可选'}
                             </p>
+                          )}
+                        </div>
+
+                        <div className="space-y-2">
+                          <p className="text-sm text-gray-500 dark:text-gray-400">
+                            ⏰ 截止时间：{formatDeadline(task.deadline)}
+                          </p>
+                          <p className="text-sm text-gray-500 dark:text-gray-400">
+                            📚 所属班级：
+                            {task.classIds && task.classIds.length > 0
+                              ? task.classIds.map(cls => cls.name).join('，')
+                              : '未绑定'}
+                          </p>
+                          <p className="text-sm text-gray-500 dark:text-gray-400">
+                            📋 逾期提交：{task.allowLateSubmission ? '允许' : '不允许'}
+                          </p>
+                          {getTaskStatus(task).status === 'late' && (
+                            <p className="text-sm text-orange-600 dark:text-orange-400 font-medium">
+                              ⚠️ 此任务已逾期，提交后将被标注为逾期作业
+                            </p>
+                          )}
+                          {task.isArchived && (
+                            <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">
+                              📦 此任务已归档，仅供查看
+                            </p>
+                          )}
+                          {task.submissionInfo && (
+                            <p className="text-sm text-green-600 dark:text-green-400 font-medium">
+                              ✅ 已于 {new Date(task.submissionInfo.submittedAt).toLocaleString()} 提交
+                              {task.submissionInfo.isLateSubmission && ' (逾期提交)'}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="flex gap-2 flex-wrap">
+                        {getTaskStatus(task).canSubmit && currentCategory === 'active' && (
+                          <Button
+                            variant={getTaskStatus(task).status === 'late' ? "warning" :
+                              getTaskStatus(task).status === 'urgent' ? "danger" : "primary"}
+                            onClick={() => navigate(`/submit/${task._id}`)}
+                          >
+                            {getTaskStatus(task).status === 'late' ? '⚠️ 逾期提交' : '📤 提交作业'}
+                          </Button>
+                        )}
+
+                        {task.submitted && (
+                          <Button
+                            variant="secondary"
+                            onClick={() => navigate(`/view-submission/${task._id}`)}
+                          >
+                            👀 查看我的提交
+                          </Button>
+                        )}
+
+                        {!getTaskStatus(task).canSubmit && getTaskStatus(task).status === 'expired' && currentCategory === 'active' && (
+                          <div className="px-5 py-2 rounded-xl bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 text-center">
+                            ❌ 已截止，无法提交
+                          </div>
+                        )}
+
+                        {currentCategory === 'archived' && (
+                          <div className="px-5 py-2 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 text-center text-sm">
+                            📦 归档任务，仅供查看
+                            {task.submitted && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => navigate(`/view-submission/${task._id}`)}
+                                className="ml-2"
+                              >
+                                👀 查看提交
+                              </Button>
+                            )}
                           </div>
                         )}
                       </div>
-                      <span className={`text-sm font-medium ${getTaskStatus(task).color} ml-4 flex-shrink-0`}>
-                        {getTaskStatus(task).text}
-                      </span>
-                    </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                      <div className="space-y-2">
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                          📂 分类：{task.category}
-                        </p>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                          📝 作业文件：{task.needsFile ? '必交' : '可选'}
-                        </p>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                          🤖 AIGC 使用：{task.allowAIGC ? '允许' : '禁止'}
-                        </p>
-                        {task.allowAIGC && (
-                          <p className="text-sm text-gray-500 dark:text-gray-400">
-                            📋 AIGC 日志：{task.requireAIGCLog ? '必交' : '可选'}
-                          </p>
-                        )}
-                      </div>
-
-                      <div className="space-y-2">
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                          ⏰ 截止时间：{formatDeadline(task.deadline)}
-                        </p>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                          📚 所属班级：
-                          {task.classIds && task.classIds.length > 0
-                            ? task.classIds.map(cls => cls.name).join('，')
-                            : '未绑定'}
-                        </p>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                          📋 逾期提交：{task.allowLateSubmission ? '允许' : '不允许'}
-                        </p>
-                        {getTaskStatus(task).status === 'late' && (
-                          <p className="text-sm text-orange-600 dark:text-orange-400 font-medium">
-                            ⚠️ 此任务已逾期，提交后将被标注为逾期作业
-                          </p>
-                        )}
-                        {task.isArchived && (
-                          <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">
-                            📦 此任务已归档，仅供查看
-                          </p>
-                        )}
-                        {task.submissionInfo && (
-                          <p className="text-sm text-green-600 dark:text-green-400 font-medium">
-                            ✅ 已于 {new Date(task.submissionInfo.submittedAt).toLocaleString()} 提交
-                            {task.submissionInfo.isLateSubmission && ' (逾期提交)'}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="flex gap-2 flex-wrap">
-                      {getTaskStatus(task).canSubmit && currentCategory === 'active' && (
-                        <Button
-                          variant={getTaskStatus(task).status === 'late' ? "warning" :
-                            getTaskStatus(task).status === 'urgent' ? "danger" : "primary"}
-                          onClick={() => navigate(`/submit/${task._id}`)}
-                        >
-                          {getTaskStatus(task).status === 'late' ? '⚠️ 逾期提交' : '📤 提交作业'}
-                        </Button>
-                      )}
-
-                      {task.submitted && (
-                        <Button
-                          variant="secondary"
-                          onClick={() => navigate(`/view-submission/${task._id}`)}
-                        >
-                          👀 查看我的提交
-                        </Button>
-                      )}
-
-                      {!getTaskStatus(task).canSubmit && getTaskStatus(task).status === 'expired' && currentCategory === 'active' && (
-                        <div className="px-5 py-2 rounded-xl bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 text-center">
-                          ❌ 已截止，无法提交
-                        </div>
-                      )}
-
-                      {currentCategory === 'archived' && (
-                        <div className="px-5 py-2 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 text-center text-sm">
-                          📦 归档任务，仅供查看
-                          {task.submitted && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => navigate(`/view-submission/${task._id}`)}
-                              className="ml-2"
-                            >
-                              👀 查看提交
-                            </Button>
-                          )}
-                        </div>
-                      )}
-                    </div>
-
-                    {task.submitted && task.submissionInfo?.hasFeedback && (
-                      <div className="mt-4 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-lg">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="text-green-600 dark:text-green-400 font-medium text-sm">
-                            💬 教师已反馈
-                          </span>
-                          {task.submissionInfo.feedbackRating && (
-                            <span className="text-yellow-500">
-                              {'⭐'.repeat(task.submissionInfo.feedbackRating)}
+                      {task.submitted && task.submissionInfo?.hasFeedback && (
+                        <div className="mt-4 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-lg">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="text-green-600 dark:text-green-400 font-medium text-sm">
+                              💬 教师已反馈
                             </span>
-                          )}
+                            {task.submissionInfo.feedbackRating && (
+                              <span className="text-yellow-500">
+                                {'⭐'.repeat(task.submissionInfo.feedbackRating)}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-sm text-green-700 dark:text-green-300 line-clamp-2">
+                            {task.submissionInfo.feedbackPreview}
+                          </p>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => navigate(`/view-submission/${task._id}`)}
+                            className="mt-2 text-xs"
+                          >
+                            查看完整反馈 →
+                          </Button>
                         </div>
-                        <p className="text-sm text-green-700 dark:text-green-300 line-clamp-2">
-                          {task.submissionInfo.feedbackPreview}
-                        </p>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => navigate(`/view-submission/${task._id}`)}
-                          className="mt-2 text-xs"
-                        >
-                          查看完整反馈 →
-                        </Button>
-                      </div>
-                    )}
+                      )}
 
-                  </motion.div>
-                )
-              )}
-            </motion.div>
-          )}
-        </AnimatePresence>
+                    </motion.div>
+                  )
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
-    </div>
+    </PullToRefreshContainer>
   );
 };
 

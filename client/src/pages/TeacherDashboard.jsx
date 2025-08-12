@@ -8,6 +8,8 @@ import { PrimaryButton, SecondaryButton, DangerButton, WarningButton } from '../
 import { motion, AnimatePresence } from 'framer-motion';
 import ConfirmDialog from '../components/ConfirmDialog';
 import toast from 'react-hot-toast';
+import PullToRefreshContainer from '../components/PullToRefreshContainer';
+import useAutoRefresh from '../hooks/useAutoRefresh';
 
 const TeacherDashboard = () => {
   const [user, setUser] = useState(null);
@@ -715,6 +717,44 @@ const TeacherDashboard = () => {
     );
   }, [currentCategory, getTaskStatus, formatDeadline, navigate, selectedTasks, toggleTaskSelection, handleTaskOperation, batchLoading, fetchTasks, setConfirmDialog]);
 
+  // 🔄 下拉刷新处理函数
+  const handlePullRefresh = useCallback(async () => {
+    try {
+      await fetchInitialData();
+      // 刷新当前分类的任务
+      if (currentCategory !== 'active') {
+        await fetchTasks(currentCategory);
+      }
+      toast.success('刷新成功');
+    } catch (error) {
+      console.error('下拉刷新失败:', error);
+      toast.error('刷新失败，请重试');
+    }
+  }, [fetchInitialData, fetchTasks, currentCategory]);
+
+  // ⏰ 自动定时刷新
+  useAutoRefresh(
+    useCallback(async () => {
+      try {
+        // 静默刷新任务数据
+        await fetchTasks(currentCategory);
+        // 检查是否有新的班级或统计变化
+        const classRes = await api.get('/class/my-classes');
+        if (classRes.data.success) {
+          setMyClasses(classRes.data.classes);
+        }
+      } catch (error) {
+        console.error('自动刷新失败:', error);
+      }
+    }, [fetchTasks, currentCategory]),
+    {
+      interval: 45000,      // 45秒间隔
+      enabled: true,
+      pauseOnHidden: true,
+      pauseOnOffline: true,
+    }
+  );
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
@@ -735,774 +775,779 @@ const TeacherDashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-4 sm:py-10 px-2 sm:px-4 transition-colors duration-300">
+    <PullToRefreshContainer 
+      onRefresh={handlePullRefresh}
+      className="min-h-screen bg-gray-50 dark:bg-gray-900 py-4 sm:py-10 px-2 sm:px-4 transition-colors duration-300"
+      disabled={loading || submitting}
+    >
       <div className="max-w-4xl mx-auto space-y-6">
-        {/* 欢迎区域 */}
-        <motion.div
-          className="mb-6"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
-          <div className="bg-gradient-to-r from-white via-blue-50/30 to-purple-50/30 dark:from-gray-800 dark:via-blue-900/10 dark:to-purple-900/10 rounded-mobile-2xl border border-gray-200/60 dark:border-gray-700/60 backdrop-blur-xl shadow-mobile p-6">
-            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
-              <div className="flex-1 min-w-0">
-                <h1 className={`font-bold mb-2 text-gray-800 dark:text-gray-100 ${
-                  isMobile ? 'text-xl' : 'text-2xl'
-                }`}>
-                  <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                    欢迎回来
-                  </span>
-                  <span className="block sm:inline text-gray-700 dark:text-gray-300 mt-1 sm:mt-0">
-                    {user.email}
-                  </span>
-                </h1>
-                
-                {/* 快速统计 */}
-                <div className="flex items-center gap-4 mt-3">
-                  <div className="flex items-center gap-1.5">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                    <span className="text-sm text-gray-600 dark:text-gray-400">
-                      {tasks.active.length} 个活跃任务
+          {/* 欢迎区域 */}
+          <motion.div
+            className="mb-6"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            <div className="bg-gradient-to-r from-white via-blue-50/30 to-purple-50/30 dark:from-gray-800 dark:via-blue-900/10 dark:to-purple-900/10 rounded-mobile-2xl border border-gray-200/60 dark:border-gray-700/60 backdrop-blur-xl shadow-mobile p-6">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
+                <div className="flex-1 min-w-0">
+                  <h1 className={`font-bold mb-2 text-gray-800 dark:text-gray-100 ${
+                    isMobile ? 'text-xl' : 'text-2xl'
+                  }`}>
+                    <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                      欢迎回来
                     </span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                    <span className="text-sm text-gray-600 dark:text-gray-400">
-                      {myClasses.length} 个班级
+                    <span className="block sm:inline text-gray-700 dark:text-gray-300 mt-1 sm:mt-0">
+                      {user.email}
                     </span>
+                  </h1>
+                  
+                  {/* 快速统计 */}
+                  <div className="flex items-center gap-4 mt-3">
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                      <span className="text-sm text-gray-600 dark:text-gray-400">
+                        {tasks.active.length} 个活跃任务
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                      <span className="text-sm text-gray-600 dark:text-gray-400">
+                        {myClasses.length} 个班级
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <div className="flex gap-2 flex-shrink-0">
-                <PrimaryButton
-                  size={isMobile ? "md" : "md"}
-                  icon="➕"
-                  haptic
-                  onClick={() => navigate('/create-class')}
-                  gradient
-                  className="flex-1 sm:flex-none"
-                >
-                  创建班级
-                </PrimaryButton>
-                <SecondaryButton
-                  size={isMobile ? "md" : "md"}
-                  icon="📚"
-                  onClick={() => navigate('/my-classes')}
-                  className="flex-1 sm:flex-none"
-                >
-                  管理班级
-                </SecondaryButton>
+                <div className="flex gap-2 flex-shrink-0">
+                  <PrimaryButton
+                    size={isMobile ? "md" : "md"}
+                    icon="➕"
+                    haptic
+                    onClick={() => navigate('/create-class')}
+                    gradient
+                    className="flex-1 sm:flex-none"
+                  >
+                    创建班级
+                  </PrimaryButton>
+                  <SecondaryButton
+                    size={isMobile ? "md" : "md"}
+                    icon="📚"
+                    onClick={() => navigate('/my-classes')}
+                    className="flex-1 sm:flex-none"
+                  >
+                    管理班级
+                  </SecondaryButton>
+                </div>
               </div>
             </div>
-          </div>
-        </motion.div>
+          </motion.div>
 
-        {/* 发布新任务表单 */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="bg-gradient-to-r from-white via-blue-50/30 to-purple-50/30 dark:from-gray-800 dark:via-blue-900/10 dark:to-purple-900/10 rounded-mobile-2xl border border-gray-200/60 dark:border-gray-700/60 backdrop-blur-xl shadow-mobile p-6"
-        >
-          <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4 flex items-center gap-2">
-            <span className="text-xl">📌</span>
-            发布新任务
-          </h2>
+          {/* 发布新任务表单 */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="bg-gradient-to-r from-white via-blue-50/30 to-purple-50/30 dark:from-gray-800 dark:via-blue-900/10 dark:to-purple-900/10 rounded-mobile-2xl border border-gray-200/60 dark:border-gray-700/60 backdrop-blur-xl shadow-mobile p-6"
+          >
+            <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4 flex items-center gap-2">
+              <span className="text-xl">📌</span>
+              发布新任务
+            </h2>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* 基础信息 */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* 基础信息 */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      任务标题 *
+                    </label>
+                    <input
+                      type="text"
+                      name="title"
+                      placeholder="输入任务标题..."
+                      value={form.title}
+                      onChange={handleChange}
+                      required
+                      className="w-full border border-gray-300 dark:border-gray-600 rounded-mobile-lg 
+                                bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 
+                                placeholder-gray-500 dark:placeholder-gray-400 
+                                transition-all duration-200 min-h-[44px] px-4 py-3 text-base
+                                focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      任务类型
+                    </label>
+                    <select
+                      name="category"
+                      value={form.category}
+                      onChange={handleChange}
+                      className="w-full border border-gray-300 dark:border-gray-600 rounded-mobile-lg 
+                                bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 
+                                transition-all duration-200 min-h-[44px] px-4 py-3 text-base
+                                focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500"
+                    >
+                      <option value="课堂练习">📝 课堂练习</option>
+                      <option value="课程任务">📚 课程任务</option>
+                    </select>
+                  </div>
+                </div>
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    任务标题 *
+                    任务描述
                   </label>
-                  <input
-                    type="text"
-                    name="title"
-                    placeholder="输入任务标题..."
-                    value={form.title}
+                  <textarea
+                    name="description"
+                    placeholder="详细描述任务要求..."
+                    value={form.description}
                     onChange={handleChange}
-                    required
+                    rows={4}
                     className="w-full border border-gray-300 dark:border-gray-600 rounded-mobile-lg 
                               bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 
                               placeholder-gray-500 dark:placeholder-gray-400 
-                              transition-all duration-200 min-h-[44px] px-4 py-3 text-base
+                              transition-all duration-200 px-4 py-3 text-base resize-none
                               focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500"
                   />
                 </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    任务类型
-                  </label>
-                  <select
-                    name="category"
-                    value={form.category}
-                    onChange={handleChange}
-                    className="w-full border border-gray-300 dark:border-gray-600 rounded-mobile-lg 
-                              bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 
-                              transition-all duration-200 min-h-[44px] px-4 py-3 text-base
-                              focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500"
-                  >
-                    <option value="课堂练习">📝 课堂练习</option>
-                    <option value="课程任务">📚 课程任务</option>
-                  </select>
-                </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  任务描述
-                </label>
-                <textarea
-                  name="description"
-                  placeholder="详细描述任务要求..."
-                  value={form.description}
-                  onChange={handleChange}
-                  rows={4}
-                  className="w-full border border-gray-300 dark:border-gray-600 rounded-mobile-lg 
-                            bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 
-                            placeholder-gray-500 dark:placeholder-gray-400 
-                            transition-all duration-200 px-4 py-3 text-base resize-none
-                            focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500"
-                />
-              </div>
-            </div>
-
-            {/* 提交要求 */}
-            <div className="bg-white/50 dark:bg-gray-800/50 rounded-mobile-xl p-4 border border-gray-200/50 dark:border-gray-700/50">
-              <h3 className="font-semibold text-gray-800 dark:text-gray-100 mb-4 flex items-center gap-2">
-                <span>📋</span>
-                提交要求
-              </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <label className="flex items-center gap-3 p-3 rounded-mobile-lg border border-gray-200 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-500 transition-colors cursor-pointer min-h-[44px]">
-                  <input
-                    type="checkbox"
-                    name="needsFile"
-                    checked={form.needsFile}
-                    onChange={handleChange}
-                    className="form-checkbox"
-                  />
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    要求文件
-                  </span>
-                </label>
-
-                <label className="flex items-center gap-3 p-3 rounded-mobile-lg border border-gray-200 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-500 transition-colors cursor-pointer min-h-[44px]">
-                  <input
-                    type="checkbox"
-                    name="allowAIGC"
-                    checked={form.allowAIGC}
-                    onChange={handleChange}
-                    className="form-checkbox"
-                  />
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    允许 AIGC
-                  </span>
-                </label>
-
-                <label className={`flex items-center gap-3 p-3 rounded-mobile-lg border transition-colors cursor-pointer min-h-[44px] ${
-                  !form.allowAIGC 
-                    ? 'border-gray-200 dark:border-gray-600 opacity-50 cursor-not-allowed' 
-                    : 'border-gray-200 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-500'
-                }`}>
-                  <input
-                    type="checkbox"
-                    name="requireAIGCLog"
-                    checked={form.requireAIGCLog}
-                    onChange={handleChange}
-                    disabled={!form.allowAIGC}
-                    className="form-checkbox disabled:opacity-50"
-                  />
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    要求 AIGC 记录
-                  </span>
-                </label>
-
-                <label className="flex items-center gap-3 p-3 rounded-mobile-lg border border-gray-200 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-500 transition-colors cursor-pointer min-h-[44px]">
-                  <input
-                    type="checkbox"
-                    name="allowLateSubmission"
-                    checked={form.allowLateSubmission}
-                    onChange={handleChange}
-                    className="form-checkbox"
-                  />
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    允许逾期
-                  </span>
-                </label>
-              </div>
-            </div>
-
-            {/* 关联班级 */}
-            {myClasses.length > 0 && (
+              {/* 提交要求 */}
               <div className="bg-white/50 dark:bg-gray-800/50 rounded-mobile-xl p-4 border border-gray-200/50 dark:border-gray-700/50">
                 <h3 className="font-semibold text-gray-800 dark:text-gray-100 mb-4 flex items-center gap-2">
-                  <span>🏫</span>
-                  关联班级
+                  <span>📋</span>
+                  提交要求
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {myClasses.map((cls) => (
-                    <label 
-                      key={cls._id} 
-                      className="flex items-center gap-3 p-3 rounded-mobile-lg border border-gray-200 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-500 transition-colors cursor-pointer min-h-[44px]"
-                    >
-                      <input
-                        type="checkbox"
-                        value={cls._id}
-                        checked={form.classIds.includes(cls._id)}
-                        onChange={(e) => {
-                          const checked = e.target.checked;
-                          const id = e.target.value;
-                          setForm((prev) => ({
-                            ...prev,
-                            classIds: checked
-                              ? [...prev.classIds, id]
-                              : prev.classIds.filter((cid) => cid !== id),
-                          }));
-                        }}
-                        className="form-checkbox"
-                      />
-                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300 line-clamp-1">
-                        {cls.name}
-                      </span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* 截止时间 */}
-            <div className="bg-white/50 dark:bg-gray-800/50 rounded-mobile-xl p-4 border border-gray-200/50 dark:border-gray-700/50">
-              <h3 className="font-semibold text-gray-800 dark:text-gray-100 mb-4 flex items-center gap-2">
-                <span>⏰</span>
-                截止时间
-              </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    截止日期 *
+                  <label className="flex items-center gap-3 p-3 rounded-mobile-lg border border-gray-200 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-500 transition-colors cursor-pointer min-h-[44px]">
+                    <input
+                      type="checkbox"
+                      name="needsFile"
+                      checked={form.needsFile}
+                      onChange={handleChange}
+                      className="form-checkbox"
+                    />
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      要求文件
+                    </span>
                   </label>
-                  <input
-                    type="date"
-                    name="deadline"
-                    value={form.deadline}
-                    onChange={handleChange}
-                    required
-                    className="w-full border border-gray-300 dark:border-gray-600 rounded-mobile-lg 
-                              bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 
-                              transition-all duration-200 min-h-[44px] px-4 py-3 text-base
-                              focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    截止时间 *
+
+                  <label className="flex items-center gap-3 p-3 rounded-mobile-lg border border-gray-200 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-500 transition-colors cursor-pointer min-h-[44px]">
+                    <input
+                      type="checkbox"
+                      name="allowAIGC"
+                      checked={form.allowAIGC}
+                      onChange={handleChange}
+                      className="form-checkbox"
+                    />
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      允许 AIGC
+                    </span>
                   </label>
-                  <input
-                    type="time"
-                    name="deadlineTime"
-                    value={form.deadlineTime}
-                    onChange={handleChange}
-                    required
-                    className="w-full border border-gray-300 dark:border-gray-600 rounded-mobile-lg 
-                              bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 
-                              transition-all duration-200 min-h-[44px] px-4 py-3 text-base
-                              focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500"
-                  />
+
+                  <label className={`flex items-center gap-3 p-3 rounded-mobile-lg border transition-colors cursor-pointer min-h-[44px] ${
+                    !form.allowAIGC 
+                      ? 'border-gray-200 dark:border-gray-600 opacity-50 cursor-not-allowed' 
+                      : 'border-gray-200 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-500'
+                  }`}>
+                    <input
+                      type="checkbox"
+                      name="requireAIGCLog"
+                      checked={form.requireAIGCLog}
+                      onChange={handleChange}
+                      disabled={!form.allowAIGC}
+                      className="form-checkbox disabled:opacity-50"
+                    />
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      要求 AIGC 记录
+                    </span>
+                  </label>
+
+                  <label className="flex items-center gap-3 p-3 rounded-mobile-lg border border-gray-200 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-500 transition-colors cursor-pointer min-h-[44px]">
+                    <input
+                      type="checkbox"
+                      name="allowLateSubmission"
+                      checked={form.allowLateSubmission}
+                      onChange={handleChange}
+                      className="form-checkbox"
+                    />
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      允许逾期
+                    </span>
+                  </label>
                 </div>
               </div>
-            </div>
 
-            <PrimaryButton
-              type="submit"
-              size="lg"
-              fullWidth
-              icon="📤"
-              haptic
-              gradient
-              className="font-semibold"
-              loading={submitting}
-              disabled={submitting}
-            >
-              {submitting ? '发布中...' : '发布任务'}
-            </PrimaryButton>
-
-            {message && (
-              <div className={`p-4 rounded-mobile-xl border text-center font-medium ${
-                message.startsWith('✅') 
-                  ? 'bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border border-green-200 dark:border-green-700 text-green-800 dark:text-green-200' 
-                  : 'bg-gradient-to-r from-red-50 to-rose-50 dark:from-red-900/20 dark:to-rose-900/20 border border-red-200 dark:border-red-700 text-red-800 dark:text-red-200'
-              }`}>
-                {message}
-              </div>
-            )}
-          </form>
-        </motion.div>
-
-        {/* 任务管理区域 */}
-        <div>
-          {/* 任务分类标签 */}
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
-            <div className={`flex bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl border border-gray-200/60 dark:border-gray-700/60 p-1.5 rounded-mobile-2xl shadow-mobile ${
-              isMobile ? 'gap-1' : 'gap-1'
-            }`}>
-              {[
-                { key: 'active', label: '📋 活跃任务', count: tasks.active.length, icon: '📋', color: 'blue' },
-                { key: 'archived', label: '📦 已归档', count: tasks.archived.length, icon: '📦', color: 'gray' },
-                { key: 'deleted', label: '🗑️ 回收站', count: tasks.deleted.length, icon: '🗑️', color: 'red' }
-              ].map(({ key, label, count, icon, color }) => (
-                <button
-                  key={key}
-                  onClick={() => handleCategoryChange(key)}
-                  className={`flex-1 px-4 py-3 rounded-mobile-xl text-sm font-medium transition-all duration-300 ease-out touch-manipulation ${
-                    currentCategory === key
-                      ? `bg-gradient-to-r ${
-                          color === 'blue' 
-                            ? 'from-blue-500 to-cyan-500 text-white shadow-mobile-lg transform scale-[1.02]' 
-                            : color === 'red'
-                            ? 'from-red-500 to-rose-500 text-white shadow-mobile-lg transform scale-[1.02]'
-                            : 'from-gray-500 to-slate-500 text-white shadow-mobile-lg transform scale-[1.02]'
-                        }`
-                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100/50 dark:hover:bg-gray-700/50'
-                  }`}
-                >
-                  <div className="flex items-center justify-center gap-2">
-                    {isMobile ? (
-                      <div className="flex flex-col items-center gap-1">
-                        <span className="text-lg">{icon}</span>
-                        <span className="text-xs font-semibold">({count})</span>
-                      </div>
-                    ) : (
-                      <>
-                        <span>{label}</span>
-                        <span className={`inline-flex items-center justify-center w-6 h-6 text-xs font-bold rounded-full ${
-                          currentCategory === key
-                            ? 'bg-white/20 text-white'
-                            : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
-                        }`}>
-                          {count}
+              {/* 关联班级 */}
+              {myClasses.length > 0 && (
+                <div className="bg-white/50 dark:bg-gray-800/50 rounded-mobile-xl p-4 border border-gray-200/50 dark:border-gray-700/50">
+                  <h3 className="font-semibold text-gray-800 dark:text-gray-100 mb-4 flex items-center gap-2">
+                    <span>🏫</span>
+                    关联班级
+                  </h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {myClasses.map((cls) => (
+                      <label 
+                        key={cls._id} 
+                        className="flex items-center gap-3 p-3 rounded-mobile-lg border border-gray-200 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-500 transition-colors cursor-pointer min-h-[44px]"
+                      >
+                        <input
+                          type="checkbox"
+                          value={cls._id}
+                          checked={form.classIds.includes(cls._id)}
+                          onChange={(e) => {
+                            const checked = e.target.checked;
+                            const id = e.target.value;
+                            setForm((prev) => ({
+                              ...prev,
+                              classIds: checked
+                                ? [...prev.classIds, id]
+                                : prev.classIds.filter((cid) => cid !== id),
+                            }));
+                          }}
+                          className="form-checkbox"
+                        />
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300 line-clamp-1">
+                          {cls.name}
                         </span>
-                      </>
-                    )}
+                      </label>
+                    ))}
                   </div>
-                </button>
-              ))}
-            </div>
+                </div>
+              )}
 
-            {/* 批量操作按钮 */}
-            {selectedTasks.size > 0 && (
-              <div className="flex gap-2">
-                <SecondaryButton
-                  size="sm"
-                  onClick={() => {
-                    setBatchOperation(currentCategory === 'active' ? 'archive' : 
-                                    currentCategory === 'archived' ? 'unarchive' : 'restore');
-                    setShowBatchModal(true);
-                  }}
-                  icon={currentCategory === 'active' ? '📦' : '🔄'}
-                >
-                  批量{currentCategory === 'active' ? '归档' : 
-                        currentCategory === 'archived' ? '恢复' : '恢复'} ({selectedTasks.size})
-                </SecondaryButton>
-                {currentCategory !== 'deleted' && (
-                  <DangerButton
+              {/* 截止时间 */}
+              <div className="bg-white/50 dark:bg-gray-800/50 rounded-mobile-xl p-4 border border-gray-200/50 dark:border-gray-700/50">
+                <h3 className="font-semibold text-gray-800 dark:text-gray-100 mb-4 flex items-center gap-2">
+                  <span>⏰</span>
+                  截止时间
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      截止日期 *
+                    </label>
+                    <input
+                      type="date"
+                      name="deadline"
+                      value={form.deadline}
+                      onChange={handleChange}
+                      required
+                      className="w-full border border-gray-300 dark:border-gray-600 rounded-mobile-lg 
+                                bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 
+                                transition-all duration-200 min-h-[44px] px-4 py-3 text-base
+                                focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      截止时间 *
+                    </label>
+                    <input
+                      type="time"
+                      name="deadlineTime"
+                      value={form.deadlineTime}
+                      onChange={handleChange}
+                      required
+                      className="w-full border border-gray-300 dark:border-gray-600 rounded-mobile-lg 
+                                bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 
+                                transition-all duration-200 min-h-[44px] px-4 py-3 text-base
+                                focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <PrimaryButton
+                type="submit"
+                size="lg"
+                fullWidth
+                icon="📤"
+                haptic
+                gradient
+                className="font-semibold"
+                loading={submitting}
+                disabled={submitting}
+              >
+                {submitting ? '发布中...' : '发布任务'}
+              </PrimaryButton>
+
+              {message && (
+                <div className={`p-4 rounded-mobile-xl border text-center font-medium ${
+                  message.startsWith('✅') 
+                    ? 'bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border border-green-200 dark:border-green-700 text-green-800 dark:text-green-200' 
+                    : 'bg-gradient-to-r from-red-50 to-rose-50 dark:from-red-900/20 dark:to-rose-900/20 border border-red-200 dark:border-red-700 text-red-800 dark:text-red-200'
+                }`}>
+                  {message}
+                </div>
+              )}
+            </form>
+          </motion.div>
+
+          {/* 任务管理区域 */}
+          <div>
+            {/* 任务分类标签 */}
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
+              <div className={`flex bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl border border-gray-200/60 dark:border-gray-700/60 p-1.5 rounded-mobile-2xl shadow-mobile ${
+                isMobile ? 'gap-1' : 'gap-1'
+              }`}>
+                {[
+                  { key: 'active', label: '📋 活跃任务', count: tasks.active.length, icon: '📋', color: 'blue' },
+                  { key: 'archived', label: '📦 已归档', count: tasks.archived.length, icon: '📦', color: 'gray' },
+                  { key: 'deleted', label: '🗑️ 回收站', count: tasks.deleted.length, icon: '🗑️', color: 'red' }
+                ].map(({ key, label, count, icon, color }) => (
+                  <button
+                    key={key}
+                    onClick={() => handleCategoryChange(key)}
+                    className={`flex-1 px-4 py-3 rounded-mobile-xl text-sm font-medium transition-all duration-300 ease-out touch-manipulation ${
+                      currentCategory === key
+                        ? `bg-gradient-to-r ${
+                            color === 'blue' 
+                              ? 'from-blue-500 to-cyan-500 text-white shadow-mobile-lg transform scale-[1.02]' 
+                              : color === 'red'
+                              ? 'from-red-500 to-rose-500 text-white shadow-mobile-lg transform scale-[1.02]'
+                              : 'from-gray-500 to-slate-500 text-white shadow-mobile-lg transform scale-[1.02]'
+                          }`
+                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100/50 dark:hover:bg-gray-700/50'
+                    }`}
+                  >
+                    <div className="flex items-center justify-center gap-2">
+                      {isMobile ? (
+                        <div className="flex flex-col items-center gap-1">
+                          <span className="text-lg">{icon}</span>
+                          <span className="text-xs font-semibold">({count})</span>
+                        </div>
+                      ) : (
+                        <>
+                          <span>{label}</span>
+                          <span className={`inline-flex items-center justify-center w-6 h-6 text-xs font-bold rounded-full ${
+                            currentCategory === key
+                              ? 'bg-white/20 text-white'
+                              : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
+                          }`}>
+                            {count}
+                          </span>
+                        </>
+                      )}
+                    </div>
+                  </button>
+                ))}
+              </div>
+
+              {/* 批量操作按钮 */}
+              {selectedTasks.size > 0 && (
+                <div className="flex gap-2">
+                  <SecondaryButton
                     size="sm"
                     onClick={() => {
-                      setBatchOperation('soft_delete');
+                      setBatchOperation(currentCategory === 'active' ? 'archive' : 
+                                      currentCategory === 'archived' ? 'unarchive' : 'restore');
                       setShowBatchModal(true);
                     }}
-                    icon="🗑️"
+                    icon={currentCategory === 'active' ? '📦' : '🔄'}
                   >
-                    批量删除 ({selectedTasks.size})
-                  </DangerButton>
-                )}
+                    批量{currentCategory === 'active' ? '归档' : 
+                          currentCategory === 'archived' ? '恢复' : '恢复'} ({selectedTasks.size})
+                  </SecondaryButton>
+                  {currentCategory !== 'deleted' && (
+                    <DangerButton
+                      size="sm"
+                      onClick={() => {
+                        setBatchOperation('soft_delete');
+                        setShowBatchModal(true);
+                      }}
+                      icon="🗑️"
+                    >
+                      批量删除 ({selectedTasks.size})
+                    </DangerButton>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* 全选复选框 */}
+            {currentTasks.length > 0 && (
+              <div className="mb-4">
+                <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-md rounded-mobile-lg p-3 border border-gray-200/50 dark:border-gray-700/50">
+                  <label className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-400 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={selectedTasks.size === currentTasks.length && currentTasks.length > 0}
+                      onChange={toggleSelectAll}
+                      className="form-checkbox checkbox-lg"
+                    />
+                    <span className="font-medium">
+                      全选 ({selectedTasks.size}/{currentTasks.length})
+                    </span>
+                  </label>
+                </div>
               </div>
             )}
-          </div>
 
-          {/* 全选复选框 */}
-          {currentTasks.length > 0 && (
-            <div className="mb-4">
-              <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-md rounded-mobile-lg p-3 border border-gray-200/50 dark:border-gray-700/50">
-                <label className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-400 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={selectedTasks.size === currentTasks.length && currentTasks.length > 0}
-                    onChange={toggleSelectAll}
-                    className="form-checkbox checkbox-lg"
-                  />
-                  <span className="font-medium">
-                    全选 ({selectedTasks.size}/{currentTasks.length})
-                  </span>
-                </label>
-              </div>
-            </div>
-          )}
-
-          {/* 任务列表 */}
-          <AnimatePresence mode="wait">
-            {currentTasks.length === 0 ? (
-              <motion.div
-                key="empty"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="text-center py-12"
-              >
-                <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800 rounded-full flex items-center justify-center shadow-mobile">
-                  <span className="text-gray-400 dark:text-gray-500 text-3xl">
-                    {currentCategory === 'active' ? '📋' : currentCategory === 'archived' ? '📦' : '🗑️'}
-                  </span>
-                </div>
-                <h3 className="text-lg font-medium text-gray-800 dark:text-gray-200 mb-2">
-                  {currentCategory === 'active' ? '暂无活跃任务' :
-                   currentCategory === 'archived' ? '暂无归档任务' : '回收站为空'}
-                </h3>
-                <p className="text-gray-600 dark:text-gray-400 mb-6">
-                  {currentCategory === 'active' ? '发布第一个任务开始教学吧！' :
-                   currentCategory === 'archived' ? '归档的任务会显示在这里' : '删除的任务会在30天后自动清理'}
-                </p>
-                {currentCategory === 'active' && (
-                  <PrimaryButton
-                    size="md"
-                    icon="➕"
-                    onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-                  >
-                    发布新任务
-                  </PrimaryButton>
-                )}
-              </motion.div>
-            ) : (
-              <motion.div
-                key="tasks"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="space-y-4"
-              >
-                {currentTasks.map((task, index) => (
-                  isMobile ? (
-                    <motion.div
-                      key={task._id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.05 }}
+            {/* 任务列表 */}
+            <AnimatePresence mode="wait">
+              {currentTasks.length === 0 ? (
+                <motion.div
+                  key="empty"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="text-center py-12"
+                >
+                  <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800 rounded-full flex items-center justify-center shadow-mobile">
+                    <span className="text-gray-400 dark:text-gray-500 text-3xl">
+                      {currentCategory === 'active' ? '📋' : currentCategory === 'archived' ? '📦' : '🗑️'}
+                    </span>
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-800 dark:text-gray-200 mb-2">
+                    {currentCategory === 'active' ? '暂无活跃任务' :
+                    currentCategory === 'archived' ? '暂无归档任务' : '回收站为空'}
+                  </h3>
+                  <p className="text-gray-600 dark:text-gray-400 mb-6">
+                    {currentCategory === 'active' ? '发布第一个任务开始教学吧！' :
+                    currentCategory === 'archived' ? '归档的任务会显示在这里' : '删除的任务会在30天后自动清理'}
+                  </p>
+                  {currentCategory === 'active' && (
+                    <PrimaryButton
+                      size="md"
+                      icon="➕"
+                      onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
                     >
-                      {renderMobileTaskCard(task)}
-                    </motion.div>
-                  ) : (
-                    // 保持原有的桌面端渲染逻辑
-                    <motion.div
-                      key={task._id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.05 }}
-                      className="bg-white dark:bg-gray-800 rounded-2xl shadow-md p-6 border border-gray-200 dark:border-gray-700"
-                    >
-                      {/* 桌面端任务卡片内容保持不变 */}
-                      <div className="flex items-start gap-4">
-                        {/* 选择框 */}
-                        <div className="flex-shrink-0 pt-1">
-                          <input
-                            type="checkbox"
-                            checked={selectedTasks.has(task._id)}
-                            onChange={() => toggleTaskSelection(task._id)}
-                            className="form-checkbox checkbox-lg"
-                          />
-                        </div>
+                      发布新任务
+                    </PrimaryButton>
+                  )}
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="tasks"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="space-y-4"
+                >
+                  {currentTasks.map((task, index) => (
+                    isMobile ? (
+                      <motion.div
+                        key={task._id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.05 }}
+                      >
+                        {renderMobileTaskCard(task)}
+                      </motion.div>
+                    ) : (
+                      // 保持原有的桌面端渲染逻辑
+                      <motion.div
+                        key={task._id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.05 }}
+                        className="bg-white dark:bg-gray-800 rounded-2xl shadow-md p-6 border border-gray-200 dark:border-gray-700"
+                      >
+                        {/* 桌面端任务卡片内容保持不变 */}
+                        <div className="flex items-start gap-4">
+                          {/* 选择框 */}
+                          <div className="flex-shrink-0 pt-1">
+                            <input
+                              type="checkbox"
+                              checked={selectedTasks.has(task._id)}
+                              onChange={() => toggleTaskSelection(task._id)}
+                              className="form-checkbox checkbox-lg"
+                            />
+                          </div>
 
-                        <div className="flex-1 min-w-0">
-                          <div className="flex flex-col lg:flex-row lg:justify-between lg:items-start gap-4 mb-4">
-                            <div className="flex-1 min-w-0">
-                              <h3 className="font-bold text-xl text-gray-800 dark:text-gray-100 mb-2 line-clamp-2">
-                                {task.title}
-                              </h3>
-                              
-                              {/* 状态标签 */}
-                              <div className="flex items-center gap-2 flex-wrap mb-3">
-                                <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getTaskStatus(task.deadline).color} ${
-                                  getTaskStatus(task.deadline).status === 'expired' 
-                                    ? 'bg-red-100 dark:bg-red-900/30 border border-red-200 dark:border-red-700/50'
-                                    : getTaskStatus(task.deadline).status === 'urgent'
-                                    ? 'bg-orange-100 dark:bg-orange-900/30 border border-orange-200 dark:border-orange-700/50'
-                                    : getTaskStatus(task.deadline).status === 'warning'
-                                    ? 'bg-yellow-100 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-700/50'
-                                    : 'bg-green-100 dark:bg-green-900/30 border border-green-200 dark:border-green-700/50'
-                                }`}>
-                                  {getTaskStatus(task.deadline).text}
-                                </span>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex flex-col lg:flex-row lg:justify-between lg:items-start gap-4 mb-4">
+                              <div className="flex-1 min-w-0">
+                                <h3 className="font-bold text-xl text-gray-800 dark:text-gray-100 mb-2 line-clamp-2">
+                                  {task.title}
+                                </h3>
                                 
-                                <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
-                                  {task.category}
-                                </span>
-                                
-                                {currentCategory === 'deleted' && task.daysLeft !== undefined && (
-                                  <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                                    task.daysLeft > 7 
-                                      ? 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300'
-                                      : task.daysLeft > 3
-                                      ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-300'
-                                      : 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300'
+                                {/* 状态标签 */}
+                                <div className="flex items-center gap-2 flex-wrap mb-3">
+                                  <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getTaskStatus(task.deadline).color} ${
+                                    getTaskStatus(task.deadline).status === 'expired' 
+                                      ? 'bg-red-100 dark:bg-red-900/30 border border-red-200 dark:border-red-700/50'
+                                      : getTaskStatus(task.deadline).status === 'urgent'
+                                      ? 'bg-orange-100 dark:bg-orange-900/30 border border-orange-200 dark:border-orange-700/50'
+                                      : getTaskStatus(task.deadline).status === 'warning'
+                                      ? 'bg-yellow-100 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-700/50'
+                                      : 'bg-green-100 dark:bg-green-900/30 border border-green-200 dark:border-green-700/50'
                                   }`}>
-                                    {task.daysLeft}天后永久删除
+                                    {getTaskStatus(task.deadline).text}
                                   </span>
+                                  
+                                  <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
+                                    {task.category}
+                                  </span>
+                                  
+                                  {currentCategory === 'deleted' && task.daysLeft !== undefined && (
+                                    <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                                      task.daysLeft > 7 
+                                        ? 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300'
+                                        : task.daysLeft > 3
+                                        ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-300'
+                                        : 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300'
+                                    }`}>
+                                      {task.daysLeft}天后永久删除
+                                    </span>
+                                  )}
+                                </div>
+
+                                {/* 任务描述 */}
+                                {task.description && (
+                                  <div className="mb-4">
+                                    <div className="bg-blue-50/60 dark:bg-blue-900/20 rounded-mobile-lg p-3 border border-blue-200/50 dark:border-blue-700/30">
+                                      <p className="text-sm text-blue-800 dark:text-blue-200 line-clamp-3">
+                                        📋 {task.description}
+                                      </p>
+                                    </div>
+                                  </div>
                                 )}
                               </div>
-
-                              {/* 任务描述 */}
-                              {task.description && (
-                                <div className="mb-4">
-                                  <div className="bg-blue-50/60 dark:bg-blue-900/20 rounded-mobile-lg p-3 border border-blue-200/50 dark:border-blue-700/30">
-                                    <p className="text-sm text-blue-800 dark:text-blue-200 line-clamp-3">
-                                      📋 {task.description}
-                                    </p>
-                                  </div>
+                            </div>
+                            
+                            {/* 任务详情网格 */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                              <div className="bg-gray-50/80 dark:bg-gray-800/50 rounded-mobile-lg p-3">
+                                <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">📂 任务信息</div>
+                                <div className="space-y-1 text-sm">
+                                  <p><span className="font-medium">类型:</span> {task.category}</p>
+                                  <p><span className="font-medium">文件:</span> {task.needsFile ? '必交' : '可选'}</p>
+                                  <p><span className="font-medium">AIGC:</span> {task.allowAIGC ? '允许' : '禁止'}</p>
                                 </div>
+                              </div>
+
+                              <div className="bg-gray-50/80 dark:bg-gray-800/50 rounded-mobile-lg p-3">
+                                <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">⏰ 时间设置</div>
+                                <div className="space-y-1 text-sm">
+                                  <p><span className="font-medium">截止:</span> {formatDeadline(task.deadline)}</p>
+                                  <p><span className="font-medium">逾期:</span> {task.allowLateSubmission ? '允许' : '不允许'}</p>
+                                </div>
+                              </div>
+
+                              <div className="bg-gray-50/80 dark:bg-gray-800/50 rounded-mobile-lg p-3">
+                                <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">📊 状态信息</div>
+                                <div className="space-y-1 text-sm">
+                                  {currentCategory === 'archived' && (
+                                    <p><span className="font-medium">学生查看:</span> {task.allowStudentViewWhenArchived ? '开放' : '限制'}</p>
+                                  )}
+                                  <p><span className="font-medium">创建:</span> {new Date(task.createdAt).toLocaleDateString()}</p>
+                                </div>
+                              </div>
+                            </div>
+                            
+                            {/* 操作按钮组 */}
+                            <div className="flex flex-wrap gap-2">
+                              {/* 查看提交记录按钮 */}
+                              <SecondaryButton
+                                size="sm"
+                                icon="📝"
+                                onClick={() => navigate(`/task/${task._id}/submissions`)}
+                              >
+                                查看提交
+                              </SecondaryButton>
+                              
+                              {/* 班级提交情况按钮 */}
+                              <PrimaryButton
+                                size="sm"
+                                icon="📊"
+                                onClick={() => navigate(`/task/${task._id}/class-status`)}
+                              >
+                                班级统计
+                              </PrimaryButton>
+
+                              {/* 根据任务状态显示不同操作按钮 */}
+                              {currentCategory === 'active' && (
+                                <>
+                                  <SecondaryButton
+                                    size="sm"
+                                    icon="📦"
+                                    onClick={() => setConfirmDialog({
+                                      isOpen: true,
+                                      title: '确认归档任务',
+                                      message: `确定要归档任务"${task.title}"吗？归档后学生将无法提交作业。`,
+                                      onConfirm: () => {
+                                        handleTaskOperation(task._id, 'archive');
+                                        setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+                                      },
+                                      confirmText: '归档',
+                                      confirmVariant: 'primary'
+                                    })}
+                                    disabled={batchLoading}
+                                  >
+                                    归档
+                                  </SecondaryButton>
+
+                                  <DangerButton
+                                    size="sm"
+                                    icon="🗑️"
+                                    onClick={() => setConfirmDialog({
+                                      isOpen: true,
+                                      title: '确认删除任务',
+                                      message: `确定要删除任务"${task.title}"吗？删除后30天内可恢复。`,
+                                      onConfirm: () => {
+                                        handleTaskOperation(task._id, 'soft_delete');
+                                        setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+                                      },
+                                      confirmText: '删除',
+                                      confirmVariant: 'danger'
+                                    })}
+                                    disabled={batchLoading}
+                                  >
+                                    删除
+                                  </DangerButton>
+                                </>
+                              )}
+
+                              {currentCategory === 'archived' && (
+                                <>
+                                  <SecondaryButton
+                                    size="sm"
+                                    icon="📤"
+                                    onClick={() => handleTaskOperation(task._id, 'unarchive')}
+                                    disabled={batchLoading}
+                                  >
+                                    恢复
+                                  </SecondaryButton>
+                                  
+                                  <SecondaryButton
+                                    size="sm"
+                                    icon={task.allowStudentViewWhenArchived ? '🔒' : '🔓'}
+                                    onClick={async () => {
+                                      try {
+                                        await api.put(`/task/${task._id}/student-permission`, {
+                                          allowStudentViewWhenArchived: !task.allowStudentViewWhenArchived
+                                        });
+                                        toast.success('✅ 权限设置成功');
+                                        await fetchTasks(currentCategory);
+                                      } catch (err) {
+                                        toast.error(`❌ 权限设置失败：${err.response?.data?.message || err.message}`);
+                                      }
+                                    }}
+                                    disabled={batchLoading}
+                                  >
+                                    {task.allowStudentViewWhenArchived ? '限制查看' : '开放查看'}
+                                  </SecondaryButton>
+                                  
+                                  <DangerButton
+                                    size="sm"
+                                    icon="🗑️"
+                                    onClick={() => handleTaskOperation(task._id, 'soft_delete')}
+                                    disabled={batchLoading}
+                                  >
+                                    删除
+                                  </DangerButton>
+                                </>
+                              )}
+
+                              {currentCategory === 'deleted' && (
+                                <>
+                                  <SecondaryButton
+                                    size="sm"
+                                    icon="🔄"
+                                    onClick={() => handleTaskOperation(task._id, 'restore')}
+                                    disabled={batchLoading}
+                                  >
+                                    恢复
+                                  </SecondaryButton>
+                                  
+                                  <DangerButton
+                                    size="sm"
+                                    icon="💀"
+                                    onClick={() => setConfirmDialog({
+                                      isOpen: true,
+                                      title: '确认永久删除',
+                                      message: `确定要永久删除任务"${task.title}"吗？此操作不可恢复！`,
+                                      onConfirm: () => {
+                                        handleTaskOperation(task._id, 'hard_delete');
+                                        setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+                                      },
+                                      confirmText: '永久删除',
+                                      confirmVariant: 'danger'
+                                    })}
+                                    disabled={batchLoading}
+                                  >
+                                    永久删除
+                                  </DangerButton>
+                                </>
                               )}
                             </div>
                           </div>
-                          
-                          {/* 任务详情网格 */}
-                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-                            <div className="bg-gray-50/80 dark:bg-gray-800/50 rounded-mobile-lg p-3">
-                              <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">📂 任务信息</div>
-                              <div className="space-y-1 text-sm">
-                                <p><span className="font-medium">类型:</span> {task.category}</p>
-                                <p><span className="font-medium">文件:</span> {task.needsFile ? '必交' : '可选'}</p>
-                                <p><span className="font-medium">AIGC:</span> {task.allowAIGC ? '允许' : '禁止'}</p>
-                              </div>
-                            </div>
-
-                            <div className="bg-gray-50/80 dark:bg-gray-800/50 rounded-mobile-lg p-3">
-                              <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">⏰ 时间设置</div>
-                              <div className="space-y-1 text-sm">
-                                <p><span className="font-medium">截止:</span> {formatDeadline(task.deadline)}</p>
-                                <p><span className="font-medium">逾期:</span> {task.allowLateSubmission ? '允许' : '不允许'}</p>
-                              </div>
-                            </div>
-
-                            <div className="bg-gray-50/80 dark:bg-gray-800/50 rounded-mobile-lg p-3">
-                              <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">📊 状态信息</div>
-                              <div className="space-y-1 text-sm">
-                                {currentCategory === 'archived' && (
-                                  <p><span className="font-medium">学生查看:</span> {task.allowStudentViewWhenArchived ? '开放' : '限制'}</p>
-                                )}
-                                <p><span className="font-medium">创建:</span> {new Date(task.createdAt).toLocaleDateString()}</p>
-                              </div>
-                            </div>
-                          </div>
-                          
-                          {/* 操作按钮组 */}
-                          <div className="flex flex-wrap gap-2">
-                            {/* 查看提交记录按钮 */}
-                            <SecondaryButton
-                              size="sm"
-                              icon="📝"
-                              onClick={() => navigate(`/task/${task._id}/submissions`)}
-                            >
-                              查看提交
-                            </SecondaryButton>
-                            
-                            {/* 班级提交情况按钮 */}
-                            <PrimaryButton
-                              size="sm"
-                              icon="📊"
-                              onClick={() => navigate(`/task/${task._id}/class-status`)}
-                            >
-                              班级统计
-                            </PrimaryButton>
-
-                            {/* 根据任务状态显示不同操作按钮 */}
-                            {currentCategory === 'active' && (
-                              <>
-                                <SecondaryButton
-                                  size="sm"
-                                  icon="📦"
-                                  onClick={() => setConfirmDialog({
-                                    isOpen: true,
-                                    title: '确认归档任务',
-                                    message: `确定要归档任务"${task.title}"吗？归档后学生将无法提交作业。`,
-                                    onConfirm: () => {
-                                      handleTaskOperation(task._id, 'archive');
-                                      setConfirmDialog(prev => ({ ...prev, isOpen: false }));
-                                    },
-                                    confirmText: '归档',
-                                    confirmVariant: 'primary'
-                                  })}
-                                  disabled={batchLoading}
-                                >
-                                  归档
-                                </SecondaryButton>
-
-                                <DangerButton
-                                  size="sm"
-                                  icon="🗑️"
-                                  onClick={() => setConfirmDialog({
-                                    isOpen: true,
-                                    title: '确认删除任务',
-                                    message: `确定要删除任务"${task.title}"吗？删除后30天内可恢复。`,
-                                    onConfirm: () => {
-                                      handleTaskOperation(task._id, 'soft_delete');
-                                      setConfirmDialog(prev => ({ ...prev, isOpen: false }));
-                                    },
-                                    confirmText: '删除',
-                                    confirmVariant: 'danger'
-                                  })}
-                                  disabled={batchLoading}
-                                >
-                                  删除
-                                </DangerButton>
-                              </>
-                            )}
-
-                            {currentCategory === 'archived' && (
-                              <>
-                                <SecondaryButton
-                                  size="sm"
-                                  icon="📤"
-                                  onClick={() => handleTaskOperation(task._id, 'unarchive')}
-                                  disabled={batchLoading}
-                                >
-                                  恢复
-                                </SecondaryButton>
-                                
-                                <SecondaryButton
-                                  size="sm"
-                                  icon={task.allowStudentViewWhenArchived ? '🔒' : '🔓'}
-                                  onClick={async () => {
-                                    try {
-                                      await api.put(`/task/${task._id}/student-permission`, {
-                                        allowStudentViewWhenArchived: !task.allowStudentViewWhenArchived
-                                      });
-                                      toast.success('✅ 权限设置成功');
-                                      await fetchTasks(currentCategory);
-                                    } catch (err) {
-                                      toast.error(`❌ 权限设置失败：${err.response?.data?.message || err.message}`);
-                                    }
-                                  }}
-                                  disabled={batchLoading}
-                                >
-                                  {task.allowStudentViewWhenArchived ? '限制查看' : '开放查看'}
-                                </SecondaryButton>
-                                
-                                <DangerButton
-                                  size="sm"
-                                  icon="🗑️"
-                                  onClick={() => handleTaskOperation(task._id, 'soft_delete')}
-                                  disabled={batchLoading}
-                                >
-                                  删除
-                                </DangerButton>
-                              </>
-                            )}
-
-                            {currentCategory === 'deleted' && (
-                              <>
-                                <SecondaryButton
-                                  size="sm"
-                                  icon="🔄"
-                                  onClick={() => handleTaskOperation(task._id, 'restore')}
-                                  disabled={batchLoading}
-                                >
-                                  恢复
-                                </SecondaryButton>
-                                
-                                <DangerButton
-                                  size="sm"
-                                  icon="💀"
-                                  onClick={() => setConfirmDialog({
-                                    isOpen: true,
-                                    title: '确认永久删除',
-                                    message: `确定要永久删除任务"${task.title}"吗？此操作不可恢复！`,
-                                    onConfirm: () => {
-                                      handleTaskOperation(task._id, 'hard_delete');
-                                      setConfirmDialog(prev => ({ ...prev, isOpen: false }));
-                                    },
-                                    confirmText: '永久删除',
-                                    confirmVariant: 'danger'
-                                  })}
-                                  disabled={batchLoading}
-                                >
-                                  永久删除
-                                </DangerButton>
-                              </>
-                            )}
-                          </div>
                         </div>
-                      </div>
-                    </motion.div>
-                  )
-                ))}
+                      </motion.div>
+                    )
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          {/* 批量操作确认模态框 */}
+          <AnimatePresence>
+            {showBatchModal && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+                onClick={(e) => e.target === e.currentTarget && setShowBatchModal(false)}
+              >
+                <motion.div
+                  initial={{ scale: 0.95, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.95, opacity: 0 }}
+                  className="bg-white dark:bg-gray-800 rounded-xl p-6 max-w-md w-full mx-4 shadow-xl"
+                >
+                  <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4">
+                    确认批量操作
+                  </h3>
+                  <p className="text-gray-600 dark:text-gray-400 mb-6">
+                    确定要对选中的 {selectedTasks.size} 个任务执行
+                    {batchOperation === 'archive' ? '归档' :
+                    batchOperation === 'unarchive' ? '恢复归档' :
+                    batchOperation === 'soft_delete' ? '删除' : '恢复'}
+                    操作吗？
+                  </p>
+                  <div className="flex gap-3 justify-end">
+                    <SecondaryButton
+                      onClick={() => setShowBatchModal(false)}
+                      disabled={batchLoading}
+                    >
+                      取消
+                    </SecondaryButton>
+                    <PrimaryButton
+                      variant={batchOperation === 'soft_delete' ? 'danger' : 'primary'}
+                      onClick={handleBatchOperation}
+                      loading={batchLoading}
+                    >
+                      确认{batchOperation === 'archive' ? '归档' :
+                            batchOperation === 'unarchive' ? '恢复' :
+                            batchOperation === 'soft_delete' ? '删除' : '恢复'}
+                    </PrimaryButton>
+                  </div>
+                </motion.div>
               </motion.div>
             )}
           </AnimatePresence>
         </div>
-
-        {/* 批量操作确认模态框 */}
-        <AnimatePresence>
-          {showBatchModal && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-              onClick={(e) => e.target === e.currentTarget && setShowBatchModal(false)}
-            >
-              <motion.div
-                initial={{ scale: 0.95, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.95, opacity: 0 }}
-                className="bg-white dark:bg-gray-800 rounded-xl p-6 max-w-md w-full mx-4 shadow-xl"
-              >
-                <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4">
-                  确认批量操作
-                </h3>
-                <p className="text-gray-600 dark:text-gray-400 mb-6">
-                  确定要对选中的 {selectedTasks.size} 个任务执行
-                  {batchOperation === 'archive' ? '归档' :
-                   batchOperation === 'unarchive' ? '恢复归档' :
-                   batchOperation === 'soft_delete' ? '删除' : '恢复'}
-                  操作吗？
-                </p>
-                <div className="flex gap-3 justify-end">
-                  <SecondaryButton
-                    onClick={() => setShowBatchModal(false)}
-                    disabled={batchLoading}
-                  >
-                    取消
-                  </SecondaryButton>
-                  <PrimaryButton
-                    variant={batchOperation === 'soft_delete' ? 'danger' : 'primary'}
-                    onClick={handleBatchOperation}
-                    loading={batchLoading}
-                  >
-                    确认{batchOperation === 'archive' ? '归档' :
-                           batchOperation === 'unarchive' ? '恢复' :
-                           batchOperation === 'soft_delete' ? '删除' : '恢复'}
-                  </PrimaryButton>
-                </div>
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
+        
+        <ConfirmDialog
+          isOpen={confirmDialog.isOpen}
+          onClose={() => setConfirmDialog(prev => ({ ...prev, isOpen: false }))}
+          onConfirm={confirmDialog.onConfirm}
+          title={confirmDialog.title}
+          message={confirmDialog.message}
+          confirmText={confirmDialog.confirmText}
+          confirmVariant={confirmDialog.confirmVariant}
+          loading={batchLoading}
+        />
       
-      <ConfirmDialog
-        isOpen={confirmDialog.isOpen}
-        onClose={() => setConfirmDialog(prev => ({ ...prev, isOpen: false }))}
-        onConfirm={confirmDialog.onConfirm}
-        title={confirmDialog.title}
-        message={confirmDialog.message}
-        confirmText={confirmDialog.confirmText}
-        confirmVariant={confirmDialog.confirmVariant}
-        loading={batchLoading}
-      />
-    </div>
+    </PullToRefreshContainer>
   );
 };
 

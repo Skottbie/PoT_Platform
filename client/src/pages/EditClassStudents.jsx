@@ -5,6 +5,9 @@ import { useParams, useNavigate } from 'react-router-dom';
 import api from '../api/axiosInstance';
 import Button from '../components/Button';
 import { motion, AnimatePresence } from 'framer-motion';
+import PullToRefreshContainer from '../components/PullToRefreshContainer';
+import useAutoRefresh from '../hooks/useAutoRefresh';
+import { useCallback } from 'react';
 
 const EditClassStudents = () => {
   const { classId } = useParams();
@@ -273,7 +276,29 @@ const EditClassStudents = () => {
     );
   }
 
+  const handlePullRefresh = useCallback(async () => {
+    try {
+      await fetchClassData();
+      toast.success('刷新成功');
+    } catch (err) {
+      console.error('刷新失败:', err);
+      toast.error('刷新失败，请重试');
+    }
+  }, [fetchClassData]);
+
+  // 编辑页面，学生状态可能变化
+  useAutoRefresh(handlePullRefresh, {
+    interval: 120000, // 2分钟
+    enabled: true,
+    pauseOnHidden: true,
+  });
+
   return (
+    <PullToRefreshContainer 
+      onRefresh={handlePullRefresh}
+      className="min-h-screen bg-gray-50 dark:bg-gray-900 py-10 px-4"
+      disabled={loading || saving}
+    >
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-10 px-4">
       <div className="max-w-6xl mx-auto">
         {/* 页面头部 */}
@@ -585,6 +610,7 @@ const EditClassStudents = () => {
         </AnimatePresence>
       </div>
     </div>
+    </PullToRefreshContainer>
   );
 };
 

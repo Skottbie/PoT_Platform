@@ -166,7 +166,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         position="top-center"
         toastOptions={{
           // 移动端优化的Toast样式
-          duration: 3000,
+          duration: 2000, // 缩短持续时间，避免与下拉刷新冲突
           style: {
             background: '#363636',
             color: '#fff',
@@ -175,18 +175,43 @@ ReactDOM.createRoot(document.getElementById('root')).render(
             padding: '12px 16px',
             maxWidth: '90vw',
             wordBreak: 'break-word',
+            zIndex: 9999, // 确保在下拉刷新指示器之上
           },
           success: {
+            duration: 1500, // 成功提示更短
             style: {
               background: '#10b981',
             },
+            iconTheme: {
+              primary: '#ffffff',
+              secondary: '#10b981',
+            },
           },
           error: {
+            duration: 3000, // 错误提示稍长
             style: {
               background: '#ef4444',
             },
+            iconTheme: {
+              primary: '#ffffff', 
+              secondary: '#ef4444',
+            },
+          },
+          loading: {
+            style: {
+              background: '#6b7280',
+            },
           },
         }}
+        containerStyle={{
+          top: 20,
+          left: 20,
+          right: 20,
+          zIndex: 9999,
+        }}
+        // 🎯 移动端优化：避免与下拉刷新手势冲突
+        gutter={8}
+        reverseOrder={false}
       />
     </>
   </React.StrictMode>,

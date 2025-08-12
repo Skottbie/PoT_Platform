@@ -7,6 +7,9 @@ import Button from '../components/Button';
 import { motion, AnimatePresence } from 'framer-motion';
 import LazyImageGrid from '../components/LazyImageGrid';
 import toast from 'react-hot-toast'; // 📌 使用 toast 替代 alert
+import PullToRefreshContainer from '../components/PullToRefreshContainer';
+import useAutoRefresh from '../hooks/useAutoRefresh';
+import { useCallback } from 'react';
 
 const TeacherTaskSubmissions = () => {
   const { taskId } = useParams();
@@ -48,6 +51,35 @@ const TeacherTaskSubmissions = () => {
     };
     fetchTaskAndSubmissions();
   }, [taskId, navigate]);
+
+  // 🔄 下拉刷新处理函数
+  const handlePullRefresh = useCallback(async () => {
+    try {
+      await refreshData();
+      toast.success('刷新成功');
+    } catch (error) {
+      console.error('下拉刷新失败:', error);
+      toast.error('刷新失败，请重试');
+    }
+  }, [refreshData]);
+
+  // ⏰ 自动定时刷新 - 提交页面需要较高频率
+  useAutoRefresh(
+    useCallback(async () => {
+      try {
+        // 静默刷新提交数据
+        await refreshData();
+      } catch (error) {
+        console.error('自动刷新失败:', error);
+      }
+    }, [refreshData]),
+    {
+      interval: 30000,      // 30秒间隔（教师查看提交较频繁）
+      enabled: true,
+      pauseOnHidden: true,
+      pauseOnOffline: true,
+    }
+  );
 
   // 📌 单独的刷新数据函数
   const refreshData = async () => {
@@ -351,7 +383,11 @@ const TeacherTaskSubmissions = () => {
   }
   
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 px-4 py-8">
+    <PullToRefreshContainer 
+      onRefresh={handlePullRefresh}
+      className="min-h-screen bg-gray-50 dark:bg-gray-900 px-4 py-8"
+      disabled={loading}
+    >
       <div className="max-w-4xl mx-auto relative">
         <div className="flex justify-between items-start mb-6">
           <div>
@@ -635,7 +671,8 @@ const TeacherTaskSubmissions = () => {
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    
+    </PullToRefreshContainer>
   );
 };
 
