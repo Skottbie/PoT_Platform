@@ -536,7 +536,7 @@ const StudentDashboard = () => {
                   isMobile ? 'text-xl' : 'text-2xl'
                 }`}>
                   <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                    欢迎回来
+                    总裁欢迎回家
                   </span>
                   <span className="block sm:inline text-gray-700 dark:text-gray-300 mt-1 sm:mt-0">
                     {user.email}

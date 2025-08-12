@@ -7,7 +7,8 @@ import javascript from 'react-syntax-highlighter/dist/esm/languages/hljs/javascr
 import python from 'react-syntax-highlighter/dist/esm/languages/hljs/python';
 import { github } from 'react-syntax-highlighter/dist/esm/styles/hljs';
 import { motion, AnimatePresence } from 'framer-motion';
-import Button from '../components/Button';
+import { FormCard, NotificationCard } from '../components/EnhancedMobileCard';
+import { PrimaryButton, SecondaryButton, WarningButton } from '../components/EnhancedButton';
 import LazyImageGrid from '../components/LazyImageGrid';
 
 SyntaxHighlighter.registerLanguage('javascript', javascript);
@@ -268,7 +269,7 @@ const SubmitTask = () => {
       const aiMessage = { 
         role: 'assistant', 
         content: res.data.reply, 
-        model: model
+        model: model 
       };
       setAigcLog((prev) => [...prev, aiMessage]);
     } catch (err) {
@@ -455,33 +456,60 @@ const SubmitTask = () => {
 
   if (alreadySubmitted) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-8">
-        <div className="max-w-xl mx-auto text-center">
-          <h1 className="text-2xl font-bold mb-4 text-gray-800 dark:text-gray-100">
-            提交任务：{task.title}
-          </h1>
-
-          {/* 📌 显示任务描述 */}
-          {task.description && (
-            <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-xl">
-              <h3 className="text-sm font-semibold text-blue-800 dark:text-blue-200 mb-2">
-                📋 任务说明
-              </h3>
-              <p className="text-blue-700 dark:text-blue-300 text-sm leading-relaxed whitespace-pre-wrap">
-                {task.description}
-              </p>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4 sm:p-8">
+        <div className="max-w-xl mx-auto">
+          <FormCard className="relative">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex-1 min-w-0">
+                <h1 className="text-xl sm:text-2xl font-bold text-gray-800 dark:text-gray-100 line-clamp-2">
+                  📤 提交作业
+                </h1>
+                <p className="text-gray-600 dark:text-gray-400 mt-1 line-clamp-1">
+                  {task.title}
+                </p>
+              </div>
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center shadow-mobile flex-shrink-0">
+                <span className="text-white text-xl">📝</span>
+              </div>
             </div>
-          )}
+
+            {/* 📌 显示任务描述 */}
+            {task.description && (
+              <NotificationCard type="info" className="mb-6">
+                <div className="flex items-start gap-3">
+                  <span className="flex-shrink-0 text-blue-600 dark:text-blue-400 text-lg">📋</span>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-sm font-semibold text-blue-800 dark:text-blue-200 mb-2">
+                      任务说明
+                    </h3>
+                    <p className="text-blue-700 dark:text-blue-300 text-sm leading-relaxed whitespace-pre-wrap break-words">
+                      {task.description}
+                    </p>
+                  </div>
+                </div>
+              </NotificationCard>
+            )}
   
-          <p className="text-green-600 dark:text-green-400 text-sm mb-4">
-            ✅ 你已提交此任务，无法重复提交。
-          </p>
-          <Button
-            variant="primary"
-            onClick={() => navigate('/student')}
-          >
-            ← 返回学生首页
-          </Button>
+            <NotificationCard type="success" className="mb-6">
+              <div className="flex items-start gap-3">
+                <span className="flex-shrink-0 text-green-600 dark:text-green-400 text-lg">✅</span>
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-sm mb-1">已提交</p>
+                  <p className="text-sm leading-relaxed">
+                    你已提交此任务，无法重复提交。
+                  </p>
+                </div>
+              </div>
+            </NotificationCard>
+
+            <SecondaryButton
+              onClick={() => navigate('/student')}
+              icon="👈"
+              fullWidth
+            >
+              返回任务列表
+            </SecondaryButton>
+          </FormCard>
         </div>
       </div>
     );
@@ -490,576 +518,676 @@ const SubmitTask = () => {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-4 sm:py-10 px-2 sm:px-4 transition-colors duration-300">
       <div className="max-w-2xl mx-auto">
-        {/* 返回按钮 - 修复位置 */}
+        {/* 返回按钮 */}
         <div className="mb-4 sm:mb-6">
-          <Button
-            variant="secondary"
+          <SecondaryButton
             size="sm"
             onClick={() => navigate('/student')}
+            icon="👈"
             className="w-full sm:w-auto"
           >
-            👈 返回学生首页
-          </Button>
+            返回任务列表
+          </SecondaryButton>
         </div>
 
         {/* 主内容卡片 */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow p-6 sm:p-8 relative transition-colors duration-300">
-          <h1 className="text-xl sm:text-2xl font-bold mb-4 text-gray-800 dark:text-gray-100">
-            提交任务：{task.title}
-          </h1>
-
-          {/* 📌 添加任务描述显示 */}
-          {task.description && (
-            <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-xl">
-              <h3 className="text-sm font-semibold text-blue-800 dark:text-blue-200 mb-2">
-                📋 任务说明
-              </h3>
-              <p className="text-blue-700 dark:text-blue-300 text-sm leading-relaxed whitespace-pre-wrap">
-                {task.description}
+        <FormCard className="relative">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex-1 min-w-0">
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-800 dark:text-gray-100 line-clamp-2">
+                📤 提交作业
+              </h1>
+              <p className="text-gray-600 dark:text-gray-400 mt-1 line-clamp-1">
+                {task.title}
               </p>
             </div>
+            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center shadow-mobile flex-shrink-0">
+              <span className="text-white text-xl">📝</span>
+            </div>
+          </div>
+
+          {/* 任务描述 */}
+          {task.description && (
+            <NotificationCard type="info" className="mb-6">
+              <div className="flex items-start gap-3">
+                <span className="flex-shrink-0 text-blue-600 dark:text-blue-400 text-lg">📋</span>
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-sm font-semibold text-blue-800 dark:text-blue-200 mb-2">
+                    任务说明
+                  </h3>
+                  <p className="text-blue-700 dark:text-blue-300 text-sm leading-relaxed whitespace-pre-wrap break-words">
+                    {task.description}
+                  </p>
+                </div>
+              </div>
+            </NotificationCard>
           )}
 
           {/* 任务状态提醒 */}
           {taskStatus && (
-            <div className={`mb-6 p-4 rounded-xl ${
-              taskStatus.isLate
-                ? taskStatus.canSubmit
-                  ? 'bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-700'
-                  : 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700'
-                : 'bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700'
-            }`}>
-              <p className={`font-medium ${
+            <NotificationCard 
+              type={
                 taskStatus.isLate
-                  ? taskStatus.canSubmit
-                    ? 'text-orange-700 dark:text-orange-300'
-                    : 'text-red-700 dark:text-red-300'
-                  : 'text-blue-700 dark:text-blue-300'
-              }`}>
-                {taskStatus.isLate
-                  ? taskStatus.canSubmit
-                    ? `⚠️ ${taskStatus.message}，仍可提交但将被标注为逾期作业`
-                    : `❌ ${taskStatus.message}`
-                  : `✅ ${taskStatus.message}`
-                }
-              </p>
-            </div>
+                  ? taskStatus.canSubmit ? 'warning' : 'error'
+                  : 'info'
+              } 
+              className="mb-6"
+            >
+              <div className="flex items-start gap-3">
+                <span className="flex-shrink-0 text-lg">
+                  {taskStatus.isLate
+                    ? taskStatus.canSubmit ? '⚠️' : '❌'
+                    : '✅'
+                  }
+                </span>
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-sm mb-1">
+                    {taskStatus.isLate
+                      ? taskStatus.canSubmit
+                        ? '逾期提交提醒'
+                        : '任务已截止'
+                      : '任务进行中'
+                    }
+                  </p>
+                  <p className="text-sm leading-relaxed">
+                    {taskStatus.isLate
+                      ? taskStatus.canSubmit
+                        ? `${taskStatus.message}，仍可提交但将被标注为逾期作业`
+                        : taskStatus.message
+                      : taskStatus.message
+                    }
+                  </p>
+                </div>
+              </div>
+            </NotificationCard>
           )}
 
-          <div className="text-sm text-gray-600 dark:text-gray-300 space-y-1 mb-6">
-            <p>📁 任务类型：{task.category}</p>
-            <p>⏰ 截止时间：{formatDeadline}</p>
-            <p>📝 作业文件：{task.needsFile ? '必交' : '可选'}</p>
-            <p>🤖 AIGC 使用：{task.allowAIGC ? '允许' : '禁止'}</p>
+          {/* 任务信息卡片 */}
+          <div className="bg-gradient-to-r from-gray-50 to-slate-50 dark:from-gray-800/50 dark:to-slate-800/50 rounded-mobile-xl p-4 mb-6 border border-gray-200/50 dark:border-gray-700/50">
+            <h3 className="font-semibold text-gray-800 dark:text-gray-100 mb-3 flex items-center gap-2">
+              <span>📊</span>
+              任务要求
+            </h3>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
+              <div className="text-center p-2 bg-white/60 dark:bg-gray-700/60 rounded-mobile-lg">
+                <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">📁 类型</div>
+                <div className="font-medium text-gray-800 dark:text-gray-200">{task.category}</div>
+              </div>
+              <div className="text-center p-2 bg-white/60 dark:bg-gray-700/60 rounded-mobile-lg">
+                <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">📝 文件</div>
+                <div className="font-medium text-gray-800 dark:text-gray-200">{task.needsFile ? '必交' : '可选'}</div>
+              </div>
+              <div className="text-center p-2 bg-white/60 dark:bg-gray-700/60 rounded-mobile-lg">
+                <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">🤖 AIGC</div>
+                <div className="font-medium text-gray-800 dark:text-gray-200">{task.allowAIGC ? '允许' : '禁止'}</div>
+              </div>
+              <div className="text-center p-2 bg-white/60 dark:bg-gray-700/60 rounded-mobile-lg">
+                <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">⏰ 截止</div>
+                <div className="font-medium text-gray-800 dark:text-gray-200 text-xs">{formatDeadline}</div>
+              </div>
+            </div>
             {task.allowAIGC && (
-              <p>📝 AIGC 日志：{task.requireAIGCLog ? '必交' : '可选'}</p>
+              <div className="mt-3 pt-3 border-t border-gray-200/50 dark:border-gray-700/50">
+                <div className="flex items-center gap-2 text-sm">
+                  <span className="text-gray-600 dark:text-gray-400">📝 AIGC 记录：</span>
+                  <span className={`font-medium ${task.requireAIGCLog ? 'text-red-600 dark:text-red-400' : 'text-gray-600 dark:text-gray-400'}`}>
+                    {task.requireAIGCLog ? '必交' : '可选'}
+                  </span>
+                </div>
+              </div>
             )}
-            <p>📋 逾期提交：{task.allowLateSubmission ? '允许' : '不允许'}</p>
+            <div className="mt-3 pt-3 border-t border-gray-200/50 dark:border-gray-700/50">
+              <div className="flex items-center gap-2 text-sm">
+                <span className="text-gray-600 dark:text-gray-400">📋 逾期提交：</span>
+                <span className={`font-medium ${task.allowLateSubmission ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                  {task.allowLateSubmission ? '允许' : '不允许'}
+                </span>
+              </div>
+            </div>
           </div>
 
           {/* 只有在可以提交时才显示表单 */}
           {taskStatus?.canSubmit ? (
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <form onSubmit={handleSubmit} className="space-y-6">
               {/* 文本提交框 */}
               <div>
-                <label className="block mb-1 font-medium text-gray-700 dark:text-gray-200">
-                  提交文本内容
+                <label className="mobile-form-label">
+                  💬 文字内容
                 </label>
                 <textarea
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
-                  placeholder="请输入你的文字作业..."
-                  className="w-full p-2 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:text-gray-100 h-28"
+                  placeholder="请输入你的作业内容..."
+                  className="mobile-form-input resize-none focus:ring-blue-500/50 focus:border-blue-500"
+                  rows={4}
                 />
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  可以输入文字作业、总结、心得等内容
+                </p>
               </div>
 
               {/* 图片上传功能 */}
               <div>
-                <label className="block mb-1 font-medium text-gray-700 dark:text-gray-200">
-                  上传图片（可选，可多选）
+                <label className="mobile-form-label">
+                  📷 上传图片 <span className="text-gray-500">(可选，支持多选)</span>
                 </label>
                 <input
                   type="file"
                   multiple
                   accept="image/*"
                   onChange={handleImageChange}
-                  className="w-full p-2 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:text-gray-100"
+                  className="mobile-form-input focus:ring-blue-500/50 focus:border-blue-500"
                 />
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  支持 JPG、PNG、GIF 等图片格式，可同时选择多张图片
+                </p>
                 {renderImagePreview}
               </div>
 
               {/* 文件上传 */}
               {task.needsFile && (
                 <div>
-                  <label className="block mb-1 font-medium text-gray-700 dark:text-gray-200">
-                    作业文件（必传）
+                  <label className="mobile-form-label">
+                    📎 作业文件 <span className="text-red-500">*必交</span>
                   </label>
                   <input
                     type="file"
                     onChange={(e) => setFile(e.target.files[0])}
-                    className="w-full p-2 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:text-gray-100"
+                    className="mobile-form-input focus:ring-blue-500/50 focus:border-blue-500"
                     required={task.needsFile}
                   />
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    请上传作业相关的文档、代码等文件
+                  </p>
                 </div>
               )}
 
-              {/* AIGC 对话区域 - ChatGPT风格全屏设计 */}
+              {/* AIGC 对话区域 - 完整保留原有功能但优化样式 */}
               {task.allowAIGC && (
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    layout
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.95 }}
-                    transition={{ duration: 0.3, ease: 'easeInOut' }}
-                    className={`${
-                      isFullscreen
-                        ? 'fixed inset-0 w-screen z-[9999] bg-white dark:bg-gray-900 flex flex-col overflow-hidden'
-                        : 'border rounded-2xl p-4 bg-gray-50 dark:bg-gray-700 space-y-3 relative'
-                    }`}
-                    style={isFullscreen ? { 
-                      position: 'fixed',
-                      top: 0,
-                      left: 0,
-                      right: 0,
-                      bottom: 0,
-                      width: '100vw',
-                      height: '100vh',
-                      paddingTop: 'env(safe-area-inset-top)',
-                      paddingBottom: '0',
-                      zIndex: 9999,
-                      margin: 0,
-                    } : {}}
-                  >
-                    {/* 全屏模式的顶部导航栏 */}
-                    {isFullscreen && (
-                      <motion.div
-                        initial={{ opacity: 0, y: -20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="flex-shrink-0 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 
-                                  px-4 sm:px-6 py-4 safe-area-inset-top"
-                      >
-                        <div className="flex items-center justify-between max-w-4xl mx-auto">
-                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 bg-gradient-to-r bg-gray-500 rounded-full flex items-center justify-center">
-                              <span className="text-white text-sm font-bold">AI</span>
+                <div className="bg-gradient-to-r from-purple-50 via-indigo-50 to-blue-50 dark:from-purple-900/20 dark:via-indigo-900/20 dark:to-blue-900/20 rounded-mobile-2xl border border-purple-200/50 dark:border-purple-700/30">
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      layout
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.95 }}
+                      transition={{ duration: 0.3, ease: 'easeInOut' }}
+                      className={`${
+                        isFullscreen
+                          ? 'fixed inset-0 w-screen z-[9999] bg-white dark:bg-gray-900 flex flex-col overflow-hidden'
+                          : 'rounded-2xl p-4 bg-white/60 dark:bg-gray-800/60 backdrop-blur-md space-y-3 relative'
+                      }`}
+                      style={isFullscreen ? { 
+                        position: 'fixed',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        width: '100vw',
+                        height: '100vh',
+                        paddingTop: 'env(safe-area-inset-top)',
+                        paddingBottom: '0',
+                        zIndex: 9999,
+                        margin: 0,
+                      } : {}}
+                    >
+                      {/* 全屏模式的顶部导航栏 - 优化样式 */}
+                      {isFullscreen && (
+                        <motion.div
+                          initial={{ opacity: 0, y: -20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="flex-shrink-0 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-b border-gray-200/60 dark:border-gray-700/60 px-4 sm:px-6 py-4 safe-area-inset-top shadow-mobile"
+                        >
+                          <div className="flex items-center justify-between max-w-4xl mx-auto">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center shadow-mobile">
+                                <span className="text-white text-lg font-bold">🤖</span>
+                              </div>
+                              <div>
+                                <h3 className="font-bold text-gray-900 dark:text-gray-100 text-lg">
+                                  AIGC 助手
+                                </h3>
+                                <p className="text-sm text-gray-500 dark:text-gray-400">
+                                  {model === 'qwen' ? '通义千问' : 'ChatGPT'}
+                                  {task.requireAIGCLog && <span className="ml-2 text-red-500">（必交）</span>}
+                                </p>
+                              </div>
                             </div>
-                            <div>
-                              <h3 className="font-semibold text-gray-900 dark:text-gray-100 text-lg">
-                                AIGC
-                              </h3>
-                              <p className="text-sm text-gray-500 dark:text-gray-400">
-                                {model === 'qwen' ? '通义千问' : 'ChatGPT'}
-                              {/*  {task.requireAIGCLog && <span className="ml-2 text-red-500">（必交）</span>} */}
-                              </p>
+                            
+                            <div className="flex items-center gap-3">
+                              {/* 模型切换 - 优化样式 */}
+                              <select
+                                value={model}
+                                onChange={(e) => setModel(e.target.value)}
+                                className="mobile-form-input !min-h-[36px] !py-1.5 !px-3 text-sm w-auto focus:ring-purple-500/50 focus:border-purple-500"
+                              >
+                                <option value="openai">ChatGPT*(维护中)</option>
+                                <option value="qwen">通义千问</option>
+                              </select>
+                              
+                              {/* 退出按钮 - 优化样式 */}
+                              <SecondaryButton
+                                size="sm"
+                                onClick={() => setIsFullscreen(false)}
+                                icon="✕"
+                                className="!w-10 !h-10 !min-w-[40px] !p-0"
+                              />
                             </div>
                           </div>
-                          
-                          <div className="flex items-center gap-3">
-                            {/* 模型切换 */}
+                        </motion.div>
+                      )}
+
+                      {/* 非全屏模式的标题栏 - 优化样式 */}
+                      {!isFullscreen && (
+                        <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md rounded-mobile-xl p-4 border border-gray-200/50 dark:border-gray-700/50 mb-3">
+                          <div className="flex justify-between items-center mb-3">
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-lg flex items-center justify-center">
+                                <span className="text-white text-sm font-bold">🤖</span>
+                              </div>
+                              <div>
+                                <label className="font-semibold text-gray-700 dark:text-gray-200">
+                                  💬 AIGC 对话助手
+                                </label>
+                                {task.requireAIGCLog && (
+                                  <span className="ml-2 text-red-500 text-sm font-normal">（必交）</span>
+                                )}
+                              </div>
+                            </div>
+
+                            <PrimaryButton
+                              size="sm"
+                              onClick={() => setIsFullscreen(true)}
+                              icon="⛶"
+                              variant="outline"
+                            >
+                              全屏
+                            </PrimaryButton>
+                          </div>
+
+                          {/* 模型选择 - 优化样式 */}
+                          <div>
+                            <label className="mobile-form-label !mb-1">
+                              选择 AI 模型
+                            </label>
                             <select
                               value={model}
                               onChange={(e) => setModel(e.target.value)}
-                              className="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 
-                                        rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100
-                                        focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                              className="mobile-form-input !min-h-[40px] focus:ring-purple-500/50 focus:border-purple-500"
                             >
                               <option value="openai">ChatGPT*(维护中)</option>
                               <option value="qwen">通义千问</option>
                             </select>
-                            
-                            {/* 退出按钮 */}
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => setIsFullscreen(false)}
-                              className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-                            >
-                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                              </svg>
-                            </Button>
                           </div>
                         </div>
-                      </motion.div>
-                    )}
+                      )}
 
-                    {/* 非全屏模式的标题栏 */}
-                    {!isFullscreen && (
-                      <div className="space-y-3 mb-3">
-                        <div className="flex justify-between items-center">
-                          <label className="font-semibold text-gray-700 dark:text-gray-200">
-                            💬 AIGC 对话区
-                            {task.requireAIGCLog && (
-                              <span className="ml-2 text-red-500 text-sm font-normal">（必交）</span>
+                      {/* 对话内容区域 - 保持原有完整功能 */}
+                      <div
+                        ref={chatBoxRef}
+                        className={`flex-1 overflow-y-auto scroll-smooth-mobile ${
+                          isFullscreen
+                            ? 'bg-white dark:bg-gray-900'
+                            : 'bg-gray-50/80 dark:bg-gray-800/50 h-40 sm:h-52 md:h-64 rounded-mobile-lg border border-gray-200/50 dark:border-gray-600/50 p-3'
+                        }`}
+                        style={isFullscreen ? {
+                          scrollbarWidth: 'thin',
+                          scrollbarColor: 'rgb(156 163 175) transparent',
+                          flex: 1,
+                          minHeight: 0,
+                          paddingBottom: `calc(70px + env(safe-area-inset-bottom, 0px))`,
+                          height: `calc(100vh - 140px - env(safe-area-inset-top, 0px))`,
+                        } : {}}
+                      >
+                        {/* 保持原有的完整对话功能代码 */}
+                        <div className={isFullscreen ? 'max-w-4xl mx-auto px-4 sm:px-6 py-6' : ''}>
+                          {/* 欢迎消息（仅全屏模式且无对话时）- 优化样式 */}
+                          {isFullscreen && aigcLog.length === 0 && (
+                            <div className="flex flex-col items-center justify-center min-h-[50vh] text-center px-4">
+                              <div className="w-20 h-20 bg-gradient-to-br from-purple-100 to-indigo-100 dark:from-purple-900/30 dark:to-indigo-900/30 rounded-full flex items-center justify-center mb-6 shadow-mobile">
+                                <span className="text-4xl">🤖</span>
+                              </div>
+                              <h3 className="text-2xl font-medium text-gray-900 dark:text-gray-100 mb-3">
+                                开始与 AI 对话
+                              </h3>
+                              <p className="text-gray-500 dark:text-gray-400 max-w-md leading-relaxed">
+                                向 AI 提问，获得学习帮助和指导
+                              </p>
+                            </div>
+                          )}
+
+                          {/* 对话消息列表 - 保持原有功能 */}
+                          <div className={`space-y-4 ${isFullscreen ? 'min-h-0 pb-32' : ''}`}>
+                            {aigcLog.map((msg, idx) => (
+                              <motion.div
+                                key={idx}
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: idx * 0.05 }}
+                                className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                              >
+                                <div className={`max-w-[85%] ${isFullscreen ? 'max-w-3xl' : ''} min-w-0`}>
+                                  {/* 发言者标识 - 优化样式 */}
+                                  <div className={`text-xs text-gray-500 dark:text-gray-400 mb-1 flex items-center gap-1 ${
+                                    msg.role === 'user' ? 'justify-end' : 'justify-start'
+                                  }`}>
+                                    <span>{msg.role === 'user' ? '👤' : '🤖'}</span>
+                                    <span>{msg.role === 'user' ? '你' : (msg.model === 'qwen' ? '通义千问' : 'ChatGPT')}</span>
+                                  </div>
+                                  
+                                  {/* 消息气泡 - 保持原有功能但优化样式 */}
+                                  <div className={`rounded-2xl px-4 py-3 shadow-mobile ${
+                                    msg.role === 'user' 
+                                      ? 'bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-br-md' 
+                                      : 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-bl-md border border-gray-200 dark:border-gray-600'
+                                  }`}>
+                                    <div className={`${isFullscreen ? 'text-base leading-relaxed' : 'text-sm'} break-words overflow-x-auto`}>
+                                      {/* 保持原有的 ReactMarkdown 渲染功能 */}
+                                      <ReactMarkdown
+                                        components={{
+                                          code({ inline, className, children, ...props }) {
+                                            const match = /language-(\w+)/.exec(className || '');
+                                            return !inline ? (
+                                              <div className="overflow-x-auto my-2">
+                                                <SyntaxHighlighter
+                                                  style={github}
+                                                  language={match ? match[1] : 'text'}
+                                                  PreTag="div"
+                                                  className={`rounded-lg ${
+                                                    isFullscreen ? 'text-sm leading-relaxed' : 'text-xs'
+                                                  }`}
+                                                  customStyle={{
+                                                    margin: 0,
+                                                    padding: '12px',
+                                                    borderRadius: '8px',
+                                                    fontSize: isFullscreen ? '14px' : '12px',
+                                                    lineHeight: '1.5',
+                                                    overflowX: 'auto',
+                                                    whiteSpace: 'pre',
+                                                    wordBreak: 'normal',
+                                                    wordWrap: 'normal',
+                                                  }}
+                                                  {...props}
+                                                >
+                                                  {String(children).replace(/\n$/, '')}
+                                                </SyntaxHighlighter>
+                                              </div>
+                                            ) : (
+                                              <code className={`px-1.5 py-0.5 rounded text-xs font-mono ${
+                                                msg.role === 'user' 
+                                                  ? 'bg-blue-400 text-white' 
+                                                  : 'bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200'
+                                              }`}>
+                                                {children}
+                                              </code>
+                                            );
+                                          },
+                                          pre({ children, ...props }) {
+                                            return (
+                                              <pre className="overflow-x-auto whitespace-pre-wrap break-words" {...props}>
+                                                {children}
+                                              </pre>
+                                            );
+                                          },
+                                          table({ children, ...props }) {
+                                            return (
+                                              <div className="overflow-x-auto my-2">
+                                                <table className="border-collapse border border-gray-300 dark:border-gray-600" {...props}>
+                                                  {children}
+                                                </table>
+                                              </div>
+                                            );
+                                          }
+                                        }}
+                                      >
+                                        {msg.content}
+                                      </ReactMarkdown>
+                                    </div>
+                                  </div>
+                                </div>
+                              </motion.div>
+                            ))}
+
+                            {/* 加载状态 - 优化样式 */}
+                            {loading && (
+                              <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="flex justify-start"
+                              >
+                                <div className="max-w-[85%]">
+                                  <div className="text-xs text-gray-500 dark:text-gray-400 mb-1 flex items-center gap-1">
+                                    <span>🤖</span>
+                                    <span>{model === 'qwen' ? '通义千问' : 'ChatGPT'}</span>
+                                  </div>
+                                  <div className="bg-white dark:bg-gray-700 rounded-2xl rounded-bl-md px-4 py-3 border border-gray-200 dark:border-gray-600 shadow-mobile">
+                                    <div className="flex items-center gap-2">
+                                      <div className="flex gap-1">
+                                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                                      </div>
+                                      <span className="text-sm text-gray-500 dark:text-gray-400">正在回复...</span>
+                                    </div>
+                                  </div>
+                                </div>
+                              </motion.div>
                             )}
-                          </label>
-
-                          <div className="flex gap-2">
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant="secondary"
-                              onClick={() => setIsFullscreen(true)}
-                            >
-                              全屏
-                            </Button>
                           </div>
-                        </div>
-
-                        {/* 模型选择 */}
-                        <div>
-                          <label className="text-sm font-medium block mb-1 text-gray-600 dark:text-gray-300">
-                            选择 AI 模型
-                          </label>
-                          <select
-                            value={model}
-                            onChange={(e) => setModel(e.target.value)}
-                            className="border p-2 rounded-lg w-full bg-white dark:bg-gray-600 dark:text-gray-100"
-                          >
-                            <option value="openai">ChatGPT*(维护中)</option>
-                            <option value="qwen">通义千问</option>
-                          </select>
                         </div>
                       </div>
-                    )}
 
-                    {/* 对话内容区域 - ChatGPT风格 */}
-                    <div
-                      ref={chatBoxRef}
-                      className={`flex-1 overflow-y-auto ${
-                        isFullscreen
-                          ? 'bg-white dark:bg-gray-900'
-                          : 'bg-gray-50 dark:bg-gray-800/50 h-40 sm:h-52 md:h-64 rounded-lg border dark:border-gray-500 p-3'
-                      }`}
-                      style={isFullscreen ? {
-                        scrollbarWidth: 'thin',
-                        scrollbarColor: 'rgb(156 163 175) transparent',
-                        flex: 1,
-                        minHeight: 0,
-                        // 大幅减少底部padding，只保留必要的空隙
-                        paddingBottom: `calc(70px + env(safe-area-inset-bottom, 0px))`,
-                        height: `calc(100vh - 140px - env(safe-area-inset-top, 0px))`,
-                      } : {}}
-                    >
-                      {/* 全屏模式对话容器 */}
-                      <div className={isFullscreen ? 'max-w-4xl mx-auto px-4 sm:px-6 py-6' : ''}>
-                        {/* 欢迎消息（仅全屏模式且无对话时） */}
-                        {isFullscreen && aigcLog.length === 0 && (
-                          <div className="flex flex-col items-center justify-center min-h-[50vh] text-center px-4">
-                            <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4">
-                              <svg className="w-8 h-8 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                              </svg>
-                            </div>
-                            <h3 className="text-2xl font-medium text-gray-900 dark:text-gray-100 mb-3">
-                              开始对话
-                            </h3>
-                            <p className="text-gray-500 dark:text-gray-400 max-w-md leading-relaxed">
-                              向 AI 提问，获得学习帮助
+                      {/* 输入区域 - 保持原有的键盘处理功能但优化样式 */}
+                      <div 
+                        className={`flex-shrink-0 ${
+                          isFullscreen 
+                            ? 'bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-t border-gray-200/60 dark:border-gray-700/60' 
+                            : 'mt-2 bg-transparent'
+                        }`}
+                        style={isFullscreen ? {
+                          position: 'fixed',
+                          left: 0,
+                          right: 0,
+                          bottom: 0,
+                          zIndex: 10000,
+                          paddingBottom: `calc(1rem + env(safe-area-inset-bottom, 0px))`,
+                          paddingTop: '1rem',
+                          paddingLeft: '1rem',
+                          paddingRight: '1rem',
+                          maxWidth: '56rem',
+                          marginLeft: 'auto',
+                          marginRight: 'auto',
+                          transform: `translate3d(0, ${viewportInfo.isKeyboardOpen ? `-${viewportInfo.keyboardHeight}px` : '0'}, 0)`,
+                          transition: 'transform 0.3s ease-out',
+                        } : {}}
+                      >
+                        <style jsx>{`
+                          [data-theme="fullscreen"] {
+                            background-color: rgba(255, 255, 255, 0.95) !important;
+                          }
+                          .dark [data-theme="fullscreen"] {
+                            background-color: rgba(17, 24, 39, 0.95) !important;
+                          }
+                        `}</style>
+                        
+                        <div className="flex items-end gap-3">
+                          <div className="flex-1 relative">
+                            <textarea
+                              ref={textareaRef}
+                              value={input}
+                              onChange={(e) => {
+                                setInput(e.target.value);
+                                requestAnimationFrame(() => {
+                                  adjustTextareaHeight();
+                                });
+                              }}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter' && !e.shiftKey && !loading) {
+                                  e.preventDefault();
+                                  handleAIGCSubmit();
+                                }
+                              }}
+                              placeholder="输入你的问题..."
+                              disabled={loading}
+                              rows={1}
+                              className={`mobile-form-input resize-none !border-gray-300 dark:!border-gray-600 
+                                        !bg-white dark:!bg-gray-800 !text-gray-900 dark:!text-gray-100
+                                        !pr-16 focus:!ring-purple-500/50 focus:!border-purple-500
+                                        transition-all duration-200 placeholder-gray-400 dark:placeholder-gray-500
+                                        ${isFullscreen ? '!text-base !leading-relaxed' : '!text-sm'}
+                                        disabled:!bg-gray-100 dark:disabled:!bg-gray-700 disabled:cursor-not-allowed`}
+                              style={{ 
+                                scrollbarWidth: 'none',
+                                msOverflowStyle: 'none',
+                                lineHeight: '1.5',
+                                minHeight: isFullscreen ? '56px' : '44px',
+                                maxHeight: isFullscreen ? '120px' : '44px',
+                                overflow: 'hidden',
+                                WebkitAppearance: 'none',
+                                borderRadius: '24px',
+                                padding: `${isFullscreen ? '16px' : '12px'} 56px ${isFullscreen ? '16px' : '12px'} 20px`,
+                                display: 'flex',
+                                alignItems: 'center',
+                              }}
+                            />
+                            
+                            {/* 发送按钮 - 保持原有功能但优化样式 */}
+                            <button
+                              type="button"
+                              onClick={handleAIGCSubmit}
+                              disabled={loading || !input.trim()}
+                              className={`absolute w-10 h-10 rounded-full transition-all duration-200
+                                        flex items-center justify-center flex-shrink-0 shadow-mobile
+                                        ${!loading && input.trim()
+                                          ? 'bg-gradient-to-br from-purple-500 to-indigo-600 text-white hover:from-purple-600 hover:to-indigo-700 shadow-purple-500/25' 
+                                          : 'bg-gray-200 dark:bg-gray-600 text-gray-400 dark:text-gray-500 cursor-not-allowed'
+                                        }`}
+                              style={{
+                                right: '12px',
+                                top: '50%',
+                                transform: 'translateY(-50%)',
+                                zIndex: 1,
+                              }}
+                            >
+                              {loading ? (
+                                <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                              ) : (
+                                <svg 
+                                  className="w-4 h-4" 
+                                  fill="none" 
+                                  stroke="currentColor" 
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                                </svg>
+                              )}
+                            </button>
+                          </div>
+                        </div>
+                        
+                        {/* 提示文字 - 优化样式 */}
+                        {isFullscreen && (
+                          <div className="hidden sm:flex justify-center items-center mt-3">
+                            <p className="text-xs text-gray-400 dark:text-gray-500">
+                              按 Enter 发送，Shift + Enter 换行
                             </p>
                           </div>
                         )}
-
-                        {/* 对话消息列表 */}
-                        <div className={`space-y-4 ${isFullscreen ? 'min-h-0 pb-32' : ''}`}>
-                          {aigcLog.map((msg, idx) => (
-                            <motion.div
-                              key={idx}
-                              initial={{ opacity: 0, y: 20 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              transition={{ delay: idx * 0.05 }}
-                              className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-                            >
-                              <div className={`max-w-[85%] ${isFullscreen ? 'max-w-3xl' : ''} min-w-0`}>
-                                {/* 发言者标识 */}
-                                <div className={`text-xs text-gray-500 dark:text-gray-400 mb-1 ${
-                                  msg.role === 'user' ? 'text-right' : 'text-left'
-                                }`}>
-                                  {msg.role === 'user' ? '你' : (msg.model === 'qwen' ? '通义千问' : 'ChatGPT')}
-                                </div>
-                                
-                                {/* 消息气泡 - 修复overflow问题 */}
-                                <div className={`rounded-2xl px-4 py-3 ${
-                                  msg.role === 'user' 
-                                    ? 'bg-blue-500 text-white rounded-br-md' 
-                                    : 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-bl-md border border-gray-200 dark:border-gray-600'
-                                }`}>
-                                  <div className={`${isFullscreen ? 'text-base leading-relaxed' : 'text-sm'} break-words overflow-x-auto`}>
-                                    <ReactMarkdown
-                                      components={{
-                                        code({ inline, className, children, ...props }) {
-                                          const match = /language-(\w+)/.exec(className || '');
-                                          return !inline ? (
-                                            <div className="overflow-x-auto my-2">
-                                              <SyntaxHighlighter
-                                                style={github}
-                                                language={match ? match[1] : 'text'}
-                                                PreTag="div"
-                                                className={`rounded-lg ${
-                                                  isFullscreen ? 'text-sm leading-relaxed' : 'text-xs'
-                                                }`}
-                                                customStyle={{
-                                                  margin: 0,
-                                                  padding: '12px',
-                                                  borderRadius: '8px',
-                                                  fontSize: isFullscreen ? '14px' : '12px',
-                                                  lineHeight: '1.5',
-                                                  overflowX: 'auto',
-                                                  whiteSpace: 'pre',
-                                                  wordBreak: 'normal',
-                                                  wordWrap: 'normal',
-                                                }}
-                                                {...props}
-                                              >
-                                                {String(children).replace(/\n$/, '')}
-                                              </SyntaxHighlighter>
-                                            </div>
-                                          ) : (
-                                            <code className={`px-1.5 py-0.5 rounded text-xs font-mono ${
-                                              msg.role === 'user' 
-                                                ? 'bg-blue-400 text-white' 
-                                                : 'bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200'
-                                            }`}>
-                                              {children}
-                                            </code>
-                                          );
-                                        },
-                                        pre({ children, ...props }) {
-                                          return (
-                                            <pre className="overflow-x-auto whitespace-pre-wrap break-words" {...props}>
-                                              {children}
-                                            </pre>
-                                          );
-                                        },
-                                        table({ children, ...props }) {
-                                          return (
-                                            <div className="overflow-x-auto my-2">
-                                              <table className="border-collapse border border-gray-300 dark:border-gray-600" {...props}>
-                                                {children}
-                                              </table>
-                                            </div>
-                                          );
-                                        }
-                                      }}
-                                    >
-                                      {msg.content}
-                                    </ReactMarkdown>
-                                  </div>
-                                </div>
-                              </div>
-                            </motion.div>
-                          ))}
-
-                          {/* 加载状态 */}
-                          {loading && (
-                            <motion.div
-                              initial={{ opacity: 0, y: 20 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              className="flex justify-start"
-                            >
-                              <div className="max-w-[85%]">
-                                <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">
-                                  {model === 'qwen' ? '通义千问' : 'ChatGPT'}
-                                </div>
-                                <div className="bg-gray-100 dark:bg-gray-700 rounded-2xl rounded-bl-md px-4 py-3 border border-gray-200 dark:border-gray-600">
-                                  <div className="flex items-center gap-2">
-                                    <div className="flex gap-1">
-                                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
-                                    </div>
-                                    <span className="text-sm text-gray-500 dark:text-gray-400">正在回复...</span>
-                                  </div>
-                                </div>
-                              </div>
-                            </motion.div>
-                          )}
-                        </div>
                       </div>
-                    </div>
-
-                    {/* 输入区域 - 非必要不修改！ */}
-                    <div 
-                      className={`flex-shrink-0 ${
-                        isFullscreen 
-                          ? 'bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700' 
-                          : 'mt-2 bg-transparent'
-                      }`}
-                      style={isFullscreen ? {
-                        position: 'fixed',
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                        zIndex: 10000,
-                        paddingBottom: `calc(1rem + env(safe-area-inset-bottom, 0px))`,
-                        paddingTop: '1rem',
-                        paddingLeft: '1rem',
-                        paddingRight: '1rem',
-                        maxWidth: '56rem',
-                        marginLeft: 'auto',
-                        marginRight: 'auto',
-                        backdropFilter: 'blur(8px)',
-                        backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                        // 关键修复：根据键盘状态动态调整输入框位置
-                        transform: `translate3d(0, ${viewportInfo.isKeyboardOpen ? `-${viewportInfo.keyboardHeight}px` : '0'}, 0)`,
-                        transition: 'transform 0.3s ease-out',
-                      } : {}}
-                      data-theme={isFullscreen ? 'fullscreen' : 'normal'}
-                    >
-                      <style jsx>{`
-                        [data-theme="fullscreen"] {
-                          background-color: rgba(255, 255, 255, 0.95) !important;
-                        }
-                        .dark [data-theme="fullscreen"] {
-                          background-color: rgba(17, 24, 39, 0.95) !important;
-                        }
-                      `}</style>
-                                          
-                      <div className="flex items-end gap-3">
-                        <div className="flex-1 relative">
-                          <textarea
-                            ref={textareaRef}
-                            value={input}
-                            onChange={(e) => {
-                              setInput(e.target.value);
-                              requestAnimationFrame(() => {
-                                adjustTextareaHeight();
-                              });
-                            }}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter' && !e.shiftKey && !loading) {
-                                e.preventDefault();
-                                handleAIGCSubmit();
-                              }
-                            }}
-                            placeholder="输入你的问题..."
-                            disabled={loading}
-                            rows={1}
-                            className={`w-full resize-none border border-gray-300 dark:border-gray-600 
-                                      bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100
-                                      px-5 pr-16 
-                                      focus:ring-2 focus:ring-blue-500 focus:border-blue-500
-                                      transition-all duration-200 placeholder-gray-400 dark:placeholder-gray-500
-                                      ${isFullscreen ? 'text-base leading-relaxed' : 'text-sm'}
-                                      disabled:bg-gray-100 dark:disabled:bg-gray-700 disabled:cursor-not-allowed`}
-                            style={{ 
-                              scrollbarWidth: 'none',
-                              msOverflowStyle: 'none',
-                              lineHeight: '1.5',
-                              minHeight: isFullscreen ? '56px' : '44px',
-                              maxHeight: isFullscreen ? '120px' : '44px',
-                              overflow: 'hidden',
-                              WebkitAppearance: 'none',
-                              // 确保全屏模式下也有圆角
-                              borderRadius: '24px',
-                              padding: `${isFullscreen ? '16px' : '12px'} 56px ${isFullscreen ? '16px' : '12px'} 20px`,
-                              display: 'flex',
-                              alignItems: 'center',
-                            }}
-                          />
-                          
-                          {/* 发送按钮保持不变 */}
-                          <button
-                            type="button"
-                            onClick={handleAIGCSubmit}
-                            disabled={loading || !input.trim()}
-                            className={`absolute w-9 h-9 rounded-full transition-all duration-200
-                                      flex items-center justify-center flex-shrink-0
-                                      ${!loading && input.trim()
-                                        ? 'bg-black dark:bg-white text-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-200' 
-                                        : 'bg-gray-200 dark:bg-gray-600 text-gray-400 dark:text-gray-500 cursor-not-allowed'
-                                      }`}
-                            style={{
-                              right: '12px',
-                              top: '50%',
-                              transform: 'translateY(-50%)',
-                              zIndex: 1,
-                            }}
-                          >
-                            {loading ? (
-                              <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                            ) : (
-                              <svg 
-                                className="w-4 h-4" 
-                                fill="none" 
-                                stroke="currentColor" 
-                                viewBox="0 0 24 24"
-                              >
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                              </svg>
-                            )}
-                          </button>
-                        </div>
-                      </div>
-                      
-                      {/* 提示文字保持不变 */}
-                      {isFullscreen && (
-                        <div className="hidden sm:flex justify-center items-center mt-3">
-                          <p className="text-xs text-gray-400 dark:text-gray-500">
-                            按 Enter 发送，Shift + Enter 换行
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  </motion.div>
-                </AnimatePresence>
+                    </motion.div>
+                  </AnimatePresence>
+                </div>
               )}
 
+              {/* AIGC可选上传选项 */}
               {task.allowAIGC && !task.requireAIGCLog && aigcLog.length > 0 && (
-                <div className="mt-4">
-                  <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-200">
+                <div className="bg-blue-50/60 dark:bg-blue-900/20 rounded-mobile-lg p-4 border border-blue-200/50 dark:border-blue-700/30">
+                  <label className="flex items-start gap-3 cursor-pointer">
                     <input
                       type="checkbox"
                       checked={shouldUploadAIGC}
                       onChange={(e) => setShouldUploadAIGC(e.target.checked)}
-                      className="rounded"
+                      className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500 mt-0.5"
                     />
-                    同时上传我的AIGC对话记录（可选）
+                    <div className="flex-1">
+                      <span className="text-sm font-medium text-blue-800 dark:text-blue-200">
+                        同时上传我的AIGC对话记录
+                      </span>
+                      <p className="text-xs text-blue-600 dark:text-blue-300 mt-1">
+                        可选项，勾选后将把你与AI的完整对话记录一起提交给老师
+                      </p>
+                    </div>
                   </label>
                 </div>
               )}
 
-              <Button
-                type="submit"
-                variant={taskStatus?.isLate ? "warning" : "primary"}
-                fullWidth
-                disabled={loading}
-              >
-                {taskStatus?.isLate ? '⚠️ 逾期提交作业' : '📤 提交作业'}
-              </Button>
+              {/* 提交按钮 */}
+              <div className="pt-4">
+                {taskStatus?.isLate ? (
+                  <WarningButton
+                    type="submit"
+                    size="lg"
+                    fullWidth
+                    icon="⚠️"
+                    haptic
+                    disabled={loading}
+                    gradient
+                  >
+                    逾期提交作业
+                  </WarningButton>
+                ) : (
+                  <PrimaryButton
+                    type="submit"
+                    size="lg"
+                    fullWidth
+                    icon="📤"
+                    haptic
+                    disabled={loading}
+                    gradient
+                  >
+                    提交作业
+                  </PrimaryButton>
+                )}
+              </div>
 
+              {/* 消息提示 */}
               {message && (
-                <p
-                  className={`mt-2 text-sm px-3 py-1.5 rounded-lg backdrop-blur-sm transition-all duration-300 ${
-                    message.startsWith('✅')
-                      ? 'bg-green-500/10 text-green-600 dark:text-green-400'
-                      : message.startsWith('⚠️')
-                      ? 'bg-orange-500/10 text-orange-600 dark:text-orange-400'
-                      : message.startsWith('📤')
-                      ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400'
-                      : 'bg-red-500/10 text-red-600 dark:text-red-400'
-                  }`}
+                <NotificationCard
+                  type={
+                    message.startsWith('✅') ? 'success' :
+                    message.startsWith('⚠️') ? 'warning' :
+                    message.startsWith('📤') ? 'info' : 'error'
+                  }
+                  className="mt-4"
                 >
-                  {message}
-                </p>
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium text-sm">
+                      {message}
+                    </span>
+                  </div>
+                </NotificationCard>
               )}
             </form>
           ) : (
-            <div className="text-center py-10">
-              <p className="text-red-600 dark:text-red-400 text-lg font-medium mb-4">
-                ❌ 任务已截止，无法提交作业
+            <div className="text-center py-12">
+              <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-red-100 to-rose-100 dark:from-red-900/30 dark:to-rose-900/30 rounded-full flex items-center justify-center border border-red-200 dark:border-red-700/50">
+                <span className="text-red-600 dark:text-red-400 text-3xl">❌</span>
+              </div>
+              <h3 className="text-lg font-medium text-red-600 dark:text-red-400 mb-2">
+                任务已截止
+              </h3>
+              <p className="text-gray-600 dark:text-gray-400 mb-6">
+                无法提交作业，请联系老师了解详情
               </p>
-              <Button
-                variant="secondary"
+              <SecondaryButton
                 onClick={() => navigate('/student')}
+                icon="👈"
               >
-                返回学生首页
-              </Button>
+                返回任务列表
+              </SecondaryButton>
             </div>
           )}
-        </div>
+        </FormCard>
       </div>
     </div>
   );
