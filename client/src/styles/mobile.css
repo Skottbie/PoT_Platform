@@ -40,6 +40,8 @@
     transition: all 0.2s ease-out;
   }
 
+  /* 🔧 修复暗色模式下复选框显示问题 - 替换 mobile.css 中的相关部分 */
+
   /* 重置所有复选框的默认样式 */
   input[type="checkbox"] {
     -webkit-appearance: none;
@@ -68,7 +70,7 @@
     padding: 0;
   }
 
-  /* 暗色模式下的默认样式 */
+  /* 🎯 暗色模式下的默认样式 */
   .dark input[type="checkbox"] {
     border-color: #6b7280;
     background-color: #374151;
@@ -89,17 +91,18 @@
   input[type="checkbox"]:checked {
     background-color: #3b82f6 !important;
     border-color: #3b82f6 !important;
-    /* 使用内联 SVG，确保在所有模式下都显示 */
+    /* 白色勾号，适用于浅色和深色背景 */
     background-image: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='%23ffffff' d='M13.854 3.646a.5.5 0 0 1 0 .708l-7.5 7.5a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6 10.293l7.146-7.147a.5.5 0 0 1 .708 0z'/%3E%3C/svg%3E") !important;
     background-size: 14px 14px !important;
     background-position: center !important;
     background-repeat: no-repeat !important;
   }
 
-  /* 暗色模式下的选中状态 - 确保勾号可见 */
+  /* 🎯 暗色模式下的选中状态 - 使用相同样式确保一致性 */
   .dark input[type="checkbox"]:checked {
     background-color: #3b82f6 !important;
     border-color: #3b82f6 !important;
+    /* 使用相同的白色勾号 */
     background-image: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='%23ffffff' d='M13.854 3.646a.5.5 0 0 1 0 .708l-7.5 7.5a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6 10.293l7.146-7.147a.5.5 0 0 1 .708 0z'/%3E%3C/svg%3E") !important;
     background-size: 14px 14px !important;
     background-position: center !important;
@@ -134,6 +137,102 @@
     background-size: 14px 14px !important;
     background-position: center !important;
     background-repeat: no-repeat !important;
+  }
+  
+  /* 大尺寸复选框（移动端友好） */
+  .checkbox-lg {
+    width: 24px !important;
+    height: 24px !important;
+    border-width: 2px !important;
+  }
+
+  .checkbox-lg:checked {
+    background-size: 18px 18px !important;
+  }
+
+  /* 特大尺寸复选框 */
+  .checkbox-xl {
+    width: 28px !important;
+    height: 28px !important;
+    border-width: 3px !important;
+    border-radius: 6px !important;
+  }
+
+  .checkbox-xl:checked {
+    background-size: 22px 22px !important;
+  }
+
+  /* 表单中的复选框 */
+  .form-checkbox {
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+    border: 2px solid #d1d5db;
+    background-color: #ffffff;
+    transition: all 0.2s ease-out;
+  }
+
+  .dark .form-checkbox {
+    border-color: #6b7280;
+    background-color: #374151;
+  }
+
+  .form-checkbox:checked {
+    background-color: #3b82f6 !important;
+    border-color: #3b82f6 !important;
+    background-image: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='%23ffffff' d='M13.854 3.646a.5.5 0 0 1 0 .708l-7.5 7.5a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6 10.293l7.146-7.147a.5.5 0 0 1 .708 0z'/%3E%3C/svg%3E") !important;
+    background-size: 14px 14px !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+  }
+
+  .dark .form-checkbox:checked {
+    background-color: #3b82f6 !important;
+    border-color: #3b82f6 !important;
+    background-image: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='%23ffffff' d='M13.854 3.646a.5.5 0 0 1 0 .708l-7.5 7.5a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6 10.293l7.146-7.147a.5.5 0 0 1 .708 0z'/%3E%3C/svg%3E") !important;
+    background-size: 14px 14px !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+  }
+
+  .form-checkbox:focus {
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
+    border-color: #3b82f6;
+    outline: none;
+  }
+
+  /* 🎯 额外的浏览器兼容性修复 */
+
+  /* Firefox 特殊处理 */
+  @supports (-moz-appearance: none) {
+    input[type="checkbox"] {
+      -moz-appearance: none !important;
+    }
+  }
+
+  /* Safari 特殊处理 - 简化版本，避免重复定义 */
+  @supports (-webkit-appearance: none) {
+    input[type="checkbox"] {
+      -webkit-appearance: none !important;
+    }
+  }
+
+  /* 高对比度模式支持 */
+  @media (prefers-contrast: high) {
+    input[type="checkbox"] {
+      border-width: 3px !important;
+    }
+    
+    input[type="checkbox"]:checked {
+      background-color: #000000 !important;
+      border-color: #000000 !important;
+    }
+    
+    .dark input[type="checkbox"]:checked {
+      background-color: #ffffff !important;
+      border-color: #ffffff !important;
+      background-image: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='%23000000' d='M13.854 3.646a.5.5 0 0 1 0 .708l-7.5 7.5a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6 10.293l7.146-7.147a.5.5 0 0 1 .708 0z'/%3E%3C/svg%3E") !important;
+    }
   }
 
   /* 保持单选框的原生样式但优化尺寸 */
@@ -560,60 +659,20 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
-
-  input[type="checkbox"] {
-    transition: none !important;
-  }
 }
 
-/* 🎯 Safari 特定修复 */
+/* 🎯 Safari 特定修复 - 移除重复定义 */
 @supports (-webkit-appearance: none) {
   input[type="checkbox"] {
-    /* 确保 Safari 完全移除默认样式 */
     -webkit-appearance: none !important;
-    
-    /* 防止 Safari 自动应用系统样式 */
-    background: #ffffff !important;
-    border: 2px solid #d1d5db !important;
-  }
-  
-  .dark input[type="checkbox"] {
-    background: #374151 !important;
-    border-color: #6b7280 !important;
-  }
-  
-  input[type="checkbox"]:checked {
-    background: #3b82f6 !important;
-    border-color: #3b82f6 !important;
-    background-image: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='%23ffffff' d='M13.854 3.646a.5.5 0 0 1 0 .708l-7.5 7.5a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6 10.293l7.146-7.147a.5.5 0 0 1 .708 0z'/%3E%3C/svg%3E") !important;
-  }
-
-  .dark input[type="checkbox"]:checked {
-    background: #3b82f6 !important;
-    border-color: #3b82f6 !important;
-    background-image: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='%23ffffff' d='M13.854 3.646a.5.5 0 0 1 0 .708l-7.5 7.5a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6 10.293l7.146-7.147a.5.5 0 0 1 .708 0z'/%3E%3C/svg%3E") !important;
   }
 }
 
-/* 🎯 iOS Safari 特殊处理 */
+/* 🎯 iOS Safari 特殊处理 - 移除重复定义 */
 @supports (-webkit-touch-callout: none) {
   input[type="checkbox"] {
     /* iOS Safari 需要明确的背景图片 */
     background-image: none !important;
-  }
-  
-  input[type="checkbox"]:checked {
-    background-image: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='%23ffffff' d='M13.854 3.646a.5.5 0 0 1 0 .708l-7.5 7.5a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6 10.293l7.146-7.147a.5.5 0 0 1 .708 0z'/%3E%3C/svg%3E") !important;
-    background-size: 14px 14px !important;
-    background-position: center !important;
-    background-repeat: no-repeat !important;
-  }
-
-  .dark input[type="checkbox"]:checked {
-    background-image: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='%23ffffff' d='M13.854 3.646a.5.5 0 0 1 0 .708l-7.5 7.5a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6 10.293l7.146-7.147a.5.5 0 0 1 .708 0z'/%3E%3C/svg%3E") !important;
-    background-size: 14px 14px !important;
-    background-position: center !important;
-    background-repeat: no-repeat !important;
   }
 }
 
