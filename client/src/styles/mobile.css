@@ -1,4 +1,4 @@
-/* src/styles/mobile.css - 新建文件 */
+/* src/styles/mobile.css - Updated with checkbox dark mode fix */
 
 /* 🎯 移动端基础优化 */
 @layer base {
@@ -40,8 +40,103 @@
     transition: all 0.2s ease-out;
   }
 
-  /* 保持复选框和单选框的原生样式但优化尺寸 */
-  input[type="checkbox"], 
+  /* 重置所有复选框的默认样式 */
+  input[type="checkbox"] {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    
+    /* 基础尺寸和样式 */
+    width: 20px;
+    height: 20px;
+    border: 2px solid #d1d5db;
+    border-radius: 4px;
+    background-color: #ffffff;
+    
+    /* 定位和布局 */
+    position: relative;
+    display: inline-block;
+    vertical-align: middle;
+    flex-shrink: 0;
+    
+    /* 过渡动画 */
+    transition: all 0.2s ease-out;
+    cursor: pointer;
+    
+    /* 确保在各种容器中都能正确显示 */
+    margin: 0;
+    padding: 0;
+  }
+
+  /* 暗色模式下的默认样式 */
+  .dark input[type="checkbox"] {
+    border-color: #6b7280;
+    background-color: #374151;
+  }
+
+  /* 悬停状态 */
+  input[type="checkbox"]:hover {
+    border-color: #3b82f6;
+    background-color: #eff6ff;
+  }
+
+  .dark input[type="checkbox"]:hover {
+    border-color: #60a5fa;
+    background-color: #1e3a8a;
+  }
+
+  /* 🔧 关键修复：选中状态的统一处理 */
+  input[type="checkbox"]:checked {
+    background-color: #3b82f6 !important;
+    border-color: #3b82f6 !important;
+    /* 使用内联 SVG，确保在所有模式下都显示 */
+    background-image: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='%23ffffff' d='M13.854 3.646a.5.5 0 0 1 0 .708l-7.5 7.5a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6 10.293l7.146-7.147a.5.5 0 0 1 .708 0z'/%3E%3C/svg%3E") !important;
+    background-size: 14px 14px !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+  }
+
+  /* 暗色模式下的选中状态 - 确保勾号可见 */
+  .dark input[type="checkbox"]:checked {
+    background-color: #3b82f6 !important;
+    border-color: #3b82f6 !important;
+    background-image: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='%23ffffff' d='M13.854 3.646a.5.5 0 0 1 0 .708l-7.5 7.5a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6 10.293l7.146-7.147a.5.5 0 0 1 .708 0z'/%3E%3C/svg%3E") !important;
+    background-size: 14px 14px !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+  }
+
+  /* 焦点状态 */
+  input[type="checkbox"]:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
+    border-color: #3b82f6;
+  }
+
+  /* 禁用状态 */
+  input[type="checkbox"]:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background-color: #f3f4f6;
+    border-color: #d1d5db;
+  }
+
+  .dark input[type="checkbox"]:disabled {
+    background-color: #1f2937;
+    border-color: #374151;
+  }
+
+  /* 不确定状态 */
+  input[type="checkbox"]:indeterminate {
+    background-color: #3b82f6 !important;
+    border-color: #3b82f6 !important;
+    background-image: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath stroke='%23ffffff' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M4 8h8'/%3E%3C/svg%3E") !important;
+    background-size: 14px 14px !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+  }
+
+  /* 保持单选框的原生样式但优化尺寸 */
   input[type="radio"] {
     -webkit-appearance: auto;
     -moz-appearance: auto;
@@ -222,6 +317,56 @@
 
   .mobile-bounce {
     @apply animate-mobile-bounce;
+  }
+
+  /* 复选框容器 */
+  .checkbox-container {
+    @apply flex items-center gap-3 cursor-pointer select-none;
+  }
+
+  .checkbox-container input[type="checkbox"] {
+    @apply mr-0; /* 移除默认边距，使用 gap 控制间距 */
+  }
+
+  /* 大尺寸复选框（移动端友好） */
+  .checkbox-lg {
+    width: 24px !important;
+    height: 24px !important;
+    border-width: 2px !important;
+  }
+
+  .checkbox-lg:checked {
+    background-size: 18px 18px !important;
+  }
+
+  /* 特大尺寸复选框 */
+  .checkbox-xl {
+    width: 28px !important;
+    height: 28px !important;
+    border-width: 3px !important;
+    border-radius: 6px !important;
+  }
+
+  .checkbox-xl:checked {
+    background-size: 22px 22px !important;
+  }
+
+  /* 表单中的复选框 */
+  .form-checkbox {
+    @apply w-5 h-5 rounded border-2 border-gray-300 dark:border-gray-600 
+           bg-white dark:bg-gray-700 transition-all duration-200;
+  }
+
+  .form-checkbox:checked {
+    @apply bg-blue-600 border-blue-600;
+    background-image: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='%23ffffff' d='M13.854 3.646a.5.5 0 0 1 0 .708l-7.5 7.5a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6 10.293l7.146-7.147a.5.5 0 0 1 .708 0z'/%3E%3C/svg%3E") !important;
+    background-size: 14px 14px !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+  }
+
+  .form-checkbox:focus {
+    @apply ring-2 ring-blue-500/50 ring-offset-2;
   }
 }
 
@@ -415,144 +560,9 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
-}
 
-/* 🎯 Safari 移动端复选框修复 */
-@layer base {
-  /* 重置所有复选框的默认样式 */
   input[type="checkbox"] {
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    appearance: none;
-    
-    /* 基础尺寸和样式 */
-    width: 20px;
-    height: 20px;
-    border: 2px solid #d1d5db;
-    border-radius: 4px;
-    background-color: #ffffff;
-    
-    /* 定位和布局 */
-    position: relative;
-    display: inline-block;
-    vertical-align: middle;
-    flex-shrink: 0;
-    
-    /* 过渡动画 */
-    transition: all 0.2s ease-out;
-    cursor: pointer;
-    
-    /* 确保在各种容器中都能正确显示 */
-    margin: 0;
-    padding: 0;
-  }
-
-  /* 暗色模式下的默认样式 */
-  .dark input[type="checkbox"] {
-    border-color: #6b7280;
-    background-color: #374151;
-  }
-
-  /* 悬停状态 */
-  input[type="checkbox"]:hover {
-    border-color: #3b82f6;
-    background-color: #eff6ff;
-  }
-
-  .dark input[type="checkbox"]:hover {
-    border-color: #60a5fa;
-    background-color: #1e3a8a;
-  }
-
-  /* 选中状态 */
-  input[type="checkbox"]:checked {
-    background-color: #3b82f6;
-    border-color: #3b82f6;
-    background-image: url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='m13.854 3.646-7.5 7.5a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6 10.293l7.146-7.147a.5.5 0 0 1 .708.708z'/%3e%3c/svg%3e");
-    background-size: 14px 14px;
-    background-position: center;
-    background-repeat: no-repeat;
-  }
-
-  /* 焦点状态 */
-  input[type="checkbox"]:focus {
-    outline: none;
-    ring: 2px;
-    ring-color: rgba(59, 130, 246, 0.5);
-    ring-offset: 2px;
-    border-color: #3b82f6;
-  }
-
-  /* 禁用状态 */
-  input[type="checkbox"]:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-    background-color: #f3f4f6;
-    border-color: #d1d5db;
-  }
-
-  .dark input[type="checkbox"]:disabled {
-    background-color: #1f2937;
-    border-color: #374151;
-  }
-
-  /* 不确定状态（如果需要） */
-  input[type="checkbox"]:indeterminate {
-    background-color: #3b82f6;
-    border-color: #3b82f6;
-    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 16 16'%3e%3cpath stroke='white' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M4 8h8'/%3e%3c/svg%3e");
-    background-size: 14px 14px;
-    background-position: center;
-    background-repeat: no-repeat;
-  }
-}
-
-/* 🎯 组件级别的复选框优化 */
-@layer components {
-  /* 复选框容器 */
-  .checkbox-container {
-    @apply flex items-center gap-3 cursor-pointer select-none;
-  }
-
-  .checkbox-container input[type="checkbox"] {
-    @apply mr-0; /* 移除默认边距，使用 gap 控制间距 */
-  }
-
-  /* 大尺寸复选框（移动端友好） */
-  .checkbox-lg {
-    width: 24px !important;
-    height: 24px !important;
-    border-width: 2px;
-  }
-
-  .checkbox-lg:checked {
-    background-size: 18px 18px;
-  }
-
-  /* 特大尺寸复选框 */
-  .checkbox-xl {
-    width: 28px !important;
-    height: 28px !important;
-    border-width: 3px;
-    border-radius: 6px;
-  }
-
-  .checkbox-xl:checked {
-    background-size: 22px 22px;
-  }
-
-  /* 表单中的复选框 */
-  .form-checkbox {
-    @apply w-5 h-5 rounded border-2 border-gray-300 dark:border-gray-600 
-           bg-white dark:bg-gray-700 transition-all duration-200;
-  }
-
-  .form-checkbox:checked {
-    @apply bg-blue-600 border-blue-600;
-  }
-
-  .form-checkbox:focus {
-    @apply ring-2 ring-blue-500/50 ring-offset-2;
+    transition: none !important;
   }
 }
 
@@ -563,18 +573,25 @@
     -webkit-appearance: none !important;
     
     /* 防止 Safari 自动应用系统样式 */
-    background: #ffffff;
-    border: 2px solid #d1d5db;
+    background: #ffffff !important;
+    border: 2px solid #d1d5db !important;
   }
   
   .dark input[type="checkbox"] {
-    background: #374151;
-    border-color: #6b7280;
+    background: #374151 !important;
+    border-color: #6b7280 !important;
   }
   
   input[type="checkbox"]:checked {
     background: #3b82f6 !important;
     border-color: #3b82f6 !important;
+    background-image: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='%23ffffff' d='M13.854 3.646a.5.5 0 0 1 0 .708l-7.5 7.5a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6 10.293l7.146-7.147a.5.5 0 0 1 .708 0z'/%3E%3C/svg%3E") !important;
+  }
+
+  .dark input[type="checkbox"]:checked {
+    background: #3b82f6 !important;
+    border-color: #3b82f6 !important;
+    background-image: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='%23ffffff' d='M13.854 3.646a.5.5 0 0 1 0 .708l-7.5 7.5a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6 10.293l7.146-7.147a.5.5 0 0 1 .708 0z'/%3E%3C/svg%3E") !important;
   }
 }
 
@@ -582,10 +599,17 @@
 @supports (-webkit-touch-callout: none) {
   input[type="checkbox"] {
     /* iOS Safari 需要明确的背景图片 */
-    background-image: none;
+    background-image: none !important;
   }
   
   input[type="checkbox"]:checked {
+    background-image: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='%23ffffff' d='M13.854 3.646a.5.5 0 0 1 0 .708l-7.5 7.5a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6 10.293l7.146-7.147a.5.5 0 0 1 .708 0z'/%3E%3C/svg%3E") !important;
+    background-size: 14px 14px !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+  }
+
+  .dark input[type="checkbox"]:checked {
     background-image: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='%23ffffff' d='M13.854 3.646a.5.5 0 0 1 0 .708l-7.5 7.5a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6 10.293l7.146-7.147a.5.5 0 0 1 .708 0z'/%3E%3C/svg%3E") !important;
     background-size: 14px 14px !important;
     background-position: center !important;
@@ -596,29 +620,22 @@
 /* 🎯 高对比度模式支持 */
 @media (prefers-contrast: high) {
   input[type="checkbox"] {
-    border-width: 3px;
-    border-color: #000000;
+    border-width: 3px !important;
+    border-color: #000000 !important;
   }
   
   input[type="checkbox"]:checked {
-    background-color: #000000;
-    border-color: #000000;
+    background-color: #000000 !important;
+    border-color: #000000 !important;
   }
   
   .dark input[type="checkbox"] {
-    border-color: #ffffff;
+    border-color: #ffffff !important;
   }
   
   .dark input[type="checkbox"]:checked {
-    background-color: #ffffff;
-    border-color: #ffffff;
-    background-image: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='%23000000' d='M13.854 3.646a.5.5 0 0 1 0 .708l-7.5 7.5a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6 10.293l7.146-7.147a.5.5 0 0 1 .708 0z'/%3E%3C/svg%3E");
-  }
-}
-
-/* 🎯 减少动画偏好 */
-@media (prefers-reduced-motion: reduce) {
-  input[type="checkbox"] {
-    transition: none;
+    background-color: #ffffff !important;
+    border-color: #ffffff !important;
+    background-image: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='%23000000' d='M13.854 3.646a.5.5 0 0 1 0 .708l-7.5 7.5a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6 10.293l7.146-7.147a.5.5 0 0 1 .708 0z'/%3E%3C/svg%3E") !important;
   }
 }
