@@ -955,9 +955,13 @@ const SubmitTask = () => {
                   disabled={loading || !input.trim()}
                   className={`absolute right-2 top-1/2 transform -translate-y-1/2 w-10 h-10 rounded-full transition-all duration-200 flex items-center justify-center ${
                     !loading && input.trim()
-                      ? 'bg-gradient-to-br from-purple-500 to-indigo-600 text-white hover:from-purple-600 hover:to-indigo-700 active:scale-95' 
+                      ? 'bg-gradient-to-br from-purple-500 to-indigo-600 text-white hover:from-purple-600 hover:to-indigo-700 active:scale-95 shadow-lg' 
                       : 'bg-gray-200 dark:bg-gray-600 text-gray-400 dark:text-gray-500 cursor-not-allowed'
                   }`}
+                  style={{
+                    top: textareaRef.current ? `${textareaRef.current.scrollHeight / 2}px` : '50%',
+                    transform: 'translateY(-50%)'
+                  }}
                 >
                   {loading ? (
                     <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
@@ -1360,11 +1364,15 @@ const SubmitTask = () => {
                           handleAIGCSubmit();
                         }}
                         disabled={loading || !input.trim()}
-                        className={`absolute right-2 top-1/2 transform -translate-y-1/2 w-8 h-8 rounded-full transition-all duration-200 flex items-center justify-center ${
+                        className={`absolute right-2 w-8 h-8 rounded-full transition-all duration-200 flex items-center justify-center ${
                           !loading && input.trim()
                             ? 'bg-gradient-to-br from-purple-500 to-indigo-600 text-white hover:from-purple-600 hover:to-indigo-700 active:scale-95' 
                             : 'bg-gray-200 dark:bg-gray-600 text-gray-400 dark:text-gray-500 cursor-not-allowed'
                         }`}
+                        style={{
+                          top: '50%',
+                          transform: 'translateY(-50%)'
+                        }}
                       >
                         {loading ? (
                           <div className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />

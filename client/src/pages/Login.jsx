@@ -165,17 +165,19 @@ const Login = () => {
                             font-medium tracking-wide mt-1
                             bg-gradient-to-r from-gray-600 to-gray-500 dark:from-gray-400 dark:to-gray-500
                             bg-clip-text text-transparent">
-                AI时代教学新范式
+                Join The Future Of Thinking.
               </p>
             </div>
           </div>
           
-          {/* 可选：添加装饰性元素 */}
+          {/* 可选：添加装饰性元素 
           <div className="flex justify-center items-center space-x-2 opacity-60">
             <div className="w-8 h-px bg-gradient-to-r from-transparent via-blue-500 to-transparent"></div>
             <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
             <div className="w-8 h-px bg-gradient-to-r from-transparent via-purple-500 to-transparent"></div>
           </div>
+        </motion.div>
+        */}
         </motion.div>
 
         {/* 登录卡片 */}

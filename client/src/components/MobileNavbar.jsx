@@ -1,4 +1,4 @@
-// src/components/MobileNavbar.jsx - 修复按钮遮挡问题
+// src/components/MobileNavbar.jsx - 保留原版设计，只更新下拉菜单
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -34,17 +34,17 @@ const MobileNavbar = ({ user }) => {
   const dashboardPath = isTeacher ? '/teacher' : '/student';
 
   const menuItems = isTeacher ? [
-    { label: '教师首页', path: '/teacher', icon: '🏠' },
-    { label: '我的班级', path: '/my-classes', icon: '📚' },
-    { label: '创建班级', path: '/create-class', icon: '➕' },
+    { label: '教师首页', path: '/teacher', icon: '🏠', color: 'blue' },
+    { label: '我的班级', path: '/my-classes', icon: '📚', color: 'green' },
+    { label: '创建班级', path: '/create-class', icon: '➕', color: 'purple' },
   ] : [
-    { label: '学生首页', path: '/student', icon: '🏠' },
-    { label: '加入班级', path: '/join-class', icon: '➕' },
+    { label: '学生首页', path: '/student', icon: '🏠', color: 'blue' },
+    { label: '加入班级', path: '/join-class', icon: '➕', color: 'green' },
   ];
 
   return (
     <>
-      {/* 主导航栏 - 提高z-index */}
+      {/* 主导航栏 - 保持原版设计 */}
       <motion.div
         className={`
           fixed top-0 left-0 right-0 z-[100]
@@ -99,66 +99,84 @@ const MobileNavbar = ({ user }) => {
         </div>
       </motion.div>
 
-      {/* 下拉菜单 - 提高z-index */}
+      {/* 下拉菜单 - 更新设计 */}
       <AnimatePresence>
         {isMenuOpen && (
           <>
             {/* 背景遮罩 */}
             <motion.div
-              className="fixed inset-0 bg-black/20 z-[90]"
+              className="fixed inset-0 bg-black/20 backdrop-blur-sm z-[90]"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsMenuOpen(false)}
             />
 
-            {/* 菜单内容 */}
+            {/* 菜单内容 - 高级设计 */}
             <motion.div
-              className="fixed top-[73px] left-4 right-4 bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl rounded-2xl shadow-xl border border-gray-200/50 dark:border-gray-700/50 z-[95] overflow-hidden"
+              className="fixed top-[73px] left-4 right-4 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-gray-200/50 dark:border-gray-700/50 z-[95] overflow-hidden"
+              style={{
+                backdropFilter: 'blur(20px) saturate(180%)',
+                WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+              }}
               initial={{ opacity: 0, y: -20, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -20, scale: 0.95 }}
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
             >
-              {/* 用户信息区域 */}
-              <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-                <p className="font-medium text-gray-800 dark:text-gray-100 truncate">
-                  {user.email}
-                </p>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  {isTeacher ? '教师账户' : '学生账户'}
-                </p>
+              {/* 用户信息区域 - Apple风格 */}
+              <div className="p-6 border-b border-gray-200/30 dark:border-gray-700/30 bg-gradient-to-r from-gray-50/50 to-gray-100/50 dark:from-gray-800/50 dark:to-gray-900/50">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center shadow-sm">
+                    <span className="text-xl">
+                      {isTeacher ? '👨‍🏫' : '👨‍🎓'}
+                    </span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-gray-900 dark:text-gray-100 truncate">
+                      {user.email}
+                    </p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      {isTeacher ? '教师账户' : '学生账户'}
+                    </p>
+                  </div>
+                  <div className="w-2 h-2 bg-green-500 rounded-full shadow-sm" />
+                </div>
               </div>
 
-              {/* 菜单项 */}
+              {/* 菜单项 - Apple风格简洁设计 */}
               <div className="py-2">
                 {menuItems.map((item, index) => (
                   <motion.button
                     key={item.path}
                     onClick={() => navigate(item.path)}
-                    className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                    className="w-full flex items-center gap-4 px-6 py-4 text-left hover:bg-gray-50/80 dark:hover:bg-gray-800/50 transition-all duration-200 active:bg-gray-100/80 dark:active:bg-gray-700/50"
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: index * 0.05 }}
                     whileTap={{ scale: 0.98 }}
                   >
-                    <span className="text-lg">{item.icon}</span>
+                    <div className="w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+                      <span className="text-lg">{item.icon}</span>
+                    </div>
                     <span className="font-medium text-gray-700 dark:text-gray-200">
                       {item.label}
                     </span>
                   </motion.button>
                 ))}
 
-                <div className="border-t border-gray-200 dark:border-gray-700 mt-2 pt-2">
+                <div className="border-t border-gray-200/50 dark:border-gray-700/50 mt-2 pt-2">
                   <motion.button
                     onClick={handleLogout}
-                    className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors text-red-600 dark:text-red-400"
+                    className="w-full flex items-center gap-4 px-6 py-4 text-left hover:bg-red-50/80 dark:hover:bg-red-900/20 transition-all duration-200 text-red-600 dark:text-red-400 active:bg-red-100/80 dark:active:bg-red-900/30"
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: menuItems.length * 0.05 }}
                     whileTap={{ scale: 0.98 }}
                   >
-                    <span className="text-lg">🚪</span>
+                    <div className="w-8 h-8 rounded-lg bg-red-100 dark:bg-red-900/50 flex items-center justify-center">
+                      <span className="text-lg">🚪</span>
+                    </div>
                     <span className="font-medium">退出登录</span>
                   </motion.button>
                 </div>
@@ -168,7 +186,7 @@ const MobileNavbar = ({ user }) => {
         )}
       </AnimatePresence>
 
-      {/* 页面内容的顶部占位 - 调整高度 */}
+      {/* 页面内容的顶部占位 */}
       <div className="h-[65px]" />
     </>
   );

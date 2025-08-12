@@ -521,7 +521,7 @@ const StudentDashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 overflow-y-auto">
       <div className="max-w-4xl mx-auto px-4 py-6">
         {/* 欢迎区域 */}
         <motion.div
@@ -538,7 +538,7 @@ const StudentDashboard = () => {
                   <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                     总裁欢迎回家
                   </span>
-                  <span className="block sm:inline text-gray-700 dark:text-gray-300 mt-1 sm:mt-0">
+                  <span className="block sm:inline text-gray-700 dark:text-gray-300 mt-1 sm:mt-0 sm:ml-2">
                     {user.email}
                   </span>
                 </h1>
