@@ -21,19 +21,6 @@ SyntaxHighlighter.registerLanguage('javascript', javascript);
 SyntaxHighlighter.registerLanguage('python', python);
 
 const SubmitTask = () => {
-  const { currentSize, currentConfig } = useFontSize();
-  const [showFontSelector, setShowFontSelector] = useState(false);
-  
-  const handleFontSizeClick = useCallback(() => {
-    console.log('字号按钮被点击了'); // 添加这行调试
-    haptic.light();
-    setShowFontSelector(true);
-  }, [haptic]);
-
-  const handleCloseFontSelector = useCallback(() => {
-    setShowFontSelector(false);
-  }, []);
-
   const { taskId } = useParams();
   const navigate = useNavigate();
   
@@ -60,6 +47,17 @@ const SubmitTask = () => {
   const [shouldUploadAIGC, setShouldUploadAIGC] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
 
+  const { currentSize, currentConfig } = useFontSize();
+  const [showFontSelector, setShowFontSelector] = useState(false);
+  const handleFontSizeClick = useCallback(() => {
+    console.log('字号按钮被点击了'); // 添加这行调试
+    haptic.light();
+    setShowFontSelector(true);
+  }, [haptic]);
+
+  const handleCloseFontSelector = useCallback(() => {
+    setShowFontSelector(false);
+  }, []);
 
   // 引用
   const chatBoxRef = useRef(null);
@@ -862,15 +860,6 @@ const SubmitTask = () => {
             </div>
           </div>
         </div>
-        
-        <div>
-        {/* 全屏内容 */}
-        {/* 字号选择器也放在这里 */}
-        <FontSizeSelector
-          isOpen={showFontSelector}
-          onClose={handleCloseFontSelector}
-        />
-        </div>
 
         {/* 对话内容区域 - 保持不变 */}
         <div
@@ -1540,7 +1529,13 @@ const SubmitTask = () => {
           )}
         </FormCard>
       </div>
-
+      {/* 🎯 字号选择器 */}
+      {isFullscreen && (
+        <FontSizeSelector
+          isOpen={showFontSelector}
+          onClose={handleCloseFontSelector}
+        />
+      )}
     </div>
     
   );
