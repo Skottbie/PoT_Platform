@@ -116,6 +116,10 @@ export class FontSizeManager {
         timestamp: Date.now()
       };
       localStorage.setItem(this.STORAGE_KEY, JSON.stringify(saveData));
+      
+      // 🔧 新增：保存成功后立即应用并分发事件
+      this.applySize(sizeKey);
+      
       return true;
     } catch (error) {
       console.warn('无法保存字号偏好设置:', error);
@@ -174,6 +178,16 @@ export class FontSizeManager {
       root.style.setProperty(property, value);
     });
 
+    // 🔧 新增：分发字号变化事件
+    const event = new CustomEvent('fontSizeChanged', {
+      detail: {
+        sizeKey,
+        config: this.getSizeConfig(sizeKey),
+        deviceType: this.getCurrentDeviceType()
+      }
+    });
+    window.dispatchEvent(event);
+
     // 移除过渡，避免影响其他动画
     setTimeout(() => {
       root.style.transition = '';
@@ -218,7 +232,6 @@ export function useFontSize() {
 
   const changeSize = React.useCallback((sizeKey) => {
     if (FontSizeManager.saveSize(sizeKey)) {
-      FontSizeManager.applySize(sizeKey);
       setCurrentSize(sizeKey);
       setUpdateTrigger(prev => prev + 1); // 强制触发更新
       return true;
@@ -231,6 +244,21 @@ export function useFontSize() {
     setCurrentSize(recommended);
     setUpdateTrigger(prev => prev + 1); // 强制触发更新
     return recommended;
+  }, []);
+
+  // 🔧 新增：监听字号变化事件
+  React.useEffect(() => {
+    const handleFontSizeChange = (event) => {
+      const { sizeKey } = event.detail;
+      setCurrentSize(sizeKey);
+      setUpdateTrigger(prev => prev + 1);
+    };
+
+    window.addEventListener('fontSizeChanged', handleFontSizeChange);
+    
+    return () => {
+      window.removeEventListener('fontSizeChanged', handleFontSizeChange);
+    };
   }, []);
 
   // 监听设备变化

@@ -15,6 +15,7 @@ import { useDeviceDetection, useVirtualKeyboard, useHapticFeedback } from '../ho
 import remarkGfm from 'remark-gfm';
 import FontSizeSelector from '../components/FontSizeSelector';
 import { useFontSize } from '../utils/fontSizeUtils';
+import { FontSizeManager} from '../utils/fontSizeUtils';
 import '../styles/aigcFontSize.css';
 
 SyntaxHighlighter.registerLanguage('javascript', javascript);
@@ -48,6 +49,7 @@ const SubmitTask = () => {
   const [initialLoading, setInitialLoading] = useState(true);
 
   const { currentSize, currentConfig } = useFontSize();
+  const [fontSizeKey, setFontSizeKey] = useState(currentSize);
   const [showFontSelector, setShowFontSelector] = useState(false);
   const handleFontSizeClick = useCallback(() => {
     //console.log('字号按钮被点击了');
@@ -57,6 +59,9 @@ const SubmitTask = () => {
 
   const handleCloseFontSelector = useCallback(() => {
     setShowFontSelector(false);
+    // 🔧 关键修复：同步最新的字号状态
+    const latestSize = FontSizeManager.getCurrentSize();
+    setFontSizeKey(latestSize);
   }, []);
 
   // 引用
@@ -432,7 +437,19 @@ const SubmitTask = () => {
     };
   };
 
-  
+  useEffect(() => {
+    const handleFontSizeChange = () => {
+      const latestSize = FontSizeManager.getCurrentSize();
+      setFontSizeKey(latestSize);
+    };
+
+    // 监听字号变化（如果有全局事件的话）
+    window.addEventListener('fontSizeChanged', handleFontSizeChange);
+    
+    return () => {
+      window.removeEventListener('fontSizeChanged', handleFontSizeChange);
+    };
+  }, []);
 
   // 🎯 反馈组件隐藏控制
   useEffect(() => {
@@ -922,7 +939,10 @@ const SubmitTask = () => {
                   </p>
                   <span className="hidden md:inline text-gray-400">·</span>
                   <p className="text-sm text-gray-500 dark:text-gray-400">
-                    {currentConfig.label} {currentConfig.size}px
+                    {(() => {
+                      const currentFontConfig = FontSizeManager.getSizeConfig(fontSizeKey);
+                      return `${currentFontConfig.label} ${currentFontConfig.size}px`;
+                    })()}
                   </p>
                 </div>
               </div>

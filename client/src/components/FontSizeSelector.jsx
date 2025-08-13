@@ -108,181 +108,195 @@ const FontSizeSelector = ({ isOpen, onClose }) => {
           dragConstraints={{ top: 0, bottom: 0 }}
           dragElastic={0.2}
           onDragEnd={isMobile ? handleSwipeDown : undefined}
-          className={`
-            bg-white dark:bg-gray-800 shadow-2xl border border-gray-200/50 dark:border-gray-700/50 
-            w-full overflow-hidden flex flex-col
-            ${isMobile 
-              ? 'max-w-none rounded-t-3xl h-[85vh]' 
-              : 'max-w-md mx-4 rounded-2xl h-[90vh]'
-            }
-          `}
-        >
-          {/* 移动端拖拽指示器 */}
-          {isMobile && (
-            <div className="flex justify-center py-3 bg-gray-50/50 dark:bg-gray-800/50">
-              <div className="w-10 h-1 bg-gray-300 dark:bg-gray-600 rounded-full" />
-            </div>
-          )}
-
-          {/* 头部 - 移动端优化 */}
-          <div className={`border-b border-gray-200/50 dark:border-gray-700/50 bg-gradient-to-r from-gray-50/50 to-gray-100/50 dark:from-gray-800/50 dark:to-gray-900/50 ${isMobile ? 'px-4 py-3' : 'px-6 py-4'}`}>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                  <span className="text-white text-sm font-bold">𝐀𝐚</span>
+            className={`
+                bg-white dark:bg-gray-800 shadow-2xl border border-gray-200/50 dark:border-gray-700/50 
+                w-full overflow-hidden flex flex-col
+                ${isMobile 
+                ? 'max-w-none rounded-t-3xl' 
+                : 'max-w-md mx-4 rounded-2xl'
+                }
+            `}
+            style={{
+                // 🔧 关键修复：使用灵活的高度策略，确保内容不被截断
+                height: isMobile ? '85vh' : 'auto',
+                maxHeight: isMobile ? '85vh' : '90vh', // 桌面端提高到90vh
+                minHeight: isMobile ? '70vh' : 'auto',
+            }}
+            >
+            {/* 移动端拖拽指示器 */}
+            {isMobile && (
+                <div className="flex justify-center py-3 bg-gray-50/50 dark:bg-gray-800/50">
+                <div className="w-10 h-1 bg-gray-300 dark:bg-gray-600 rounded-full" />
                 </div>
-                <div>
-                  <h3 className="font-semibold text-gray-900 dark:text-gray-100">
-                    字号设置
-                  </h3>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    {deviceType === 'mobile' ? '手机端' : deviceType === 'tablet' ? '平板端' : '桌面端'}适配
-                  </p>
-                </div>
-              </div>
-              
-              {!isMobile && (
-                <button
-                  onClick={handleClose}
-                  className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors flex items-center justify-center"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              )}
-            </div>
-          </div>
+            )}
 
-          {/* 字号选择 - 移动端2x2布局 */}
-          <div className={`flex-1 overflow-y-auto ${isMobile ? 'px-4 py-3' : 'px-6 py-4'}`}>
-            <div className={`grid gap-3 mb-4 ${isMobile ? 'grid-cols-2' : 'grid-cols-2'}`}>
-              {allSizes.map((sizeConfig) => (
-                <motion.button
-                  key={sizeConfig.value}
-                  onClick={() => handleSizeSelect(sizeConfig.value)}
-                  className={`relative rounded-xl border-2 transition-all duration-200 ${
-                    previewSize === sizeConfig.value
-                      ? 'border-blue-500 bg-blue-50/50 dark:bg-blue-900/20 scale-105'
-                      : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
-                  } ${isMobile ? 'p-3' : 'p-4'}`}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <div className="text-center">
-                    <div 
-                      className="font-medium text-gray-900 dark:text-gray-100 mb-1"
-                      style={{ fontSize: `${Math.min(sizeConfig.size, isMobile ? 18 : 20)}px` }}
+            {/* 头部 - 固定高度 */}
+            <div className={`flex-shrink-0 border-b border-gray-200/50 dark:border-gray-700/50 bg-gradient-to-r from-gray-50/50 to-gray-100/50 dark:from-gray-800/50 dark:to-gray-900/50 ${isMobile ? 'px-4 py-3' : 'px-6 py-4'}`}>
+                <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                    <span className="text-white text-sm font-bold">𝐀𝐚</span>
+                    </div>
+                    <div>
+                    <h3 className="font-semibold text-gray-900 dark:text-gray-100">
+                        字号设置
+                    </h3>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                        {deviceType === 'mobile' ? '手机端' : deviceType === 'tablet' ? '平板端' : '桌面端'}适配
+                    </p>
+                    </div>
+                </div>
+                
+                {!isMobile && (
+                    <button
+                    onClick={handleClose}
+                    className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors flex items-center justify-center"
                     >
-                      文字
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                    </button>
+                )}
+                </div>
+            </div>
+
+            {/* 🔧 字号选择区域 - 固定内容，自适应高度 */}
+            <div className={`flex-shrink-0 ${isMobile ? 'px-4 py-3' : 'px-6 py-4'}`}>
+                {/* 字号选择网格 */}
+                <div className={`grid gap-3 mb-4 ${isMobile ? 'grid-cols-2' : 'grid-cols-2'}`}>
+                {allSizes.map((sizeConfig) => (
+                    <motion.button
+                    key={sizeConfig.value}
+                    onClick={() => handleSizeSelect(sizeConfig.value)}
+                    className={`relative rounded-xl border-2 transition-all duration-200 ${
+                        previewSize === sizeConfig.value
+                        ? 'border-blue-500 bg-blue-50/50 dark:bg-blue-900/20 scale-105'
+                        : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
+                    } ${isMobile ? 'p-3' : 'p-4'}`}
+                    whileTap={{ scale: 0.95 }}
+                    >
+                    <div className="text-center">
+                        <div 
+                        className="font-medium text-gray-900 dark:text-gray-100 mb-1"
+                        style={{ fontSize: `${Math.min(sizeConfig.size, isMobile ? 18 : 20)}px` }}
+                        >
+                        文字
+                        </div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">
+                        {sizeConfig.label}
+                        </div>
+                        {!isMobile && (
+                        <div className="text-xs text-gray-400 dark:text-gray-500">
+                            {sizeConfig.size}px
+                        </div>
+                        )}
                     </div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400">
-                      {sizeConfig.label}
-                    </div>
-                    {/* 移动端不显示像素值，减少视觉复杂度 */}
-                    {!isMobile && (
-                      <div className="text-xs text-gray-400 dark:text-gray-500">
-                        {sizeConfig.size}px
-                      </div>
+
+                    {sizeConfig.value === recommendedSize && (
+                        <div className="absolute -top-1 -right-1 bg-green-500 text-white text-xs px-1.5 py-0.5 rounded-full">
+                        推荐
+                        </div>
                     )}
-                  </div>
 
-                  {/* 推荐标签 */}
-                  {sizeConfig.value === recommendedSize && (
-                    <div className="absolute -top-1 -right-1 bg-green-500 text-white text-xs px-1.5 py-0.5 rounded-full">
-                      推荐
+                    {previewSize === sizeConfig.value && (
+                        <motion.div
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        className="absolute -top-1 -left-1 w-3 h-3 bg-blue-500 rounded-full"
+                        />
+                    )}
+                    </motion.button>
+                ))}
+                </div>
+
+                {/* 重置按钮 */}
+                <button
+                onClick={handleReset}
+                className="w-full mb-2 py-2 px-4 text-sm text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+                >
+                恢复推荐设置
+                </button>
+            </div>
+
+            {/* 🔧 预览区域 - 关键修复：灵活高度策略 */}
+            <div className={`
+                ${isMobile ? 'flex-1 min-h-[120px]' : 'flex-shrink-0'} 
+                flex flex-col bg-gray-50/50 dark:bg-gray-900/50 border-t border-gray-200/50 dark:border-gray-700/50 
+                ${isMobile ? 'px-4 py-3' : 'px-6 py-4'}
+            `}>
+                <div className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                预览效果
+                </div>
+                
+                <div 
+                className={`
+                    ${isMobile ? 'flex-1' : 'h-32'} 
+                    bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-200/50 dark:border-gray-700/50 
+                    ${isMobile ? 'overflow-hidden' : 'overflow-y-auto'}
+                `}
+                style={{
+                    fontSize: `${previewConfig.size}px`,
+                    lineHeight: previewConfig.size <= 16 ? '1.6' : '1.5',
+                    transition: 'all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+                    WebkitOverflowScrolling: isMobile ? 'auto' : 'touch',
+                    touchAction: isMobile ? 'none' : 'pan-y',
+                }}
+                >
+                {/* 用户消息预览 */}
+                <div className="flex justify-end mb-1">
+                    <div className={`bg-blue-500 text-white rounded-xl px-2 py-1 ${isMobile ? 'max-w-[70%]' : 'max-w-[85%]'}`}>
+                    {previewText.user}
                     </div>
-                  )}
-
-                  {/* 选中指示器 */}
-                  {previewSize === sizeConfig.value && (
-                    <motion.div
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      className="absolute -top-1 -left-1 w-3 h-3 bg-blue-500 rounded-full"
-                    />
-                  )}
-                </motion.button>
-              ))}
-            </div>
-
-            {/* 重置按钮 */}
-            <button
-              onClick={handleReset}
-              className="w-full mb-4 py-2 px-4 text-sm text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
-            >
-              恢复推荐设置
-            </button>
-          </div>
-
-          {/* 预览区域 - 移动端简化 */}
-          <div className={`flex-shrink-0 bg-gray-50/50 dark:bg-gray-900/50 border-t border-gray-200/50 dark:border-gray-700/50 ${isMobile ? 'px-4 py-3' : 'px-6 py-4'}`}>
-            <div className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-              预览效果
-            </div>
-            
-            <div 
-              className={`bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-200/50 dark:border-gray-700/50 ${isMobile ? 'max-h-20' : 'max-h-32'} overflow-y-auto`}
-              style={{
-                fontSize: `${previewConfig.size}px`,
-                lineHeight: previewConfig.size <= 16 ? '1.6' : '1.5',
-                transition: 'all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
-                // 移动端优化触摸滚动
-                WebkitOverflowScrolling: 'touch',
-                touchAction: 'pan-y',
-              }}
-            >
-              {/* 用户消息预览 */}
-              <div className="flex justify-end mb-1">
-                <div className={`bg-blue-500 text-white rounded-xl px-2 py-1 ${isMobile ? 'max-w-[70%]' : 'max-w-[85%]'}`}>
-                  {previewText.user}
                 </div>
-              </div>
 
-              {/* AI回复预览 - 添加ReactMarkdown渲染 */}
-              <div className="flex justify-start">
-                <div className={`bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl px-2 py-1 ${isMobile ? 'max-w-[70%]' : 'max-w-[85%]'}`}>
-                  <ReactMarkdown
-                    remarkPlugins={[remarkGfm]}
-                    components={{
-                      // 简化的markdown组件，只处理基础样式
-                      p: ({ children }) => <div className="whitespace-pre-wrap">{children}</div>,
-                      strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
-                      code: ({ children }) => (
-                        <code className="bg-gray-200 dark:bg-gray-600 px-1 py-0.5 rounded text-sm font-mono">
-                          {children}
-                        </code>
-                      ),
-                    }}
-                  >
-                    {previewText.assistant}
-                  </ReactMarkdown>
+                {/* AI回复预览 */}
+                <div className="flex justify-start">
+                    <div className={`bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl px-2 py-1 ${isMobile ? 'max-w-[70%]' : 'max-w-[85%]'}`}>
+                    <ReactMarkdown
+                        remarkPlugins={[remarkGfm]}
+                        components={{
+                        p: ({ children }) => (
+                            <div className={isMobile ? "line-clamp-3" : "whitespace-pre-wrap"}>
+                            {children}
+                            </div>
+                        ),
+                        strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
+                        code: ({ children }) => (
+                            <code className="bg-gray-200 dark:bg-gray-600 px-1 py-0.5 rounded text-sm font-mono">
+                            {children}
+                            </code>
+                        ),
+                        }}
+                    >
+                        {previewText.assistant}
+                    </ReactMarkdown>
+                    </div>
                 </div>
-              </div>
+                </div>
             </div>
-          </div>
 
-          {/* 底部按钮 - 移动端优化 */}
-          <div className={`flex-shrink-0 bg-gray-50/50 dark:bg-gray-900/50 border-t border-gray-200/50 dark:border-gray-700/50 ${isMobile ? 'px-4 py-4 pb-safe' : 'px-6 py-4'}`}>
-            <div className="flex gap-3">
-              <Button
-                variant="secondary"
-                onClick={handleClose}
-                className="flex-1"
-                size={isMobile ? "lg" : "md"}
-              >
-                取消
-              </Button>
-              <Button
-                variant="primary"
-                onClick={handleConfirm}
-                className="flex-1"
-                size={isMobile ? "lg" : "md"}
-              >
-                应用设置
-              </Button>
+            {/* 🔧 底部按钮 - 确保始终可见，固定在底部 */}
+            <div className={`flex-shrink-0 bg-gray-50/50 dark:bg-gray-900/50 border-t border-gray-200/50 dark:border-gray-700/50 ${isMobile ? 'px-4 py-4 pb-safe' : 'px-6 py-4'}`}>
+                <div className="flex gap-3">
+                <Button
+                    variant="secondary"
+                    onClick={handleClose}
+                    className="flex-1"
+                    size={isMobile ? "lg" : "md"}
+                >
+                    取消
+                </Button>
+                <Button
+                    variant="primary"
+                    onClick={handleConfirm}
+                    className="flex-1"
+                    size={isMobile ? "lg" : "md"}
+                >
+                    应用设置
+                </Button>
+                </div>
             </div>
-          </div>
-        </motion.div>
+            </motion.div>
       </motion.div>
     </AnimatePresence>
   );
