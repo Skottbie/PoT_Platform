@@ -1,4 +1,4 @@
-// src/components/PullToRefreshIndicator.jsx - 简化版
+// src/components/PullToRefreshIndicator.jsx - 优化版本
 import { motion, AnimatePresence } from 'framer-motion';
 
 const PullToRefreshIndicator = ({ 
@@ -12,12 +12,15 @@ const PullToRefreshIndicator = ({
   const getIndicatorState = () => {
     if (isRefreshing) return 'refreshing';
     if (canRelease) return 'release';
-    if (isPulling) return 'pulling';
+    if (isPulling && pullDistance > 10) return 'pulling'; // 🔧 添加最小拉动距离
     return 'hidden';
   };
 
   const state = getIndicatorState();
   const progress = Math.min(pullDistance / threshold, 1);
+
+  // 🔧 只在真正有拉动时才显示
+  const shouldShow = state !== 'hidden';
 
   // 获取状态文本
   const getStateText = () => {
@@ -40,25 +43,30 @@ const PullToRefreshIndicator = ({
     return 0;
   };
 
+  // 🔧 修复：动态计算指示器位置，避免布局偏移
+  const indicatorHeight = Math.min(pullDistance, threshold + 20);
+
   return (
     <div 
-      className="absolute top-0 left-0 right-0 z-10 flex items-center justify-center bg-gray-50/80 dark:bg-gray-900/80 backdrop-blur-md"
+      className="absolute top-0 left-0 right-0 z-10 flex items-center justify-center bg-gray-50/90 dark:bg-gray-900/90 backdrop-blur-sm"
       style={{
-        height: `${Math.max(pullDistance, 0)}px`,
-        transform: `translateY(-${Math.max(0, threshold - pullDistance)}px)`,
+        height: `${indicatorHeight}px`,
+        transform: `translateY(${-Math.max(0, threshold + 20 - pullDistance)}px)`,
+        opacity: shouldShow ? 1 : 0,
+        transition: isRefreshing ? 'none' : 'opacity 0.2s ease-out',
       }}
     >
       <AnimatePresence>
-        {(isPulling || isRefreshing) && (
+        {shouldShow && (
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.8 }}
             transition={{ duration: 0.2 }}
-            className="flex flex-col items-center gap-2 py-4"
+            className="flex flex-col items-center gap-2 py-2"
           >
             {/* 指示器图标 */}
-            <div className="relative">
+            <div className="relative flex items-center justify-center">
               {state === 'refreshing' ? (
                 // 加载中的旋转动画
                 <motion.div
@@ -93,7 +101,7 @@ const PullToRefreshIndicator = ({
                 </motion.div>
               )}
 
-              {/* 进度环 */}
+              {/* 进度环 - 只在拉动时显示 */}
               {state === 'pulling' && (
                 <svg 
                   className="absolute inset-0 w-6 h-6 transform -rotate-90"
@@ -133,13 +141,15 @@ const PullToRefreshIndicator = ({
               className={`text-sm font-medium ${
                 state === 'release' 
                   ? 'text-green-600 dark:text-green-400' 
-                  : 'text-blue-600 dark:text-blue-400'
+                  : state === 'refreshing'
+                  ? 'text-blue-600 dark:text-blue-400'
+                  : 'text-gray-600 dark:text-gray-400'
               }`}
             >
               {getStateText()}
             </motion.p>
 
-            {/* 额外的视觉反馈 */}
+            {/* 成功状态点 */}
             {state === 'release' && (
               <motion.div
                 initial={{ scale: 0 }}

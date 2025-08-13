@@ -48,7 +48,7 @@ const EditClassStudents = () => {
     }
   }, [classId]);
 
-  // 下拉刷新专用函数（包含toast）
+  /* 下拉刷新专用函数（包含toast）
   const handlePullRefresh = useCallback(async () => {
     try {
       const res = await api.get(`/class/${classId}`);
@@ -64,6 +64,7 @@ const EditClassStudents = () => {
       toast.error('刷新失败，请重试');
     }
   }, [classId]);
+  */
 
   // 自动刷新专用函数（静默，无toast）
   const handleAutoRefresh = useCallback(async () => {
@@ -320,11 +321,6 @@ const EditClassStudents = () => {
   }
 
   return (
-    <PullToRefreshContainer 
-      onRefresh={handlePullRefresh}
-      className="min-h-screen bg-gray-50 dark:bg-gray-900 py-10 px-4"
-      disabled={loading || saving}
-    >
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-10 px-4">
         <div className="max-w-6xl mx-auto">
           {/* 页面头部 */}
@@ -636,7 +632,6 @@ const EditClassStudents = () => {
           </AnimatePresence>
         </div>
       </div>
-    </PullToRefreshContainer>
   );
 };
 
