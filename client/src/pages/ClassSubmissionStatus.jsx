@@ -1,13 +1,11 @@
 // client/src/pages/ClassSubmissionStatus.jsx
-
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../api/axiosInstance';
 import Button from '../components/Button';
 import { motion, AnimatePresence } from 'framer-motion';
 import PullToRefreshContainer from '../components/PullToRefreshContainer';
 import useAutoRefresh from '../hooks/useAutoRefresh';
-import { useCallback } from 'react';
 import toast from 'react-hot-toast';
 
 const ClassSubmissionStatus = () => {
@@ -16,7 +14,9 @@ const ClassSubmissionStatus = () => {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState(null);
   const [expandedClasses, setExpandedClasses] = useState(new Set());
-  const fetchClassStatus = async () => {
+
+  // 🔧 核心数据获取函数
+  const fetchClassStatus = useCallback(async () => {
     try {
       const res = await api.get(`/task/${taskId}/class-status`);
       setData(res.data);
@@ -26,11 +26,40 @@ const ClassSubmissionStatus = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [taskId, navigate]);
 
   useEffect(() => {
     fetchClassStatus();
-  }, [taskId, navigate]);
+  }, [fetchClassStatus]);
+
+  // 🔧 修复：下拉刷新专用函数（包含toast）
+  const handlePullRefresh = useCallback(async () => {
+    try {
+      const res = await api.get(`/task/${taskId}/class-status`);
+      setData(res.data);
+      toast.success('刷新成功');
+    } catch (err) {
+      console.error('刷新失败:', err);
+      toast.error('刷新失败，请重试');
+    }
+  }, [taskId]);
+
+  // 🔧 修复：自动刷新专用函数（静默，无toast）
+  const handleAutoRefresh = useCallback(async () => {
+    try {
+      const res = await api.get(`/task/${taskId}/class-status`);
+      setData(res.data);
+    } catch (err) {
+      console.error('自动刷新失败:', err);
+    }
+  }, [taskId]);
+
+  // 🔧 使用独立的自动刷新函数
+  useAutoRefresh(handleAutoRefresh, {
+    interval: 45000,
+    enabled: true,
+    pauseOnHidden: true,
+  });
 
   const toggleClassExpand = (classId) => {
     const newExpanded = new Set(expandedClasses);
@@ -128,40 +157,12 @@ const ClassSubmissionStatus = () => {
     );
   }
 
-  const handlePullRefresh = useCallback(async () => {
-    try {
-      const res = await api.get(`/task/${taskId}/class-status`);
-      setData(res.data);
-      toast.success('刷新成功');
-    } catch (err) {
-      console.error('刷新失败:', err);
-      toast.error('刷新失败，请重试');
-    }
-  }, [taskId]);
-
-  const handleAutoRefresh = useCallback(async () => {
-    try {
-      const res = await api.get(`/task/${taskId}/class-status`);
-      setData(res.data);
-    } catch (err) {
-      console.error('自动刷新失败:', err);
-    }
-  }, [taskId]); 
-
-  // 班级提交状态需要较频繁更新
-  useAutoRefresh(handlePullRefresh, {
-    interval: 45000, // 45秒
-    enabled: true,
-    pauseOnHidden: true,
-  });
-
   return (
     <PullToRefreshContainer 
       onRefresh={handlePullRefresh}
       className="min-h-screen bg-gray-50 dark:bg-gray-900 py-10 px-4"
       disabled={loading}
     >
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-10 px-4">
       <div className="max-w-6xl mx-auto">
         {/* 页面头部 */}
         <div className="flex justify-between items-start mb-6">
@@ -364,7 +365,6 @@ const ClassSubmissionStatus = () => {
           </div>
         )}
       </div>
-    </div>
     </PullToRefreshContainer>
   );
 };

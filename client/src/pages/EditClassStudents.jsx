@@ -1,13 +1,12 @@
-// src/pages/EditClassStudents.jsx
+// src/pages/EditClassStudents.jsx - 完全修复版本
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../api/axiosInstance';
 import Button from '../components/Button';
 import { motion, AnimatePresence } from 'framer-motion';
 import PullToRefreshContainer from '../components/PullToRefreshContainer';
 import useAutoRefresh from '../hooks/useAutoRefresh';
-import { useCallback } from 'react';
 import toast from 'react-hot-toast';
 
 const EditClassStudents = () => {
@@ -27,17 +26,15 @@ const EditClassStudents = () => {
   const [pendingAction, setPendingAction] = useState(null);
   const [hasChanges, setHasChanges] = useState(false);
 
-  useEffect(() => {
-    fetchClassData();
-  }, [classId]);
+  // 🔧 修复：所有 hooks 必须在组件顶部，任何条件 return 之前
 
-  const fetchClassData = async () => {
+  // 核心数据获取函数
+  const fetchClassData = useCallback(async () => {
     try {
       const res = await api.get(`/class/${classId}`);
       if (res.data.success) {
         const cls = res.data.class;
         setClassData(cls);
-        // 只显示未被软删除的学生
         const activeStudents = cls.studentList.filter(s => !s.isRemoved);
         setStudents(activeStudents.map(s => ({ ...s, isModified: false })));
       } else {
@@ -49,16 +46,48 @@ const EditClassStudents = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [classId]);
+
+  // 下拉刷新专用函数（包含toast）
+  const handlePullRefresh = useCallback(async () => {
+    try {
+      const res = await api.get(`/class/${classId}`);
+      if (res.data.success) {
+        const cls = res.data.class;
+        setClassData(cls);
+        const activeStudents = cls.studentList.filter(s => !s.isRemoved);
+        setStudents(activeStudents.map(s => ({ ...s, isModified: false })));
+      }
+      toast.success('刷新成功');
+    } catch (err) {
+      console.error('刷新失败:', err);
+      toast.error('刷新失败，请重试');
+    }
+  }, [classId]);
+
+  // 自动刷新专用函数（静默，无toast）
+  const handleAutoRefresh = useCallback(async () => {
+    try {
+      const res = await api.get(`/class/${classId}`);
+      if (res.data.success) {
+        const cls = res.data.class;
+        setClassData(cls);
+        const activeStudents = cls.studentList.filter(s => !s.isRemoved);
+        setStudents(activeStudents.map(s => ({ ...s, isModified: false })));
+      }
+    } catch (err) {
+      console.error('自动刷新失败:', err);
+    }
+  }, [classId]);
 
   // 检查是否有权限编辑
-  const canEdit = () => {
+  const canEdit = useCallback(() => {
     const userRole = localStorage.getItem('role');
     return userRole === 'teacher' && classData;
-  };
+  }, [classData]);
 
   // 处理现有学生信息修改
-  const updateStudent = (index, field, value) => {
+  const updateStudent = useCallback((index, field, value) => {
     const newStudentList = [...students];
     const oldValue = newStudentList[index][field];
     
@@ -68,32 +97,32 @@ const EditClassStudents = () => {
       setStudents(newStudentList);
       setHasChanges(true);
     }
-  };
+  }, [students]);
 
   // 处理新学生信息输入
-  const updateNewStudent = (index, field, value) => {
+  const updateNewStudent = useCallback((index, field, value) => {
     const newStudentList = [...newStudents];
     newStudentList[index][field] = value;
     setNewStudents(newStudentList);
     setHasChanges(true);
-  };
+  }, [newStudents]);
 
   // 添加新学生行
-  const addNewStudentRow = () => {
+  const addNewStudentRow = useCallback(() => {
     setNewStudents([...newStudents, { name: '', studentId: '', isNew: true }]);
-  };
+  }, [newStudents]);
 
   // 删除新学生行
-  const removeNewStudentRow = (index) => {
+  const removeNewStudentRow = useCallback((index) => {
     if (newStudents.length > 1) {
       const newStudentList = newStudents.filter((_, i) => i !== index);
       setNewStudents(newStudentList);
       setHasChanges(true);
     }
-  };
+  }, [newStudents]);
 
   // 批量选择学生
-  const toggleStudentSelection = (studentId) => {
+  const toggleStudentSelection = useCallback((studentId) => {
     const newSelection = new Set(selectedStudents);
     if (newSelection.has(studentId)) {
       newSelection.delete(studentId);
@@ -101,19 +130,19 @@ const EditClassStudents = () => {
       newSelection.add(studentId);
     }
     setSelectedStudents(newSelection);
-  };
+  }, [selectedStudents]);
 
   // 全选/取消全选
-  const toggleSelectAll = () => {
+  const toggleSelectAll = useCallback(() => {
     if (selectedStudents.size === students.length) {
       setSelectedStudents(new Set());
     } else {
       setSelectedStudents(new Set(students.map((_, index) => index)));
     }
-  };
+  }, [selectedStudents.size, students]);
 
   // 批量粘贴新学生
-  const handleBatchPaste = (e) => {
+  const handleBatchPaste = useCallback((e) => {
     const pastedText = e.clipboardData.getData('text');
     const lines = pastedText.trim().split('\n');
     const pastedStudents = [];
@@ -135,10 +164,10 @@ const EditClassStudents = () => {
       setHasChanges(true);
       setTimeout(() => setMessage(''), 3000);
     }
-  };
+  }, [newStudents]);
 
   // 验证数据
-  const validateData = () => {
+  const validateData = useCallback(() => {
     // 检查现有学生学号重复
     const existingIds = students.map(s => s.studentId.trim());
     const newIds = newStudents.filter(s => s.name.trim() && s.studentId.trim()).map(s => s.studentId.trim());
@@ -156,16 +185,16 @@ const EditClassStudents = () => {
     }
 
     return { valid: true };
-  };
+  }, [students, newStudents]);
 
   // 确认操作模态框
-  const showConfirmation = (action) => {
+  const showConfirmation = useCallback((action) => {
     setPendingAction(action);
     setShowConfirmModal(true);
-  };
+  }, []);
 
   // 执行确认的操作
-  const executeAction = async () => {
+  const executeAction = useCallback(async () => {
     setShowConfirmModal(false);
     
     if (pendingAction.type === 'save') {
@@ -175,10 +204,10 @@ const EditClassStudents = () => {
     }
     
     setPendingAction(null);
-  };
+  }, [pendingAction]);
 
   // 保存修改
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
     const validation = validateData();
     if (!validation.valid) {
       setMessage(validation.message);
@@ -221,10 +250,10 @@ const EditClassStudents = () => {
     } finally {
       setSaving(false);
     }
-  };
+  }, [validateData, students, newStudents, classId, navigate]);
 
   // 移除选中学生
-  const handleRemoveSelected = async () => {
+  const handleRemoveSelected = useCallback(async () => {
     if (selectedStudents.size === 0) return;
 
     setSaving(true);
@@ -254,8 +283,21 @@ const EditClassStudents = () => {
     } finally {
       setSaving(false);
     }
-  };
+  }, [selectedStudents, students, classId, fetchClassData]);
 
+  // 使用独立的自动刷新函数
+  useAutoRefresh(handleAutoRefresh, {
+    interval: 120000, // 2分钟
+    enabled: true,
+    pauseOnHidden: true,
+  });
+
+  // 初始化数据获取
+  useEffect(() => {
+    fetchClassData();
+  }, [fetchClassData]);
+
+  // 🔧 现在可以安全地进行条件渲染
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
@@ -277,346 +319,323 @@ const EditClassStudents = () => {
     );
   }
 
-  const handlePullRefresh = useCallback(async () => {
-    try {
-      const res = await api.get(`/class/${classId}`);
-      if (res.data.success) {
-        const cls = res.data.class;
-        setClassData(cls);
-        const activeStudents = cls.studentList.filter(s => !s.isRemoved);
-        setStudents(activeStudents.map(s => ({ ...s, isModified: false })));
-      }
-      toast.success('刷新成功');
-    } catch (err) {
-      console.error('刷新失败:', err);
-      toast.error('刷新失败，请重试');
-    }
-  }, [classId]); // 🔧 只依赖 classId
-
-  // 编辑页面，学生状态可能变化
-  useAutoRefresh(handlePullRefresh, {
-    interval: 120000, // 2分钟
-    enabled: true,
-    pauseOnHidden: true,
-  });
-
   return (
     <PullToRefreshContainer 
       onRefresh={handlePullRefresh}
       className="min-h-screen bg-gray-50 dark:bg-gray-900 py-10 px-4"
       disabled={loading || saving}
     >
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-10 px-4">
-      <div className="max-w-6xl mx-auto">
-        {/* 页面头部 */}
-        <div className="flex flex-col lg:flex-row lg:justify-between lg:items-start gap-4 mb-6">
-          <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-gray-800 dark:text-gray-100 mb-2">
-              ✏️ 编辑班级学生
-            </h1>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              班级：{classData?.name} | 当前学生：{students.length} 人
-            </p>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-10 px-4">
+        <div className="max-w-6xl mx-auto">
+          {/* 页面头部 */}
+          <div className="flex flex-col lg:flex-row lg:justify-between lg:items-start gap-4 mb-6">
+            <div>
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-800 dark:text-gray-100 mb-2">
+                ✏️ 编辑班级学生
+              </h1>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                班级：{classData?.name} | 当前学生：{students.length} 人
+              </p>
+            </div>
+            <div className="flex gap-2 sm:gap-3 flex-shrink-0">
+              <Button
+                variant="secondary"
+                onClick={() => navigate(`/class/${classId}/students`)}
+                disabled={saving}
+                className="text-xs sm:text-sm px-2 sm:px-4"
+              >
+                <span className="hidden sm:inline">👈 取消编辑</span>
+                <span className="sm:hidden">👈 取消</span>
+              </Button>
+              <Button
+                variant="primary"
+                onClick={() => showConfirmation({
+                  type: 'save',
+                  title: '确认保存修改',
+                  message: '确定要保存对学生信息的所有修改吗？此操作将同步更新相关的作业提交记录。'
+                })}
+                disabled={!hasChanges || saving}
+                loading={saving}
+                className="text-xs sm:text-sm px-2 sm:px-4"
+              >
+                <span className="hidden sm:inline">💾 保存修改</span>
+                <span className="sm:hidden">💾 保存</span>
+              </Button>
+            </div>
           </div>
-          <div className="flex gap-2 sm:gap-3 flex-shrink-0">
-            <Button
-              variant="secondary"
-              onClick={() => navigate(`/class/${classId}/students`)}
-              disabled={saving}
-              className="text-xs sm:text-sm px-2 sm:px-4"
-            >
-              <span className="hidden sm:inline">👈 取消编辑</span>
-              <span className="sm:hidden">👈 取消</span>
-            </Button>
-            <Button
-              variant="primary"
-              onClick={() => showConfirmation({
-                type: 'save',
-                title: '确认保存修改',
-                message: '确定要保存对学生信息的所有修改吗？此操作将同步更新相关的作业提交记录。'
-              })}
-              disabled={!hasChanges || saving}
-              loading={saving}
-              className="text-xs sm:text-sm px-2 sm:px-4"
-            >
-              <span className="hidden sm:inline">💾 保存修改</span>
-              <span className="sm:hidden">💾 保存</span>
-            </Button>
+
+          {/* 警告提示 */}
+          <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-xl p-4 mb-6">
+            <h3 className="text-yellow-800 dark:text-yellow-200 font-medium mb-2">⚠️ 重要提示</h3>
+            <ul className="text-sm text-yellow-700 dark:text-yellow-300 space-y-1">
+              <li>• 修改学生姓名或学号将同步更新该学生的所有历史作业提交记录</li>
+              <li>• 移除学生将进行30天软删除，期间可恢复，30天后永久删除</li>
+              <li>• 已加入班级的学生被移除后，其作业记录将被保留但标记为"学生已移除"</li>
+            </ul>
           </div>
-        </div>
 
-        {/* 警告提示 */}
-        <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-xl p-4 mb-6">
-          <h3 className="text-yellow-800 dark:text-yellow-200 font-medium mb-2">⚠️ 重要提示</h3>
-          <ul className="text-sm text-yellow-700 dark:text-yellow-300 space-y-1">
-            <li>• 修改学生姓名或学号将同步更新该学生的所有历史作业提交记录</li>
-            <li>• 移除学生将进行30天软删除，期间可恢复，30天后永久删除</li>
-            <li>• 已加入班级的学生被移除后，其作业记录将被保留但标记为"学生已移除"</li>
-          </ul>
-        </div>
+          {/* 现有学生编辑 */}
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md mb-8 overflow-hidden">
+            <div className="px-6 py-4 bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
+              <div className="flex justify-between items-center">
+                <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
+                  现有学生 ({students.length})
+                </h2>
+                <div className="flex items-center gap-3">
+                  <label className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                    <input
+                      type="checkbox"
+                      checked={selectedStudents.size === students.length && students.length > 0}
+                      onChange={toggleSelectAll}
+                      className="rounded"
+                    />
+                    全选
+                  </label>
+                  {selectedStudents.size > 0 && (
+                    <Button
+                      variant="danger"
+                      size="sm"
+                      onClick={() => showConfirmation({
+                        type: 'remove_selected',
+                        title: '确认移除学生',
+                        message: `确定要移除选中的 ${selectedStudents.size} 名学生吗？移除后30天内可恢复，30天后将永久删除。`,
+                        count: selectedStudents.size
+                      })}
+                    >
+                      移除选中 ({selectedStudents.size})
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </div>
 
-        {/* 现有学生编辑 */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md mb-8 overflow-hidden">
-          <div className="px-6 py-4 bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
-            <div className="flex justify-between items-center">
+            {students.length === 0 ? (
+              <div className="p-8 text-center text-gray-500 dark:text-gray-400">
+                暂无学生，请在下方添加新学生
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50 dark:bg-gray-700">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-200 w-12">选择</th>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-200">姓名</th>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-200">学号</th>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-200">状态</th>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-200">加入时间</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200 dark:divide-gray-600">
+                    {students.map((student, index) => (
+                      <motion.tr
+                        key={student._id || index}
+                        className={`hover:bg-gray-50 dark:hover:bg-gray-700/50 ${
+                          student.isModified ? 'bg-blue-50 dark:bg-blue-900/20' : ''
+                        }`}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: index * 0.05 }}
+                      >
+                        <td className="px-4 py-3">
+                          <input
+                            type="checkbox"
+                            checked={selectedStudents.has(index)}
+                            onChange={() => toggleStudentSelection(index)}
+                            className="rounded"
+                          />
+                        </td>
+                        <td className="px-4 py-3">
+                          <input
+                            type="text"
+                            value={student.name}
+                            onChange={(e) => updateStudent(index, 'name', e.target.value)}
+                            className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm
+                                      bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100
+                                      focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          />
+                        </td>
+                        <td className="px-4 py-3">
+                          <input
+                            type="text"
+                            value={student.studentId}
+                            onChange={(e) => updateStudent(index, 'studentId', e.target.value)}
+                            className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm
+                                      bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100
+                                      focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          />
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-2">
+                            {student.userId ? (
+                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300">
+                                ✅ 已加入
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
+                                ⏳ 未加入
+                              </span>
+                            )}
+                            {student.isModified && (
+                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300">
+                                已修改
+                              </span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
+                          {student.joinedAt ? new Date(student.joinedAt).toLocaleDateString() : '-'}
+                        </td>
+                      </motion.tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+
+          {/* 添加新学生 */}
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden">
+            <div className="px-6 py-4 bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
               <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
-                现有学生 ({students.length})
+                添加新学生
               </h2>
-              <div className="flex items-center gap-3">
-                <label className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                  <input
-                    type="checkbox"
-                    checked={selectedStudents.size === students.length && students.length > 0}
-                    onChange={toggleSelectAll}
-                    className="rounded"
-                  />
-                  全选
-                </label>
-                {selectedStudents.size > 0 && (
-                  <Button
-                    variant="danger"
-                    size="sm"
-                    onClick={() => showConfirmation({
-                      type: 'remove_selected',
-                      title: '确认移除学生',
-                      message: `确定要移除选中的 ${selectedStudents.size} 名学生吗？移除后30天内可恢复，30天后将永久删除。`,
-                      count: selectedStudents.size
-                    })}
-                  >
-                    移除选中 ({selectedStudents.size})
-                  </Button>
-                )}
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                💡 支持从Excel复制粘贴，格式：姓名[Tab]学号，每行一个学生
+              </p>
+            </div>
+
+            <div className="p-6">
+              <div onPaste={handleBatchPaste}>
+                <table className="w-full">
+                  <thead className="bg-gray-50 dark:bg-gray-700">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-200 w-16">序号</th>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-200">姓名</th>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-200">学号</th>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-200 w-20">操作</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200 dark:divide-gray-600">
+                    {newStudents.map((student, index) => (
+                      <tr key={index} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                        <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
+                          {index + 1}
+                        </td>
+                        <td className="px-4 py-3">
+                          <input
+                            type="text"
+                            value={student.name}
+                            onChange={(e) => updateNewStudent(index, 'name', e.target.value)}
+                            className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm
+                                      bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100
+                                      focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            placeholder="学生姓名"
+                          />
+                        </td>
+                        <td className="px-4 py-3">
+                          <input
+                            type="text"
+                            value={student.studentId}
+                            onChange={(e) => updateNewStudent(index, 'studentId', e.target.value)}
+                            className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm
+                                      bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100
+                                      focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            placeholder="学号"
+                          />
+                        </td>
+                        <td className="px-4 py-3">
+                          {newStudents.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => removeNewStudentRow(index)}
+                              className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 text-sm"
+                            >
+                              删除
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="flex justify-between items-center mt-4">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  onClick={addNewStudentRow}
+                >
+                  ➕ 添加学生
+                </Button>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  待添加学生：{newStudents.filter(s => s.name.trim() && s.studentId.trim()).length}
+                </p>
               </div>
             </div>
           </div>
 
-          {students.length === 0 ? (
-            <div className="p-8 text-center text-gray-500 dark:text-gray-400">
-              暂无学生，请在下方添加新学生
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50 dark:bg-gray-700">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-200 w-12">选择</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-200">姓名</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-200">学号</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-200">状态</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-200">加入时间</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200 dark:divide-gray-600">
-                  {students.map((student, index) => (
-                    <motion.tr
-                      key={student._id || index}
-                      className={`hover:bg-gray-50 dark:hover:bg-gray-700/50 ${
-                        student.isModified ? 'bg-blue-50 dark:bg-blue-900/20' : ''
-                      }`}
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ delay: index * 0.05 }}
-                    >
-                      <td className="px-4 py-3">
-                        <input
-                          type="checkbox"
-                          checked={selectedStudents.has(index)}
-                          onChange={() => toggleStudentSelection(index)}
-                          className="rounded"
-                        />
-                      </td>
-                      <td className="px-4 py-3">
-                        <input
-                          type="text"
-                          value={student.name}
-                          onChange={(e) => updateStudent(index, 'name', e.target.value)}
-                          className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm
-                                    bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100
-                                    focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        />
-                      </td>
-                      <td className="px-4 py-3">
-                        <input
-                          type="text"
-                          value={student.studentId}
-                          onChange={(e) => updateStudent(index, 'studentId', e.target.value)}
-                          className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm
-                                    bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100
-                                    focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        />
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-2">
-                          {student.userId ? (
-                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300">
-                              ✅ 已加入
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
-                              ⏳ 未加入
-                            </span>
-                          )}
-                          {student.isModified && (
-                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300">
-                              已修改
-                            </span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
-                        {student.joinedAt ? new Date(student.joinedAt).toLocaleDateString() : '-'}
-                      </td>
-                    </motion.tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-
-        {/* 添加新学生 */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden">
-          <div className="px-6 py-4 bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
-            <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
-              添加新学生
-            </h2>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-              💡 支持从Excel复制粘贴，格式：姓名[Tab]学号，每行一个学生
-            </p>
-          </div>
-
-          <div className="p-6">
-            <div onPaste={handleBatchPaste}>
-              <table className="w-full">
-                <thead className="bg-gray-50 dark:bg-gray-700">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-200 w-16">序号</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-200">姓名</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-200">学号</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-200 w-20">操作</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200 dark:divide-gray-600">
-                  {newStudents.map((student, index) => (
-                    <tr key={index} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                      <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
-                        {index + 1}
-                      </td>
-                      <td className="px-4 py-3">
-                        <input
-                          type="text"
-                          value={student.name}
-                          onChange={(e) => updateNewStudent(index, 'name', e.target.value)}
-                          className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm
-                                    bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100
-                                    focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                          placeholder="学生姓名"
-                        />
-                      </td>
-                      <td className="px-4 py-3">
-                        <input
-                          type="text"
-                          value={student.studentId}
-                          onChange={(e) => updateNewStudent(index, 'studentId', e.target.value)}
-                          className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm
-                                    bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100
-                                    focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                          placeholder="学号"
-                        />
-                      </td>
-                      <td className="px-4 py-3">
-                        {newStudents.length > 1 && (
-                          <button
-                            type="button"
-                            onClick={() => removeNewStudentRow(index)}
-                            className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 text-sm"
-                          >
-                            删除
-                          </button>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            <div className="flex justify-between items-center mt-4">
-              <Button
-                type="button"
-                variant="secondary"
-                size="sm"
-                onClick={addNewStudentRow}
-              >
-                ➕ 添加学生
-              </Button>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                待添加学生：{newStudents.filter(s => s.name.trim() && s.studentId.trim()).length}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* 消息提示 */}
-        <AnimatePresence>
-          {message && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className={`fixed bottom-6 right-6 p-4 rounded-xl shadow-lg ${
-                message.startsWith('✅') 
-                  ? 'bg-green-500 text-white' 
-                  : 'bg-red-500 text-white'
-              }`}
-            >
-              {message}
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* 确认模态框 */}
-        <AnimatePresence>
-          {showConfirmModal && pendingAction && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
-              onClick={(e) => e.target === e.currentTarget && setShowConfirmModal(false)}
-            >
+          {/* 消息提示 */}
+          <AnimatePresence>
+            {message && (
               <motion.div
-                initial={{ scale: 0.95, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.95, opacity: 0 }}
-                className="bg-white dark:bg-gray-800 rounded-xl p-6 max-w-md w-full mx-4 shadow-xl"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                className={`fixed bottom-6 right-6 p-4 rounded-xl shadow-lg ${
+                  message.startsWith('✅') 
+                    ? 'bg-green-500 text-white' 
+                    : 'bg-red-500 text-white'
+                }`}
               >
-                <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4">
-                  {pendingAction.title}
-                </h3>
-                <p className="text-gray-600 dark:text-gray-400 mb-6">
-                  {pendingAction.message}
-                </p>
-                <div className="flex gap-3 justify-end">
-                  <Button
-                    variant="secondary"
-                    onClick={() => setShowConfirmModal(false)}
-                  >
-                    取消
-                  </Button>
-                  <Button
-                    variant={pendingAction.type === 'remove_selected' ? 'danger' : 'primary'}
-                    onClick={executeAction}
-                  >
-                    确认
-                  </Button>
-                </div>
+                {message}
               </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+            )}
+          </AnimatePresence>
+
+          {/* 确认模态框 */}
+          <AnimatePresence>
+            {showConfirmModal && pendingAction && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+                onClick={(e) => e.target === e.currentTarget && setShowConfirmModal(false)}
+              >
+                <motion.div
+                  initial={{ scale: 0.95, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.95, opacity: 0 }}
+                  className="bg-white dark:bg-gray-800 rounded-xl p-6 max-w-md w-full mx-4 shadow-xl"
+                >
+                  <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4">
+                    {pendingAction.title}
+                  </h3>
+                  <p className="text-gray-600 dark:text-gray-400 mb-6">
+                    {pendingAction.message}
+                  </p>
+                  <div className="flex gap-3 justify-end">
+                    <Button
+                      variant="secondary"
+                      onClick={() => setShowConfirmModal(false)}
+                    >
+                      取消
+                    </Button>
+                    <Button
+                      variant={pendingAction.type === 'remove_selected' ? 'danger' : 'primary'}
+                      onClick={executeAction}
+                    >
+                      确认
+                    </Button>
+                  </div>
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
-    </div>
     </PullToRefreshContainer>
   );
 };
