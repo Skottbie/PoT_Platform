@@ -112,7 +112,7 @@ const FontSizeSelector = ({ isOpen, onClose }) => {
                 bg-white dark:bg-gray-800 shadow-2xl border border-gray-200/50 dark:border-gray-700/50 
                 w-full overflow-hidden flex flex-col
                 ${isMobile 
-                ? 'max-w-none rounded-t-3xl' 
+                ? 'max-w-none rounded-b-3xl' 
                 : 'max-w-md mx-4 rounded-2xl'
                 }
             `}
@@ -275,27 +275,27 @@ const FontSizeSelector = ({ isOpen, onClose }) => {
                 </div>
             </div>
 
-            {/* 🔧 底部按钮 - 确保始终可见，固定在底部 */}
-            <div className={`flex-shrink-0 bg-gray-50/50 dark:bg-gray-900/50 border-t border-gray-200/50 dark:border-gray-700/50 ${isMobile ? 'px-4 py-4 pb-safe' : 'px-6 py-4'}`}>
-                <div className="flex gap-3">
-                <Button
+                {/* 底部按钮区域 - 缩小按钮 */}
+                <div className={`flex-shrink-0 bg-gray-50/50 dark:bg-gray-900/50 border-t border-gray-200/50 dark:border-gray-700/50 ${isMobile ? 'px-4 py-3 pb-safe' : 'px-6 py-4'}`}>
+                <div className="flex gap-2"> {/* 减少gap */}
+                    <Button
                     variant="secondary"
                     onClick={handleClose}
                     className="flex-1"
-                    size={isMobile ? "lg" : "md"}
-                >
+                    size={isMobile ? "md" : "sm"} // 缩小按钮尺寸
+                    >
                     取消
-                </Button>
-                <Button
+                    </Button>
+                    <Button
                     variant="primary"
                     onClick={handleConfirm}
                     className="flex-1"
-                    size={isMobile ? "lg" : "md"}
-                >
+                    size={isMobile ? "md" : "sm"} // 缩小按钮尺寸
+                    >
                     应用设置
-                </Button>
+                    </Button>
                 </div>
-            </div>
+                </div>
             </motion.div>
       </motion.div>
     </AnimatePresence>
