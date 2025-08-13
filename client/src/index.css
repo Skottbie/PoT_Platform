@@ -1,5 +1,6 @@
 @import './styles/mobile.css';
 @import './styles/pullToRefresh.css';
+@import './styles/aigcFontSize.css';
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

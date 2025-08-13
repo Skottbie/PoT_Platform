@@ -13,6 +13,9 @@ import { PrimaryButton, SecondaryButton, WarningButton, IconButton } from '../co
 import LazyImageGrid from '../components/LazyImageGrid';
 import { useDeviceDetection, useVirtualKeyboard, useHapticFeedback } from '../hooks/useDeviceDetetion';
 import remarkGfm from 'remark-gfm';
+import FontSizeSelector from '../components/FontSizeSelector';
+import { useFontSize } from '../utils/fontSizeUtils';
+import '../styles/aigcFontSize.css';
 
 SyntaxHighlighter.registerLanguage('javascript', javascript);
 SyntaxHighlighter.registerLanguage('python', python);
@@ -44,6 +47,17 @@ const SubmitTask = () => {
   const [shouldUploadAIGC, setShouldUploadAIGC] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
 
+  const { currentSize, currentConfig } = useFontSize();
+  const [showFontSelector, setShowFontSelector] = useState(false);
+  const handleFontSizeClick = useCallback(() => {
+    haptic.light();
+    setShowFontSelector(true);
+  }, [haptic]);
+
+  const handleCloseFontSelector = useCallback(() => {
+    setShowFontSelector(false);
+  }, []);
+
   // 引用
   const chatBoxRef = useRef(null);
   const textareaRef = useRef(null);
@@ -64,8 +78,8 @@ const SubmitTask = () => {
               margin: 0,
               padding: '12px',
               borderRadius: '8px',
-              fontSize: '14px',
-              lineHeight: '1.5',
+              fontSize: 'var(--aigc-code-font-size)',
+              lineHeight: '1.4',
               overflowX: 'auto',
               backgroundColor: isUserMessage ? 'rgba(59, 130, 246, 0.1)' : '#f6f8fa',
             }}
@@ -79,7 +93,9 @@ const SubmitTask = () => {
           isUserMessage 
             ? 'bg-blue-400/30 text-white' 
             : 'bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200'
-        }`}>
+          }`}
+          style={{ fontSize: 'var(--aigc-code-font-size)' }}
+        >
           {children}
         </code>
       );
@@ -138,7 +154,9 @@ const SubmitTask = () => {
           isUserMessage 
             ? 'text-white/90' 
             : 'text-gray-700 dark:text-gray-300'
-        }`}>
+          }`}
+          style={{ fontSize: 'var(--aigc-font-size-sm)' }}
+        >
           {children}
         </th>
       );
@@ -159,7 +177,7 @@ const SubmitTask = () => {
     // 列表处理
     ul({ children }) {
       return (
-        <ul className="list-disc list-inside my-2 space-y-1 text-sm pl-4">
+        <ul className="list-disc list-inside my-2 space-y-1 pl-4">
           {children}
         </ul>
       );
@@ -167,7 +185,7 @@ const SubmitTask = () => {
 
     ol({ children }) {
       return (
-        <ol className="list-decimal list-inside my-2 space-y-1 text-sm pl-4">
+        <ol className="list-decimal list-inside my-2 space-y-1 pl-4">
           {children}
         </ol>
       );
@@ -175,7 +193,7 @@ const SubmitTask = () => {
 
     li({ children }) {
       return (
-        <li className="text-sm leading-relaxed">
+        <li className="leading-relaxed">
           {children}
         </li>
       );
@@ -184,11 +202,13 @@ const SubmitTask = () => {
     // 标题处理
     h1({ children }) {
       return (
-        <h1 className={`text-lg font-bold mt-4 mb-2 ${
+        <h1 className={`font-bold mt-4 mb-2 ${
           isUserMessage 
             ? 'text-white' 
             : 'text-gray-900 dark:text-gray-100'
-        }`}>
+          }`}
+          style={{ fontSize: 'calc(var(--aigc-font-size-base) * 1.5)' }}
+        >
           {children}
         </h1>
       );
@@ -196,11 +216,13 @@ const SubmitTask = () => {
 
     h2({ children }) {
       return (
-        <h2 className={`text-base font-bold mt-3 mb-2 ${
+        <h2 className={`font-bold mt-3 mb-2 ${
           isUserMessage 
             ? 'text-white' 
             : 'text-gray-900 dark:text-gray-100'
-        }`}>
+          }`}
+          style={{ fontSize: 'calc(var(--aigc-font-size-base) * 1.3)' }}
+        >
           {children}
         </h2>
       );
@@ -208,11 +230,13 @@ const SubmitTask = () => {
 
     h3({ children }) {
       return (
-        <h3 className={`text-sm font-bold mt-3 mb-1 ${
+        <h3 className={`font-bold mt-3 mb-1 ${
           isUserMessage 
             ? 'text-white' 
             : 'text-gray-900 dark:text-gray-100'
-        }`}>
+          }`}
+          style={{ fontSize: 'calc(var(--aigc-font-size-base) * 1.15)' }}
+        >
           {children}
         </h3>
       );
@@ -221,7 +245,7 @@ const SubmitTask = () => {
     // 段落处理
     p({ children }) {
       return (
-        <p className="my-2 text-sm leading-relaxed">
+        <p className="my-2 leading-relaxed">
           {children}
         </p>
       );
@@ -235,7 +259,7 @@ const SubmitTask = () => {
             ? 'border-white/30 bg-white/10' 
             : 'border-blue-400 bg-blue-50 dark:bg-blue-900/20'
         }`}>
-          <div className={`text-sm ${
+          <div className={`${
             isUserMessage 
               ? 'text-white/90' 
               : 'text-blue-800 dark:text-blue-200'
@@ -778,16 +802,19 @@ const SubmitTask = () => {
         <div className="flex-shrink-0 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-b border-gray-200/60 dark:border-gray-700/60 px-4 py-4 safe-area-inset-top">
           <div className="flex items-center justify-between max-w-4xl mx-auto">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center">
-                <span className="text-white text-lg font-bold">🤖</span>
-              </div>
+                <button
+                  onClick={handleFontSizeClick}
+                  className="w-10 h-10 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center hover:shadow-lg transition-all duration-200 active:scale-95"
+                  title="调整字号"
+                >
+                  <span className="text-white text-lg font-bold">𝐀𝐚</span>
+                </button>
               <div>
                 <h3 className="font-bold text-gray-900 dark:text-gray-100 text-lg">
                   AIGC
                 </h3>
                 <p className="text-sm text-gray-500 dark:text-gray-400">
-                  {model === 'qwen' ? '通义千问' : 'ChatGPT'}
-                  {/*{task.requireAIGCLog && <span className="ml-2 text-red-500">（必交）</span>}*/}
+                  {model === 'qwen' ? '通义千问' : 'ChatGPT'} · {currentConfig.label} {currentConfig.size}px
                 </p>
               </div>
             </div>
@@ -821,7 +848,7 @@ const SubmitTask = () => {
         {/* 对话内容区域 */}
         <div
           ref={chatBoxRef}
-          className="flex-1 overflow-y-auto bg-white dark:bg-gray-900"
+          className="flex-1 overflow-y-auto bg-white dark:bg-gray-900 aigc-chat-content"
           style={{
             paddingBottom: `calc(80px + env(safe-area-inset-bottom, 0px) + ${keyboardState.isOpen ? keyboardState.height : 0}px)`,
           }}
@@ -837,10 +864,10 @@ const SubmitTask = () => {
                   <span className="text-4xl">🤖</span>
                 </div>
                 <h3 className="text-2xl font-medium text-gray-900 dark:text-gray-100 mb-3">
-                  开始与 AI 对话
+                  开始Thinking.
                 </h3>
                 <p className="text-gray-500 dark:text-gray-400 max-w-md leading-relaxed">
-                  与AI共建你的Thinking Chain.
+                  构建你的Thinking Chain. AI友情客串。
                 </p>
               </motion.div>
             )}
@@ -1486,8 +1513,17 @@ const SubmitTask = () => {
           )}
         </FormCard>
       </div>
+      {/* 🎯 字号选择器 */}
+      {isFullscreen && (
+        <FontSizeSelector
+          isOpen={showFontSelector}
+          onClose={handleCloseFontSelector}
+        />
+      )}
     </div>
+    
   );
+  
 };
 
 export default SubmitTask;
