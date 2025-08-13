@@ -1,6 +1,6 @@
-/* client/src/styles/aigcFontSize.css - AIGC字号控制样式 */
+/* client/src/styles/aigcFontSize.css - 增强版移动端适配 */
 
-/* 🎯 AIGC 字号CSS变量定义 */
+/* 🎯 AIGC 字号CSS变量定义 - 设备自适应 */
 :root {
   /* 默认字号设置（16px标准） */
   --aigc-font-size-base: 16px;
@@ -10,7 +10,7 @@
   --aigc-code-font-size: 14px;
 }
 
-/* 🎯 AIGC对话内容字号控制 */
+/* 🎯 AIGC对话内容字号控制 - 平滑过渡 */
 .aigc-chat-content {
   /* 基础文本 */
   font-size: var(--aigc-font-size-base);
@@ -67,6 +67,18 @@
   line-height: var(--aigc-line-height);
 }
 
+/* 🎯 任务列表样式优化 */
+.aigc-chat-content .task-list-item {
+  list-style: none;
+  position: relative;
+  padding-left: 0;
+}
+
+.aigc-chat-content .task-list-item input[type="checkbox"] {
+  margin-right: 8px;
+  transform: scale(1.1);
+}
+
 /* 🎯 代码块字号适配 */
 .aigc-chat-content code {
   font-size: var(--aigc-code-font-size);
@@ -84,6 +96,16 @@
   line-height: 1.4;
 }
 
+/* 🎯 代码块复制按钮样式 */
+.aigc-chat-content .group:hover .copy-button {
+  opacity: 1;
+}
+
+.aigc-chat-content .copy-button {
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
 /* 🎯 表格字号适配 */
 .aigc-chat-content table {
   font-size: var(--aigc-font-size-base);
@@ -95,10 +117,11 @@
   line-height: var(--aigc-line-height);
 }
 
-/* 🎯 引用块字号 */
+/* 🎯 引用块字号和样式增强 */
 .aigc-chat-content blockquote {
   font-size: var(--aigc-font-size-base);
   line-height: var(--aigc-line-height);
+  position: relative;
 }
 
 /* 🎯 小字号文本 */
@@ -127,10 +150,24 @@
   font-style: italic;
 }
 
-/* 🎯 链接字号 */
+/* 🎯 删除线样式 */
+.aigc-chat-content del {
+  font-size: inherit;
+  text-decoration: line-through;
+  opacity: 0.75;
+}
+
+/* 🎯 链接字号和样式 */
 .aigc-chat-content a {
   font-size: inherit;
   line-height: inherit;
+  position: relative;
+}
+
+/* 🎯 外链图标样式 */
+.aigc-chat-content a svg {
+  display: inline-block;
+  vertical-align: baseline;
 }
 
 /* 🎯 Markdown组件专用样式 */
@@ -156,21 +193,81 @@
   line-height: inherit !important;
 }
 
-/* 🎯 数学公式字号适配（如果使用） */
-.aigc-chat-content .math,
-.aigc-chat-content .katex {
-  font-size: calc(var(--aigc-font-size-base) * 0.95);
-}
-
-/* 🎯 响应式字号调整 */
+/* 🎯 移动端专用优化 */
 @media (max-width: 640px) {
-  /* 移动端小屏幕时的字号下限 */
+  /* 移动端字号下限和上限 */
   :root {
     --aigc-font-size-min: 14px;
+    --aigc-font-size-max: 20px;
   }
   
   .aigc-chat-content {
-    font-size: max(var(--aigc-font-size-base), var(--aigc-font-size-min));
+    font-size: clamp(var(--aigc-font-size-min), var(--aigc-font-size-base), var(--aigc-font-size-max));
+  }
+
+  /* 移动端代码块优化 */
+  .aigc-chat-content pre {
+    border-radius: 8px;
+    margin: 12px 0;
+  }
+
+  .aigc-chat-content pre code {
+    padding: 12px;
+    font-size: calc(var(--aigc-code-font-size) * 0.95);
+  }
+
+  /* 移动端表格优化 */
+  .aigc-chat-content table {
+    font-size: calc(var(--aigc-font-size-base) * 0.9);
+    min-width: 100%;
+  }
+
+  .aigc-chat-content th,
+  .aigc-chat-content td {
+    padding: 8px 12px;
+    font-size: calc(var(--aigc-font-size-base) * 0.9);
+  }
+
+  /* 移动端引用块优化 */
+  .aigc-chat-content blockquote {
+    margin: 12px 0;
+    padding: 12px 16px;
+    border-radius: 0 8px 8px 0;
+  }
+
+  /* 移动端链接点击区域优化 */
+  .aigc-chat-content a {
+    padding: 2px 0;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+  }
+}
+
+/* 🎯 平板端适配 */
+@media (min-width: 641px) and (max-width: 1024px) {
+  .aigc-chat-content {
+    /* 平板端稍微增加行高 */
+    --aigc-line-height-tablet: calc(var(--aigc-line-height) + 0.1);
+    line-height: var(--aigc-line-height-tablet);
+  }
+}
+
+/* 🎯 桌面端适配 */
+@media (min-width: 1025px) {
+  /* 桌面端复制按钮增强 */
+  .aigc-chat-content .copy-button:hover {
+    background-color: #374151;
+    transform: scale(1.05);
+  }
+
+  /* 桌面端表格悬停效果 */
+  .aigc-chat-content table tr:hover {
+    background-color: rgba(0, 0, 0, 0.02);
+  }
+
+  .dark .aigc-chat-content table tr:hover {
+    background-color: rgba(255, 255, 255, 0.02);
   }
 }
 
@@ -186,14 +283,22 @@
     background-color: rgba(0, 0, 0, 0.1);
     padding: 2px 4px;
     border-radius: 4px;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+  }
+
+  .dark .aigc-chat-content code {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
   }
 }
 
 /* 🎯 减少动画偏好时禁用过渡 */
 @media (prefers-reduced-motion: reduce) {
   .aigc-chat-content,
-  .aigc-chat-content * {
+  .aigc-chat-content *,
+  .copy-button {
     transition: none !important;
+    animation: none !important;
   }
 }
 
@@ -213,4 +318,26 @@
   font-size: var(--aigc-font-size-xs) !important;
   line-height: 1.3 !important;
   opacity: 0.7;
+}
+
+/* 🎯 字号选择器动画优化 */
+.font-selector-slide-up {
+  animation: slideUpSmooth 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+@keyframes slideUpSmooth {
+  from {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 🎯 字号切换时的平滑过渡 */
+.aigc-font-transition {
+  transition: font-size 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+              line-height 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }

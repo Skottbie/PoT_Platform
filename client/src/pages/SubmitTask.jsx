@@ -50,7 +50,7 @@ const SubmitTask = () => {
   const { currentSize, currentConfig } = useFontSize();
   const [showFontSelector, setShowFontSelector] = useState(false);
   const handleFontSizeClick = useCallback(() => {
-    console.log('字号按钮被点击了'); // 添加这行调试
+    //console.log('字号按钮被点击了');
     haptic.light();
     setShowFontSelector(true);
   }, [haptic]);
@@ -63,280 +63,374 @@ const SubmitTask = () => {
   const chatBoxRef = useRef(null);
   const textareaRef = useRef(null);
 
-  // 添加完整的 Markdown 组件配置
-  const getMarkdownComponents = (isUserMessage) => ({
-    // 代码块处理
-    code({ inline, className, children, ...props }) {
-      const match = /language-(\w+)/.exec(className || '');
-      return !inline ? (
-        <div className="overflow-x-auto my-3">
-          <SyntaxHighlighter
-            style={github}
-            language={match ? match[1] : 'text'}
-            PreTag="div"
-            className="rounded-lg text-sm"
-            customStyle={{
-              margin: 0,
-              padding: '12px',
-              borderRadius: '8px',
-              fontSize: 'var(--aigc-code-font-size)',
-              lineHeight: '1.4',
-              overflowX: 'auto',
-              backgroundColor: isUserMessage ? 'rgba(59, 130, 246, 0.1)' : '#f6f8fa',
-            }}
-            {...props}
+
+  const getMarkdownComponents = (isUserMessage) => {
+    // 复制到剪贴板的工具函数
+    const copyToClipboard = async (text) => {
+      try {
+        await navigator.clipboard.writeText(text);
+        // 可以添加 toast 提示
+        return true;
+      } catch (err) {
+        // 降级处理
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        return true;
+      }
+    };
+
+    return {
+      // 🎯 代码块处理 - 增加复制功能
+      code({ inline, className, children, ...props }) {
+        const match = /language-(\w+)/.exec(className || '');
+        const codeContent = String(children).replace(/\n$/, '');
+
+        if (!inline) {
+          return (
+            <div className="overflow-x-auto my-3 group relative">
+              {/* 复制按钮 */}
+              <button
+                onClick={() => copyToClipboard(codeContent)}
+                className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-gray-700 hover:bg-gray-600 text-white text-xs px-2 py-1 rounded flex items-center gap-1 z-10"
+                title="复制代码"
+              >
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+                复制
+              </button>
+
+              <SyntaxHighlighter
+                style={github}
+                language={match ? match[1] : 'text'}
+                PreTag="div"
+                className="rounded-lg text-sm"
+                customStyle={{
+                  margin: 0,
+                  padding: '12px',
+                  paddingTop: '40px', // 为复制按钮留出空间
+                  borderRadius: '8px',
+                  fontSize: 'var(--aigc-code-font-size)',
+                  lineHeight: '1.4',
+                  overflowX: 'auto',
+                  backgroundColor: isUserMessage ? 'rgba(59, 130, 246, 0.1)' : '#f6f8fa',
+                }}
+                {...props}
+              >
+                {codeContent}
+              </SyntaxHighlighter>
+            </div>
+          );
+        }
+
+        return (
+          <code 
+            className={`px-1.5 py-0.5 rounded text-xs font-mono ${
+              isUserMessage 
+                ? 'bg-blue-400/30 text-white' 
+                : 'bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200'
+            }`}
+            style={{ fontSize: 'var(--aigc-code-font-size)' }}
           >
-            {String(children).replace(/\n$/, '')}
-          </SyntaxHighlighter>
-        </div>
-      ) : (
-        <code className={`px-1.5 py-0.5 rounded text-xs font-mono ${
-          isUserMessage 
-            ? 'bg-blue-400/30 text-white' 
-            : 'bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200'
-          }`}
-          style={{ fontSize: 'var(--aigc-code-font-size)' }}
-        >
-          {children}
-        </code>
-      );
-    },
-
-    // 表格处理
-    table({ children }) {
-      return (
-        <div className="overflow-x-auto my-4 rounded-lg border border-gray-200 dark:border-gray-600">
-          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm">
             {children}
-          </table>
-        </div>
-      );
-    },
+          </code>
+        );
+      },
 
-    thead({ children }) {
-      return (
-        <thead className={`${
-          isUserMessage 
-            ? 'bg-blue-500/20' 
-            : 'bg-gray-50 dark:bg-gray-800'
-        }`}>
-          {children}
-        </thead>
-      );
-    },
+      // 🎯 表格处理 - 移动端优化
+      table({ children }) {
+        return (
+          <div className="overflow-x-auto my-4 rounded-lg border border-gray-200 dark:border-gray-600">
+            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm">
+              {children}
+            </table>
+          </div>
+        );
+      },
 
-    tbody({ children }) {
-      return (
-        <tbody className={`${
-          isUserMessage 
-            ? 'bg-blue-500/5' 
-            : 'bg-white dark:bg-gray-900'
-        } divide-y divide-gray-200 dark:divide-gray-700`}>
-          {children}
-        </tbody>
-      );
-    },
-
-    tr({ children }) {
-      return (
-        <tr className={`${
-          isUserMessage 
-            ? 'hover:bg-blue-500/10' 
-            : 'hover:bg-gray-50 dark:hover:bg-gray-800'
-        }`}>
-          {children}
-        </tr>
-      );
-    },
-
-    th({ children }) {
-      return (
-        <th className={`px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider ${
-          isUserMessage 
-            ? 'text-white/90' 
-            : 'text-gray-700 dark:text-gray-300'
-          }`}
-          style={{ fontSize: 'var(--aigc-font-size-sm)' }}
-        >
-          {children}
-        </th>
-      );
-    },
-
-    td({ children }) {
-      return (
-        <td className={`px-3 py-2 text-sm ${
-          isUserMessage 
-            ? 'text-white/90' 
-            : 'text-gray-900 dark:text-gray-100'
-        }`}>
-          {children}
-        </td>
-      );
-    },
-
-    // 列表处理
-    ul({ children }) {
-      return (
-        <ul className="list-disc list-inside my-2 space-y-1 pl-4">
-          {children}
-        </ul>
-      );
-    },
-
-    ol({ children }) {
-      return (
-        <ol className="list-decimal list-inside my-2 space-y-1 pl-4">
-          {children}
-        </ol>
-      );
-    },
-
-    li({ children }) {
-      return (
-        <li className="leading-relaxed">
-          {children}
-        </li>
-      );
-    },
-
-    // 标题处理
-    h1({ children }) {
-      return (
-        <h1 className={`font-bold mt-4 mb-2 ${
-          isUserMessage 
-            ? 'text-white' 
-            : 'text-gray-900 dark:text-gray-100'
-          }`}
-          style={{ fontSize: 'calc(var(--aigc-font-size-base) * 1.5)' }}
-        >
-          {children}
-        </h1>
-      );
-    },
-
-    h2({ children }) {
-      return (
-        <h2 className={`font-bold mt-3 mb-2 ${
-          isUserMessage 
-            ? 'text-white' 
-            : 'text-gray-900 dark:text-gray-100'
-          }`}
-          style={{ fontSize: 'calc(var(--aigc-font-size-base) * 1.3)' }}
-        >
-          {children}
-        </h2>
-      );
-    },
-
-    h3({ children }) {
-      return (
-        <h3 className={`font-bold mt-3 mb-1 ${
-          isUserMessage 
-            ? 'text-white' 
-            : 'text-gray-900 dark:text-gray-100'
-          }`}
-          style={{ fontSize: 'calc(var(--aigc-font-size-base) * 1.15)' }}
-        >
-          {children}
-        </h3>
-      );
-    },
-
-    // 段落处理
-    p({ children }) {
-      return (
-        <p className="my-2 leading-relaxed">
-          {children}
-        </p>
-      );
-    },
-
-    // 引用块处理
-    blockquote({ children }) {
-      return (
-        <blockquote className={`border-l-4 pl-4 py-2 my-3 rounded-r-lg ${
-          isUserMessage 
-            ? 'border-white/30 bg-white/10' 
-            : 'border-blue-400 bg-blue-50 dark:bg-blue-900/20'
-        }`}>
-          <div className={`${
+      thead({ children }) {
+        return (
+          <thead className={`${
             isUserMessage 
-              ? 'text-white/90' 
-              : 'text-blue-800 dark:text-blue-200'
+              ? 'bg-blue-500/20' 
+              : 'bg-gray-50 dark:bg-gray-800'
           }`}>
             {children}
-          </div>
-        </blockquote>
-      );
-    },
+          </thead>
+        );
+      },
 
-    // 链接处理
-    a({ href, children }) {
-      return (
-        <a 
-          href={href} 
-          target="_blank" 
-          rel="noopener noreferrer"
-          className={`hover:underline font-medium ${
+      tbody({ children }) {
+        return (
+          <tbody className={`${
+            isUserMessage 
+              ? 'bg-blue-500/5' 
+              : 'bg-white dark:bg-gray-900'
+          } divide-y divide-gray-200 dark:divide-gray-700`}>
+            {children}
+          </tbody>
+        );
+      },
+
+      tr({ children }) {
+        return (
+          <tr className={`${
+            isUserMessage 
+              ? 'hover:bg-blue-500/10' 
+              : 'hover:bg-gray-50 dark:hover:bg-gray-800'
+          }`}>
+            {children}
+          </tr>
+        );
+      },
+
+      th({ children }) {
+        return (
+          <th 
+            className={`px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider ${
+              isUserMessage 
+                ? 'text-white/90' 
+                : 'text-gray-700 dark:text-gray-300'
+            }`}
+            style={{ fontSize: 'var(--aigc-font-size-sm)' }}
+          >
+            {children}
+          </th>
+        );
+      },
+
+      td({ children }) {
+        return (
+          <td className={`px-3 py-2 text-sm ${
             isUserMessage 
               ? 'text-white/90' 
-              : 'text-blue-600 dark:text-blue-400'
+              : 'text-gray-900 dark:text-gray-100'
+          }`}>
+            {children}
+          </td>
+        );
+      },
+
+      // 🎯 列表处理 - 增加任务列表支持
+      ul({ children }) {
+        return (
+          <ul className="list-disc list-inside my-2 space-y-1 pl-4">
+            {children}
+          </ul>
+        );
+      },
+
+      ol({ children }) {
+        return (
+          <ol className="list-decimal list-inside my-2 space-y-1 pl-4">
+            {children}
+          </ol>
+        );
+      },
+
+      li({ children, className }) {
+        // 检查是否是任务列表项
+        const isTaskList = className?.includes('task-list-item');
+        
+        if (isTaskList) {
+          return (
+            <li className="leading-relaxed list-none flex items-start gap-2 my-1">
+              {children}
+            </li>
+          );
+        }
+
+        return (
+          <li className="leading-relaxed">
+            {children}
+          </li>
+        );
+      },
+
+      // 🎯 任务列表复选框处理
+      input({ type, checked, disabled }) {
+        if (type === 'checkbox') {
+          return (
+            <input
+              type="checkbox"
+              checked={checked}
+              disabled={disabled}
+              className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500 mt-0.5 pointer-events-none"
+              readOnly
+            />
+          );
+        }
+        return <input type={type} checked={checked} disabled={disabled} />;
+      },
+
+      // 🎯 标题处理 - 保持现有的h1-h3
+      h1({ children }) {
+        return (
+          <h1 className={`font-bold mt-4 mb-2 ${
+            isUserMessage 
+              ? 'text-white' 
+              : 'text-gray-900 dark:text-gray-100'
           }`}
-        >
-          {children}
-        </a>
-      );
-    },
+          style={{ fontSize: 'calc(var(--aigc-font-size-base) * 1.5)' }}
+          >
+            {children}
+          </h1>
+        );
+      },
 
-    // 强调和加粗
-    strong({ children }) {
-      return (
-        <strong className={`font-semibold ${
-          isUserMessage 
-            ? 'text-white' 
-            : 'text-gray-900 dark:text-gray-100'
-        }`}>
-          {children}
-        </strong>
-      );
-    },
+      h2({ children }) {
+        return (
+          <h2 className={`font-bold mt-3 mb-2 ${
+            isUserMessage 
+              ? 'text-white' 
+              : 'text-gray-900 dark:text-gray-100'
+          }`}
+          style={{ fontSize: 'calc(var(--aigc-font-size-base) * 1.3)' }}
+          >
+            {children}
+          </h2>
+        );
+      },
 
-    em({ children }) {
-      return (
-        <em className={`italic ${
-          isUserMessage 
-            ? 'text-white/90' 
-            : 'text-gray-800 dark:text-gray-200'
-        }`}>
-          {children}
-        </em>
-      );
-    },
+      h3({ children }) {
+        return (
+          <h3 className={`font-bold mt-3 mb-1 ${
+            isUserMessage 
+              ? 'text-white' 
+              : 'text-gray-900 dark:text-gray-100'
+          }`}
+          style={{ fontSize: 'calc(var(--aigc-font-size-base) * 1.15)' }}
+          >
+            {children}
+          </h3>
+        );
+      },
 
-    // 水平分割线
-    hr() {
-      return (
-        <hr className={`my-4 ${
-          isUserMessage 
-            ? 'border-white/30' 
-            : 'border-gray-300 dark:border-gray-600'
-        }`} />
-      );
-    },
+      // 🎯 段落处理
+      p({ children }) {
+        return (
+          <p className="my-2 leading-relaxed">
+            {children}
+          </p>
+        );
+      },
 
-    // 图片处理
-    img({ src, alt }) {
-      return (
-        <img 
-          src={src} 
-          alt={alt} 
-          className="max-w-full h-auto rounded-lg my-2 border border-gray-200 dark:border-gray-600"
-          loading="lazy"
-        />
-      );
-    },
-  });
+      // 🎯 引用块处理 - 增强样式
+      blockquote({ children }) {
+        return (
+          <blockquote className={`border-l-4 pl-4 py-2 my-3 rounded-r-lg relative ${
+            isUserMessage 
+              ? 'border-white/30 bg-white/10' 
+              : 'border-blue-400 bg-blue-50 dark:bg-blue-900/20'
+          }`}>
+            {/* 引用图标 */}
+            <div className={`absolute -left-2 -top-2 w-6 h-6 rounded-full flex items-center justify-center text-xs ${
+              isUserMessage 
+                ? 'bg-white/20 text-white/70' 
+                : 'bg-blue-100 dark:bg-blue-800 text-blue-600 dark:text-blue-300'
+            }`}>
+              "
+            </div>
+            <div className={`${
+              isUserMessage 
+                ? 'text-white/90' 
+                : 'text-blue-800 dark:text-blue-200'
+            }`}>
+              {children}
+            </div>
+          </blockquote>
+        );
+      },
+
+      // 🎯 链接处理 - 安全性增强
+      a({ href, children }) {
+        return (
+          <a 
+            href={href} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className={`hover:underline font-medium transition-colors duration-200 ${
+              isUserMessage 
+                ? 'text-white/90 hover:text-white' 
+                : 'text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300'
+            }`}
+          >
+            {children}
+            {/* 外链图标 */}
+            <svg className="inline w-3 h-3 ml-1 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+            </svg>
+          </a>
+        );
+      },
+
+      // 🎯 强调和加粗
+      strong({ children }) {
+        return (
+          <strong className={`font-semibold ${
+            isUserMessage 
+              ? 'text-white' 
+              : 'text-gray-900 dark:text-gray-100'
+          }`}>
+            {children}
+          </strong>
+        );
+      },
+
+      em({ children }) {
+        return (
+          <em className={`italic ${
+            isUserMessage 
+              ? 'text-white/90' 
+              : 'text-gray-800 dark:text-gray-200'
+          }`}>
+            {children}
+          </em>
+        );
+      },
+
+      // 🎯 删除线支持
+      del({ children }) {
+        return (
+          <del className={`line-through opacity-75 ${
+            isUserMessage 
+              ? 'text-white/70' 
+              : 'text-gray-600 dark:text-gray-400'
+          }`}>
+            {children}
+          </del>
+        );
+      },
+
+      // 🎯 水平分割线
+      hr() {
+        return (
+          <hr className={`my-4 border-t-2 ${
+            isUserMessage 
+              ? 'border-white/30' 
+              : 'border-gray-300 dark:border-gray-600'
+          }`} />
+        );
+      },
+
+      // 🎯 图片处理 - 响应式优化
+      img({ src, alt }) {
+        return (
+          <img 
+            src={src} 
+            alt={alt} 
+            className="max-w-full h-auto rounded-lg my-2 border border-gray-200 dark:border-gray-600 shadow-sm hover:shadow-md transition-shadow duration-200"
+            loading="lazy"
+            style={{ maxHeight: '400px', objectFit: 'contain' }}
+          />
+        );
+      },
+    };
+  };
 
   
 
@@ -1021,9 +1115,14 @@ const SubmitTask = () => {
               <p className="text-xs text-gray-400 dark:text-gray-500">
                 按 Enter 发送，Shift + Enter 换行
               </p>
+              
             </div>
           </div>
         </div>
+        <FontSizeSelector
+          isOpen={showFontSelector}
+          onClose={handleCloseFontSelector}
+        />
       </div>
     );
   }
@@ -1529,13 +1628,6 @@ const SubmitTask = () => {
           )}
         </FormCard>
       </div>
-      {/* 🎯 字号选择器 */}
-      {isFullscreen && (
-        <FontSizeSelector
-          isOpen={showFontSelector}
-          onClose={handleCloseFontSelector}
-        />
-      )}
     </div>
     
   );
