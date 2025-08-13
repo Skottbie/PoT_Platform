@@ -57,7 +57,7 @@ trackPerformance();
 
 // 🎯 移动端输入框聚焦管理初始化
 document.addEventListener('DOMContentLoaded', () => {
-  initInputFocusManager();
+  //initInputFocusManager();
 });
 
 // 🎯 移动端视口元标签动态调整
