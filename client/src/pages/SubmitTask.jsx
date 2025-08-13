@@ -50,6 +50,7 @@ const SubmitTask = () => {
   const { currentSize, currentConfig } = useFontSize();
   const [showFontSelector, setShowFontSelector] = useState(false);
   const handleFontSizeClick = useCallback(() => {
+    console.log('字号按钮被点击了'); // 添加这行调试
     haptic.light();
     setShowFontSelector(true);
   }, [haptic]);
@@ -798,37 +799,52 @@ const SubmitTask = () => {
   if (isFullscreen) {
     return (
       <div className="fixed inset-0 z-[9999] bg-white dark:bg-gray-900 flex flex-col">
-        {/* 顶部导航栏 */}
+        {/* 顶部导航栏 - 修复移动端布局 */}
         <div className="flex-shrink-0 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-b border-gray-200/60 dark:border-gray-700/60 px-4 py-4 safe-area-inset-top">
           <div className="flex items-center justify-between max-w-4xl mx-auto">
-            <div className="flex items-center gap-3">
-                <button
-                  onClick={handleFontSizeClick}
-                  className="w-10 h-10 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center hover:shadow-lg transition-all duration-200 active:scale-95"
-                  title="调整字号"
-                >
-                  <span className="text-white text-lg font-bold">𝐀𝐚</span>
-                </button>
-              <div>
-                <h3 className="font-bold text-gray-900 dark:text-gray-100 text-lg">
+            {/* 左侧：字号按钮和标题 - 修复移动端布局 */}
+            <div className="flex items-center gap-3 flex-1 min-w-0">
+              {/* 字号按钮 - 改进样式和图标 */}
+              <button
+                onClick={handleFontSizeClick}
+                className="w-12 h-10 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center hover:shadow-lg transition-all duration-200 active:scale-95"
+                title="调整字号"
+              >
+                <div className="flex items-baseline gap-0.5">
+                  <span className="text-white text-xs font-bold">A</span>
+                  <span className="text-white text-sm font-bold">A</span>
+                </div>
+              </button>
+              
+              {/* 标题和信息 - 移动端优化布局 */}
+              <div className="flex-1 min-w-0">
+                <h3 className="font-bold text-gray-900 dark:text-gray-100 text-lg truncate">
                   AIGC
                 </h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  {model === 'qwen' ? '通义千问' : 'ChatGPT'} · {currentConfig.label} {currentConfig.size}px
-                </p>
+                {/* 移动端分两行显示，桌面端一行显示 */}
+                <div className="md:flex md:items-center md:gap-2">
+                  <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
+                    {model === 'qwen' ? '通义千问' : 'ChatGPT'}
+                  </p>
+                  <span className="hidden md:inline text-gray-400">·</span>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    {currentConfig.label} {currentConfig.size}px
+                  </p>
+                </div>
               </div>
             </div>
             
-            <div className="flex items-center gap-3">
+            {/* 右侧：模型选择和关闭按钮 */}
+            <div className="flex items-center gap-3 flex-shrink-0">
               <select
                 value={model}
                 onChange={(e) => {
                   setModel(e.target.value);
                   haptic.light();
                 }}
-                className="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500"
+                className="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 max-w-[120px]"
               >
-                <option value="openai">ChatGPT*(维护中)</option>
+                <option value="openai">ChatGPT*维护中</option>
                 <option value="qwen">通义千问</option>
               </select>
               
@@ -845,7 +861,7 @@ const SubmitTask = () => {
           </div>
         </div>
 
-        {/* 对话内容区域 */}
+        {/* 对话内容区域 - 保持不变 */}
         <div
           ref={chatBoxRef}
           className="flex-1 overflow-y-auto bg-white dark:bg-gray-900 aigc-chat-content"
