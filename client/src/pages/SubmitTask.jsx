@@ -28,6 +28,7 @@ const SubmitTask = () => {
   const deviceInfo = useDeviceDetection();
   const keyboardState = useVirtualKeyboard();
   const haptic = useHapticFeedback();
+  const [selectWidth, setSelectWidth] = useState('auto');
 
   // 基础状态
   const [task, setTask] = useState(null);
@@ -435,6 +436,27 @@ const SubmitTask = () => {
       },
     };
   };
+
+  useEffect(() => {
+    if (!isFullscreen) return; // 只在全屏时执行
+    
+    const measureSelectWidth = () => {
+      const measurer = document.createElement('span');
+      measurer.style.visibility = 'hidden';
+      measurer.style.position = 'absolute';
+      measurer.style.fontSize = '16px';
+      measurer.style.fontFamily = getComputedStyle(document.body).fontFamily;
+      measurer.textContent = model === 'qwen' ? '通义千问' : 'ChatGPT*维护中';
+      document.body.appendChild(measurer);
+      
+      const textWidth = measurer.offsetWidth;
+      document.body.removeChild(measurer);
+      
+      setSelectWidth(`${textWidth + 40}px`);
+    };
+
+    measureSelectWidth();
+  }, [model, isFullscreen]); 
 
   useEffect(() => {
     const handleFontSizeChange = () => {
@@ -905,49 +927,24 @@ const SubmitTask = () => {
     );
   }
 
-  // 🎯 AIGC 全屏模式组件 - 原生应用级设计
-  // 🎯 AIGC 全屏模式组件 - 原生应用级设计（消除色偏版本）
+  // 🎯 AIGC 全屏模式组件 - 修复后版本
   if (isFullscreen) {
-    // 动态测量select宽度的Hook
-    const [selectWidth, setSelectWidth] = React.useState('auto');
-    
-    React.useEffect(() => {
-      const measureSelectWidth = () => {
-        // 创建隐藏的测量元素
-        const measurer = document.createElement('span');
-        measurer.style.visibility = 'hidden';
-        measurer.style.position = 'absolute';
-        measurer.style.fontSize = '16px';
-        measurer.style.fontFamily = getComputedStyle(document.body).fontFamily;
-        measurer.textContent = model === 'qwen' ? '通义千问' : 'ChatGPT*维护中';
-        document.body.appendChild(measurer);
-        
-        const textWidth = measurer.offsetWidth;
-        document.body.removeChild(measurer);
-        
-        // 添加padding和下拉箭头的空间
-        setSelectWidth(`${textWidth + 40}px`);
-      };
-
-      measureSelectWidth();
-    }, [model]);
-
     return (
       <div className={`fixed inset-0 z-[9999] flex flex-col ${
         isMobile 
-          ? 'bg-[#1a1a1a] dark:bg-[#1a1a1a]' // 使用纯色背景，消除渐变
+          ? 'bg-[#1a1a1a] dark:bg-[#1a1a1a]' 
           : 'bg-white dark:bg-gray-900'
       }`}>
-        {/* 顶部导航栏 - 原生应用级隐身设计 */}
+        {/* 顶部导航栏 */}
         <div className={`flex-shrink-0 backdrop-blur-xl border-b safe-area-inset-top ${
           isMobile 
-            ? 'bg-[#1f1f1f] dark:bg-[#1f1f1f] border-[#2a2a2a] px-4 py-2' // 使用实色，消除透明度
+            ? 'bg-[#1f1f1f] dark:bg-[#1f1f1f] border-[#2a2a2a] px-4 py-2'
             : 'bg-white/95 dark:bg-gray-900/95 border-gray-200/60 dark:border-gray-700/60 px-4 py-4'
         }`}>
           <div className={`flex items-center justify-between ${isMobile ? 'h-10' : 'max-w-4xl mx-auto'}`}>
             {/* 左侧区域 */}
             <div className="flex items-center gap-3 flex-1 min-w-0">
-              {/* 字号按钮 - 完全隐身的原生设计 */}
+              {/* 字号按钮 */}
               <button
                 onClick={handleFontSizeClick}
                 className={`transition-all duration-200 active:scale-95 ${
@@ -958,16 +955,14 @@ const SubmitTask = () => {
                 title="调整字号"
               >
                 <div className={`flex items-baseline gap-0.5 ${
-                  isMobile 
-                    ? 'text-gray-300'
-                    : 'text-white'
+                  isMobile ? 'text-gray-300' : 'text-white'
                 }`}>
                   <span className="text-xs font-semibold">A</span>
                   <span className="text-sm font-semibold">A</span>
                 </div>
               </button>
               
-              {/* 标题和模型选择 - 移动端完全隐身的响应式设计 */}
+              {/* 模型选择 */}
               {isMobile ? (
                 <select
                   value={model}
@@ -1011,7 +1006,7 @@ const SubmitTask = () => {
               )}
             </div>
             
-            {/* 右侧：模型选择器和关闭按钮 */}
+            {/* 右侧：关闭按钮等 */}
             <div className="flex items-center gap-3 flex-shrink-0">
               {!isMobile && (
                 <select
@@ -1027,7 +1022,6 @@ const SubmitTask = () => {
                 </select>
               )}
               
-              {/* 关闭按钮 - 完全隐身的原生设计 */}
               <button
                 onClick={() => {
                   haptic.light();
@@ -1047,13 +1041,11 @@ const SubmitTask = () => {
           </div>
         </div>
 
-        {/* 对话内容区域 - 纯色背景 */}
+        {/* 对话内容区域 */}
         <div
           ref={chatBoxRef}
           className={`flex-1 overflow-y-auto aigc-chat-content ${
-            isMobile 
-              ? 'bg-[#1a1a1a]' // 使用纯色，消除渐变
-              : 'bg-white dark:bg-gray-900'
+            isMobile ? 'bg-[#1a1a1a]' : 'bg-white dark:bg-gray-900'
           }`}
           style={{
             paddingBottom: `calc(80px + env(safe-area-inset-bottom, 0px) + ${keyboardState.isOpen ? keyboardState.height : 0}px)`,
