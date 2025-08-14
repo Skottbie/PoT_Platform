@@ -85,37 +85,49 @@ const DraftSaveIndicator = ({
         )}
       </AnimatePresence>
 
-      {/* 手动保存按钮 */}
-      <IconButton
+      {/* 手动保存按钮 - 使用 SecondaryButton 保持样式一致 */}
+      <motion.button
         onClick={handleManualSave}
-        className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-        variant="ghost"
         disabled={saveStatus === 'saving'}
         title="手动保存草稿"
+        className={`
+          relative p-2.5 rounded-lg border transition-all duration-200
+          ${saveStatus === 'saved' 
+            ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-700 text-green-600 dark:text-green-400' 
+            : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
+          }
+          ${saveStatus === 'saving' ? 'opacity-50 cursor-not-allowed' : 'hover:border-gray-300 dark:hover:border-gray-500'}
+          shadow-sm hover:shadow-md
+        `}
+        whileTap={{ scale: saveStatus === 'saving' ? 1 : 0.95 }}
+        whileHover={{ scale: saveStatus === 'saving' ? 1 : 1.02 }}
       >
         <motion.div
-          whileTap={{ scale: 0.9 }}
           className="w-4 h-4"
+          animate={saveStatus === 'saving' ? { rotate: 360 } : { rotate: 0 }}
+          transition={saveStatus === 'saving' ? { duration: 1, repeat: Infinity, ease: "linear" } : {}}
         >
-          <svg 
-            className={`w-full h-full transition-colors ${
-              saveStatus === 'saved' 
-                ? 'text-green-600 dark:text-green-400' 
-                : 'text-gray-600 dark:text-gray-400'
-            }`} 
-            fill="none" 
-            stroke="currentColor" 
-            viewBox="0 0 24 24"
-          >
-            <path 
-              strokeLinecap="round" 
-              strokeLinejoin="round" 
-              strokeWidth={2} 
-              d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" 
-            />
-          </svg>
+          {saveStatus === 'saving' ? (
+            <svg className="w-full h-full" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+          ) : (
+            <svg 
+              className="w-full h-full" 
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+            >
+              <path 
+                strokeLinecap="round" 
+                strokeLinejoin="round" 
+                strokeWidth={2} 
+                d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" 
+              />
+            </svg>
+          )}
         </motion.div>
-      </IconButton>
+      </motion.button>
     </div>
   );
 };

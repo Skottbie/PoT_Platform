@@ -1626,20 +1626,14 @@ const SubmitTask = () => {
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
         >
-          <button
+          {/* 使用现有的 SecondaryButton 组件保持样式一致 */}
+          <SecondaryButton
             onClick={handleBackClick} // 使用新的处理函数
-            className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition-colors group"
+            icon="👈"
+            className="flex-shrink-0"
           >
-            <motion.div
-              whileHover={{ x: -2 }}
-              className="flex items-center gap-2"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-              <span className="font-medium">返回</span>
-            </motion.div>
-          </button>
+            返回
+          </SecondaryButton>
 
           {/* 草稿保存指示器 */}
           <DraftSaveIndicator
