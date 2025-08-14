@@ -70,6 +70,7 @@ const SubmitTask = () => {
     hasDraft,
     showRestoreDialog,
     draftData,
+    lastSaveTime,
     debouncedSave,
     manualSave,
     restoreDraft,
@@ -1677,6 +1678,7 @@ const handleExitFullscreen = useCallback(async () => {
           {/* 草稿保存指示器 */}
           <DraftSaveIndicator
             saveStatus={saveStatus}
+            lastSaveTime={lastSaveTime}
             onManualSave={handleManualSave}
           />
         </motion.div>

@@ -1,17 +1,54 @@
 // src/components/DraftSaveIndicator.jsx
 import { motion, AnimatePresence } from 'framer-motion';
 import { useHapticFeedback } from '../hooks/useDeviceDetetion';
+import { useState, useEffect } from 'react';
 
 const DraftSaveIndicator = ({ 
   saveStatus, 
   onManualSave,
+  lastSaveTime, // 新增：最后保存时间
   className = ''
 }) => {
   const haptic = useHapticFeedback();
+  const [currentTime, setCurrentTime] = useState(Date.now());
+
+  // 每分钟更新一次当前时间，用于计算相对时间
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(Date.now());
+    }, 60000); // 每分钟更新一次
+
+    return () => clearInterval(timer);
+  }, []);
 
   const handleManualSave = () => {
     haptic.light();
     onManualSave();
+  };
+
+  // 格式化相对时间
+  const formatRelativeTime = (timestamp) => {
+    if (!timestamp) return null;
+    
+    const now = currentTime;
+    const diff = now - timestamp;
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(diff / 3600000);
+    const days = Math.floor(diff / 86400000);
+
+    if (minutes < 1) return '刚刚';
+    if (minutes < 60) return `${minutes}分钟前`;
+    if (hours < 24) return `${hours}小时前`;
+    if (days < 7) return `${days}天前`;
+    
+    // 超过7天显示具体日期
+    const date = new Date(timestamp);
+    return date.toLocaleDateString('zh-CN', { 
+      month: 'short', 
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
   };
 
   // 获取按钮状态样式
@@ -127,95 +164,109 @@ const DraftSaveIndicator = ({
   };
 
   return (
-    <div className={`flex items-center gap-3 ${className}`}>
-      {/* 状态指示文本 */}
-      <AnimatePresence mode="wait">
-        {getStatusText() && (
-          <motion.div
-            key={saveStatus}
-            initial={{ opacity: 0, x: -10, scale: 0.9 }}
-            animate={{ opacity: 1, x: 0, scale: 1 }}
-            exit={{ opacity: 0, x: 10, scale: 0.9 }}
-            transition={{ duration: 0.3, ease: "easeOut" }}
-            className="flex items-center gap-2"
-          >
-            {/* 状态指示点 */}
+    <div className={`flex flex-col items-end gap-2 ${className}`}>
+      {/* 最新保存时间 - 只在有保存时间时显示 */}
+      {lastSaveTime && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-xs text-gray-500 dark:text-gray-400 font-medium"
+        >
+          最后保存：{formatRelativeTime(lastSaveTime)}
+        </motion.div>
+      )}
+
+      {/* 保存状态和按钮区域 */}
+      <div className="flex items-center gap-3">
+        {/* 状态指示文本 */}
+        <AnimatePresence mode="wait">
+          {getStatusText() && (
             <motion.div
-              className={`w-2 h-2 rounded-full ${
+              key={saveStatus}
+              initial={{ opacity: 0, x: -10, scale: 0.9 }}
+              animate={{ opacity: 1, x: 0, scale: 1 }}
+              exit={{ opacity: 0, x: 10, scale: 0.9 }}
+              transition={{ duration: 0.3, ease: "easeOut" }}
+              className="flex items-center gap-2"
+            >
+              {/* 状态指示点 */}
+              <motion.div
+                className={`w-2 h-2 rounded-full ${
+                  saveStatus === 'saved' 
+                    ? 'bg-green-500' 
+                    : saveStatus === 'saving'
+                    ? 'bg-blue-500' 
+                    : 'bg-red-500'
+                }`}
+                animate={saveStatus === 'saving' ? { 
+                  scale: [1, 1.3, 1],
+                  opacity: [1, 0.6, 1]
+                } : {}}
+                transition={saveStatus === 'saving' ? { 
+                  duration: 1.5, 
+                  repeat: Infinity 
+                } : {}}
+              />
+              
+              {/* 状态文本 */}
+              <span className={`text-sm font-medium ${
                 saveStatus === 'saved' 
-                  ? 'bg-green-500' 
+                  ? 'text-green-600 dark:text-green-400' 
                   : saveStatus === 'saving'
-                  ? 'bg-blue-500' 
-                  : 'bg-red-500'
-              }`}
-              animate={saveStatus === 'saving' ? { 
-                scale: [1, 1.3, 1],
-                opacity: [1, 0.6, 1]
-              } : {}}
-              transition={saveStatus === 'saving' ? { 
-                duration: 1.5, 
-                repeat: Infinity 
-              } : {}}
-            />
-            
-            {/* 状态文本 */}
-            <span className={`text-sm font-medium ${
+                  ? 'text-blue-600 dark:text-blue-400' 
+                  : 'text-red-600 dark:text-red-400'
+              }`}>
+                {getStatusText()}
+              </span>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* 主保存按钮 */}
+        <motion.button
+          onClick={handleManualSave}
+          disabled={saveStatus === 'saving'}
+          className={getButtonStyles()}
+          whileHover={saveStatus !== 'saving' ? { 
+            scale: 1.02,
+            y: -1,
+          } : {}}
+          whileTap={saveStatus !== 'saving' ? { 
+            scale: 0.95,
+            y: 0,
+          } : {}}
+          transition={{ type: "spring", stiffness: 400, damping: 17 }}
+          title={saveStatus === 'saving' ? '正在保存...' : '手动保存草稿'}
+        >
+          {/* 背景光效 */}
+          <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none">
+            <div className={`absolute inset-0 rounded-xl ${
               saveStatus === 'saved' 
-                ? 'text-green-600 dark:text-green-400' 
+                ? 'bg-gradient-to-r from-green-400/10 to-emerald-400/10' 
                 : saveStatus === 'saving'
-                ? 'text-blue-600 dark:text-blue-400' 
-                : 'text-red-600 dark:text-red-400'
-            }`}>
-              {getStatusText()}
-            </span>
-          </motion.div>
-        )}
-      </AnimatePresence>
+                ? 'bg-gradient-to-r from-blue-400/10 to-cyan-400/10'
+                : saveStatus === 'error'
+                ? 'bg-gradient-to-r from-red-400/10 to-rose-400/10'
+                : 'bg-gradient-to-r from-gray-400/10 to-slate-400/10'
+            }`} />
+          </div>
 
-      {/* 主保存按钮 */}
-      <motion.button
-        onClick={handleManualSave}
-        disabled={saveStatus === 'saving'}
-        className={getButtonStyles()}
-        whileHover={saveStatus !== 'saving' ? { 
-          scale: 1.02,
-          y: -1,
-        } : {}}
-        whileTap={saveStatus !== 'saving' ? { 
-          scale: 0.95,
-          y: 0,
-        } : {}}
-        transition={{ type: "spring", stiffness: 400, damping: 17 }}
-        title={saveStatus === 'saving' ? '正在保存...' : '手动保存草稿'}
-      >
-        {/* 背景光效 */}
-        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none">
-          <div className={`absolute inset-0 rounded-xl ${
-            saveStatus === 'saved' 
-              ? 'bg-gradient-to-r from-green-400/10 to-emerald-400/10' 
-              : saveStatus === 'saving'
-              ? 'bg-gradient-to-r from-blue-400/10 to-cyan-400/10'
-              : saveStatus === 'error'
-              ? 'bg-gradient-to-r from-red-400/10 to-rose-400/10'
-              : 'bg-gradient-to-r from-gray-400/10 to-slate-400/10'
-          }`} />
-        </div>
+          {/* 图标容器 */}
+          <div className="relative z-10">
+            {getIcon()}
+          </div>
 
-        {/* 图标容器 */}
-        <div className="relative z-10">
-          {getIcon()}
-        </div>
-
-        {/* 涟漪效果 */}
-        {saveStatus === 'saved' && (
-          <motion.div
-            className="absolute inset-0 rounded-xl border-2 border-green-400/50"
-            initial={{ scale: 1, opacity: 0.8 }}
-            animate={{ scale: 1.5, opacity: 0 }}
-            transition={{ duration: 0.8, ease: "easeOut" }}
-          />
-        )}
-      </motion.button>
+          {/* 涟漪效果 */}
+          {saveStatus === 'saved' && (
+            <motion.div
+              className="absolute inset-0 rounded-xl border-2 border-green-400/50"
+              initial={{ scale: 1, opacity: 0.8 }}
+              animate={{ scale: 1.5, opacity: 0 }}
+              transition={{ duration: 0.8, ease: "easeOut" }}
+            />
+          )}
+        </motion.button>
+      </div>
     </div>
   );
 };

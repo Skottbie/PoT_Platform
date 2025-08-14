@@ -1,4 +1,4 @@
-// src/hooks/useDraftSave.js - 完整修复版
+// src/hooks/useDraftSave.js - 修复智能退出的完整版本
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useHapticFeedback } from './useDeviceDetetion';
 
@@ -128,13 +128,34 @@ export const useDraftSave = (taskId, isFullscreen = false) => {
   const [hasDraft, setHasDraft] = useState(false);
   const [draftData, setDraftData] = useState(null);
   const [showRestoreDialog, setShowRestoreDialog] = useState(false);
+  const [lastSaveTime, setLastSaveTime] = useState(null); // 🆕 最后保存时间
   
   const haptic = useHapticFeedback();
   const saveTimeoutRef = useRef(null);
-  const lastSaveDataRef = useRef('');
+  const lastSaveDataRef = useRef(''); // 🆕 用于智能退出判断
+  const pendingSaveDataRef = useRef(''); // 🆕 记录即将保存的数据
   
   // 🔥 关键修复：全屏模式下完全禁用所有定时器和自动保存
   const isAutoSaveEnabled = useRef(!isFullscreen);
+
+  // 🆕 数据标准化函数 - 确保数据结构一致性
+  const normalizeDataForComparison = useCallback((data) => {
+    // 标准化数据结构，确保对比一致性
+    return {
+      content: data.content || '',
+      images: data.images || [],
+      file: data.file || null,
+      fileInfo: data.fileInfo || {
+        hasFile: !!data.file,
+        fileName: data.file?.name || '',
+        fileSize: data.file ? formatFileSize(data.file.size) : '',
+        fileType: data.file?.type || ''
+      },
+      aigcLog: data.aigcLog || [],
+      model: data.model || 'qwen',
+      shouldUploadAIGC: data.shouldUploadAIGC || false
+    };
+  }, []);
 
   // 监听全屏状态变化，立即清理定时器
   useEffect(() => {
@@ -148,6 +169,8 @@ export const useDraftSave = (taskId, isFullscreen = false) => {
       }
       // 停止任何正在进行的保存操作
       setSaveStatus('idle');
+      // 🆕 清除pending状态
+      pendingSaveDataRef.current = '';
       console.log('🔥 全屏模式：已禁用自动保存');
     } else {
       console.log('🔥 非全屏模式：已启用自动保存');
@@ -168,13 +191,28 @@ export const useDraftSave = (taskId, isFullscreen = false) => {
         setHasDraft(true);
         setDraftData(draft);
         setShowRestoreDialog(true);
+        // 🆕 设置最后保存时间和数据
+        if (draft.lastSaved) {
+          setLastSaveTime(draft.lastSaved);
+          // 构建草稿数据用于对比
+          const draftDataForComparison = {
+            content: draft.content || '',
+            images: draft.images || [],
+            file: null, // 草稿中不保存文件
+            fileInfo: draft.fileInfo || { hasFile: false },
+            aigcLog: draft.aigcLog || [],
+            model: draft.model || 'qwen',
+            shouldUploadAIGC: draft.shouldUploadAIGC || false
+          };
+          lastSaveDataRef.current = JSON.stringify(draftDataForComparison);
+        }
       }
     } catch (error) {
       console.error('检查草稿失败:', error);
     }
   }, [taskId]);
 
-  // 保存草稿 - 添加全屏状态检查
+  // 保存草稿 - 添加全屏状态检查和时间跟踪
   const saveDraft = useCallback(async (data, isManual = false) => {
     if (!taskId || !data) return false;
 
@@ -184,9 +222,12 @@ export const useDraftSave = (taskId, isFullscreen = false) => {
       return false;
     }
 
-    // 检查数据是否有变化
-    const currentDataStr = JSON.stringify(data);
+    // 🆕 标准化数据后再比较
+    const normalizedData = normalizeDataForComparison(data);
+    const currentDataStr = JSON.stringify(normalizedData);
+    
     if (currentDataStr === lastSaveDataRef.current && !isManual) {
+      console.log('🆕 数据无变化，跳过自动保存');
       return false;
     }
 
@@ -195,7 +236,7 @@ export const useDraftSave = (taskId, isFullscreen = false) => {
     try {
       // 处理图片数据 - 转换为可存储的格式
       const processedImages = await Promise.all(
-        (data.images || []).map(async (image) => {
+        (normalizedData.images || []).map(async (image) => {
           if (image instanceof File) {
             return {
               file: image,
@@ -210,24 +251,24 @@ export const useDraftSave = (taskId, isFullscreen = false) => {
       );
 
       const draftPayload = {
-        content: data.content || '',
+        content: normalizedData.content,
         images: processedImages,
-        fileInfo: data.fileInfo || {
-          hasFile: !!data.file,
-          fileName: data.file?.name || '',
-          fileSize: data.file ? formatFileSize(data.file.size) : '',
-          fileType: data.file?.type || ''
-        },
-        aigcLog: data.aigcLog || [],
-        model: data.model || 'qwen',
-        shouldUploadAIGC: data.shouldUploadAIGC || false
+        fileInfo: normalizedData.fileInfo,
+        aigcLog: normalizedData.aigcLog,
+        model: normalizedData.model,
+        shouldUploadAIGC: normalizedData.shouldUploadAIGC
       };
 
       const success = await draftStorage.saveDraft(taskId, draftPayload);
       
       if (success) {
         setSaveStatus('saved');
+        // 🆕 更新最后保存的数据和时间
         lastSaveDataRef.current = currentDataStr;
+        // 🆕 清除pending状态（因为已经完成保存）
+        pendingSaveDataRef.current = '';
+        const saveTime = Date.now();
+        setLastSaveTime(saveTime);
         
         if (isManual) {
           haptic.success();
@@ -238,18 +279,22 @@ export const useDraftSave = (taskId, isFullscreen = false) => {
         return true;
       } else {
         setSaveStatus('error');
+        // 🆕 保存失败时清除pending状态
+        pendingSaveDataRef.current = '';
         setTimeout(() => setSaveStatus('idle'), 3000);
         return false;
       }
     } catch (error) {
       console.error('保存草稿失败:', error);
       setSaveStatus('error');
+      // 🆕 保存失败时清除pending状态
+      pendingSaveDataRef.current = '';
       setTimeout(() => setSaveStatus('idle'), 3000);
       return false;
     }
-  }, [taskId, haptic, isFullscreen]);
+  }, [taskId, haptic, isFullscreen, normalizeDataForComparison]);
 
-  // 防抖的自动保存 - 加强全屏检查
+  // 防抖的自动保存 - 加强全屏检查和pending状态管理
   const debouncedSave = useCallback((data) => {
     // 🔥 双重检查：当前状态 + ref状态
     if (isFullscreen || !isAutoSaveEnabled.current) {
@@ -261,6 +306,12 @@ export const useDraftSave = (taskId, isFullscreen = false) => {
       clearTimeout(saveTimeoutRef.current);
     }
     
+    // 🆕 标准化数据后记录pending状态
+    const normalizedData = normalizeDataForComparison(data);
+    const currentDataStr = JSON.stringify(normalizedData);
+    pendingSaveDataRef.current = currentDataStr;
+    console.log('🆕 记录即将保存的数据，用于智能退出判断');
+    
     saveTimeoutRef.current = setTimeout(() => {
       // 🔥 执行前再次检查全屏状态
       if (!isFullscreen && isAutoSaveEnabled.current) {
@@ -268,15 +319,19 @@ export const useDraftSave = (taskId, isFullscreen = false) => {
         saveDraft(data, false);
       } else {
         console.log('🔥 取消自动保存：状态已变化');
+        // 如果取消保存，清除pending状态
+        pendingSaveDataRef.current = '';
       }
     }, 3000);
-  }, [isFullscreen, saveDraft]);
+  }, [isFullscreen, saveDraft, normalizeDataForComparison]);
 
   // 手动保存
   const manualSave = useCallback((data) => {
     if (saveTimeoutRef.current) {
       clearTimeout(saveTimeoutRef.current);
     }
+    // 🆕 清除pending状态，因为要立即执行保存
+    pendingSaveDataRef.current = '';
     console.log('🔥 执行手动保存');
     return saveDraft(data, true);
   }, [saveDraft]);
@@ -299,21 +354,57 @@ export const useDraftSave = (taskId, isFullscreen = false) => {
     await draftStorage.deleteDraft(taskId);
     setHasDraft(false);
     setDraftData(null);
+    setLastSaveTime(null); // 🆕 清除保存时间
+    lastSaveDataRef.current = ''; // 🆕 清除保存数据
+    pendingSaveDataRef.current = ''; // 🆕 清除pending状态
   }, [taskId]);
 
-  // 页面离开前检查
+  // 🆕 智能页面离开前检查 - 基于数据对比和pending状态
   const checkBeforeLeave = useCallback((currentData) => {
     if (!currentData) return false;
     
+    // 检查是否有实际内容
     const hasContent = !!(
       currentData.content?.trim() ||
       currentData.images?.length > 0 ||
       currentData.file ||
       currentData.aigcLog?.length > 0
     );
+
+    // 如果没有内容，不需要提示
+    if (!hasContent) {
+      console.log('🆕 无内容，不需要保存提示');
+      return false;
+    }
+
+    // 🆕 标准化当前数据后再比较
+    const normalizedData = normalizeDataForComparison(currentData);
+    const currentDataStr = JSON.stringify(normalizedData);
     
-    return hasContent;
-  }, []);
+    // 🆕 检查当前数据是否已保存或即将保存
+    const isSameAsLastSave = currentDataStr === lastSaveDataRef.current;
+    const isSameAsPendingSave = currentDataStr === pendingSaveDataRef.current;
+    
+    console.log('🆕 退出检查:', {
+      hasContent,
+      isSameAsLastSave,
+      isSameAsPendingSave,
+      saveStatus,
+      lastSaveExists: !!lastSaveDataRef.current,
+      pendingSaveExists: !!pendingSaveDataRef.current,
+      currentDataStr: currentDataStr.substring(0, 100) + '...',
+      lastSaveStr: lastSaveDataRef.current.substring(0, 100) + '...',
+      pendingSaveStr: pendingSaveDataRef.current.substring(0, 100) + '...'
+    });
+
+    if (isSameAsLastSave || isSameAsPendingSave) {
+      console.log('🆕 数据已保存或即将保存，无需提示');
+      return false;
+    }
+
+    console.log('🆕 检测到未保存的更改，需要提示');
+    return true;
+  }, [normalizeDataForComparison]);
 
   // 初始化检查草稿
   useEffect(() => {
@@ -328,7 +419,9 @@ export const useDraftSave = (taskId, isFullscreen = false) => {
         saveTimeoutRef.current = null;
       }
       isAutoSaveEnabled.current = false;
-      console.log('🔥 组件卸载：已清理所有定时器');
+      // 🆕 清理pending状态
+      pendingSaveDataRef.current = '';
+      console.log('🔥 组件卸载：已清理所有定时器和pending状态');
     };
   }, []);
 
@@ -337,6 +430,7 @@ export const useDraftSave = (taskId, isFullscreen = false) => {
     hasDraft,
     showRestoreDialog,
     draftData,
+    lastSaveTime, // 🆕 导出最后保存时间
     debouncedSave,
     manualSave,
     restoreDraft,
