@@ -927,330 +927,335 @@ const SubmitTask = () => {
     );
   }
 
-  // 🎯 AIGC 全屏模式组件 - 修复后版本
+  // 🎯 AIGC 全屏模式组件 - 原生应用级设计
   if (isFullscreen) {
-    return (
-      <div className={`fixed inset-0 z-[9999] flex flex-col ${
-        isMobile 
-          ? 'bg-[#1a1a1a] dark:bg-[#1a1a1a]' 
-          : 'bg-white dark:bg-gray-900'
-      }`}>
-        {/* 顶部导航栏 */}
-        <div className={`flex-shrink-0 backdrop-blur-xl border-b safe-area-inset-top ${
+      return (
+        <div className={`fixed inset-0 z-[9999] flex flex-col ${
           isMobile 
-            ? 'bg-[#1f1f1f] dark:bg-[#1f1f1f] border-[#2a2a2a] px-4 py-2'
-            : 'bg-white/95 dark:bg-gray-900/95 border-gray-200/60 dark:border-gray-700/60 px-4 py-4'
+            ? 'bg-gradient-to-br from-[#fefdfb] via-[#fefcf9] to-[#fdf8f0] dark:bg-gradient-to-br dark:from-[#1a1a1a] dark:via-[#1c1c1c] dark:to-[#1e1e1e]' 
+            : 'bg-white dark:bg-gray-900'
         }`}>
-          <div className={`flex items-center justify-between ${isMobile ? 'h-10' : 'max-w-4xl mx-auto'}`}>
-            {/* 左侧区域 */}
-            <div className="flex items-center gap-3 flex-1 min-w-0">
-              {/* 字号按钮 */}
-              <button
-                onClick={handleFontSizeClick}
-                className={`transition-all duration-200 active:scale-95 ${
-                  isMobile 
-                    ? 'w-9 h-9 hover:opacity-80 active:opacity-70 rounded-full flex items-center justify-center border-0 outline-none focus:outline-none focus:ring-0 bg-transparent'
-                    : 'w-12 h-10 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center hover:shadow-lg'
-                }`}
-                title="调整字号"
-              >
-                <div className={`flex items-baseline gap-0.5 ${
-                  isMobile ? 'text-gray-300' : 'text-white'
-                }`}>
-                  <span className="text-xs font-semibold">A</span>
-                  <span className="text-sm font-semibold">A</span>
-                </div>
-              </button>
-              
-              {/* 模型选择 */}
-              {isMobile ? (
-                <select
-                  value={model}
-                  onChange={(e) => {
-                    setModel(e.target.value);
-                    haptic.light();
-                  }}
-                  className="bg-transparent border-0 text-base font-medium text-gray-200 focus:outline-none focus:ring-0 cursor-pointer hover:opacity-80 active:opacity-70 outline-none ring-0 rounded-lg px-2 py-1 transition-all duration-200"
-                  style={{
-                    width: selectWidth,
-                    minWidth: 'fit-content',
-                    appearance: 'none',
-                    backgroundImage: `url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%23D1D5DB' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E")`,
-                    backgroundPosition: 'right 8px center',
-                    backgroundRepeat: 'no-repeat',
-                    backgroundSize: '16px',
-                    paddingRight: '32px'
-                  }}
-                >
-                  <option value="openai">ChatGPT*维护中</option>
-                  <option value="qwen">通义千问</option>
-                </select>
-              ) : (
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-bold text-gray-900 dark:text-gray-100 text-lg truncate">
-                    AIGC
-                  </h3>
-                  <div className="md:flex md:items-center md:gap-2">
-                    <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
-                      {model === 'qwen' ? '通义千问' : 'ChatGPT'}
-                    </p>
-                    <span className="hidden md:inline text-gray-400">·</span>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      {(() => {
-                        const currentFontConfig = FontSizeManager.getSizeConfig(fontSizeKey);
-                        return `${currentFontConfig.label} ${currentFontConfig.size}px`;
-                      })()}
-                    </p>
-                  </div>
-                </div>
-              )}
-            </div>
-            
-            {/* 右侧：关闭按钮等 */}
-            <div className="flex items-center gap-3 flex-shrink-0">
-              {!isMobile && (
-                <select
-                  value={model}
-                  onChange={(e) => {
-                    setModel(e.target.value);
-                    haptic.light();
-                  }}
-                  className="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 max-w-[120px]"
-                >
-                  <option value="openai">ChatGPT*维护中</option>
-                  <option value="qwen">通义千问</option>
-                </select>
-              )}
-              
-              <button
-                onClick={() => {
-                  haptic.light();
-                  setIsFullscreen(false);
-                }}
-                className={`transition-all duration-200 active:scale-95 ${
-                  isMobile 
-                    ? 'w-9 h-9 hover:opacity-80 active:opacity-70 rounded-full flex items-center justify-center border-0 outline-none focus:outline-none focus:ring-0 bg-transparent'
-                    : '!w-10 !h-10 !p-0 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full flex items-center justify-center'
-                }`}
-              >
-                <svg className={`${isMobile ? 'w-4 h-4' : 'w-5 h-5'} text-gray-300`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* 对话内容区域 */}
-        <div
-          ref={chatBoxRef}
-          className={`flex-1 overflow-y-auto aigc-chat-content ${
-            isMobile ? 'bg-[#1a1a1a]' : 'bg-white dark:bg-gray-900'
-          }`}
-          style={{
-            paddingBottom: `calc(80px + env(safe-area-inset-bottom, 0px) + ${keyboardState.isOpen ? keyboardState.height : 0}px)`,
-          }}
-        >
-          <div className={isMobile ? 'px-3 py-4' : 'max-w-4xl mx-auto px-4 py-6'}>
-            {aigcLog.length === 0 && (
-              <motion.div 
-                className="flex flex-col items-center justify-center min-h-[50vh] text-center"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-              >
-                <div className={`${isMobile ? 'w-16 h-16' : 'w-20 h-20'} bg-gradient-to-br from-purple-100 to-indigo-100 dark:from-purple-900/30 dark:to-indigo-900/30 rounded-full flex items-center justify-center mb-4`}>
-                  <span className={`${isMobile ? 'text-3xl' : 'text-4xl'}`}>🤖</span>
-                </div>
-                <h3 className={`${isMobile ? 'text-xl' : 'text-2xl'} font-medium text-gray-100 mb-3`}>
-                  开始Thinking.
-                </h3>
-                <p className={`text-gray-400 ${isMobile ? 'text-sm' : 'max-w-md'} leading-relaxed`}>
-                  构建你的Thinking Chain
-                </p>
-              </motion.div>
-            )}
-
-            <div className={isMobile ? 'space-y-2' : 'space-y-4'}>
-              {aigcLog.map((msg, idx) => (
-                <motion.div
-                  key={idx}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: idx * 0.05 }}
-                  className={msg.role === 'user' ? 'flex justify-end' : ''}
-                >
-                  {msg.role === 'user' ? (
-                    // 🎯 用户消息 - 移动端和桌面端不同样式
-                    <div className={isMobile ? 'max-w-[70%] min-w-0' : 'max-w-3xl min-w-0'}>
-                      <div className={`text-xs text-gray-500 dark:text-gray-400 mb-1 flex items-center gap-1 justify-end`}>
-                        <span>👤</span>
-                        <span>你</span>
-                      </div>
-                      
-                      <div className={`rounded-2xl rounded-br-md border shadow-sm ${
-                        isMobile 
-                          ? 'bg-white dark:bg-black text-gray-900 dark:text-gray-100 border-gray-200/50 dark:border-gray-700/30 px-3 py-2'
-                          : 'bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-br-md px-4 py-3'
-                      }`}>
-                        <div className={`${isMobile ? 'text-sm' : 'text-base'} leading-normal break-words`}>
-                          <ReactMarkdown
-                            components={getMarkdownComponents(msg.role === 'user')}
-                            remarkPlugins={[remarkGfm]}
-                          >
-                            {msg.content}
-                          </ReactMarkdown>
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    // 🎯 AIGC消息 - 移动端无气泡，桌面端有气泡
-                    <div className={isMobile ? 'w-full' : 'max-w-3xl'}>
-                      {!isMobile && (
-                        <div className="text-xs text-gray-500 dark:text-gray-400 mb-1 flex items-center gap-1">
-                          <span>🤖</span>
-                          <span>{msg.model === 'qwen' ? '通义千问' : 'ChatGPT'}</span>
-                        </div>
-                      )}
-                      
-                      <div className={isMobile 
-                        ? 'py-2 border-l-2 border-gray-600/50 pl-3'
-                        : 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-2xl rounded-bl-md px-4 py-3 border border-gray-200 dark:border-gray-600 shadow-sm'
-                      }>
-                        <div className={`${isMobile ? 'text-sm text-gray-200' : 'text-base'} leading-relaxed break-words`}>
-                          <ReactMarkdown
-                            components={getMarkdownComponents(msg.role === 'user')}
-                            remarkPlugins={[remarkGfm]}
-                          >
-                            {msg.content}
-                          </ReactMarkdown>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </motion.div>
-              ))}
-
-              {loading && (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className={isMobile ? 'w-full' : 'flex justify-start'}
-                >
-                  <div className={isMobile ? 'py-2' : 'max-w-3xl'}>
-                    {!isMobile && (
-                      <div className="text-xs text-gray-500 dark:text-gray-400 mb-1 flex items-center gap-1">
-                        <span>🤖</span>
-                        <span>{model === 'qwen' ? '通义千问' : 'ChatGPT'}</span>
-                      </div>
-                    )}
-                    <div className={isMobile 
-                      ? 'border-l-2 border-gray-600/50 pl-3'
-                      : 'bg-white dark:bg-gray-700 rounded-2xl rounded-bl-md px-4 py-3 border border-gray-200 dark:border-gray-600'
-                    }>
-                      <div className="flex items-center gap-2">
-                        <div className="flex gap-1">
-                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
-                        </div>
-                        <span className="text-sm text-gray-400">正在回复...</span>
-                      </div>
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* 输入区域 - 原生应用级一体化设计 */}
-        <div 
-          className={`flex-shrink-0 backdrop-blur-xl border-t safe-area-inset-bottom ${
+          {/* 顶部导航栏 - 原生应用级隐身设计 */}
+          <div className={`flex-shrink-0 backdrop-blur-xl border-b safe-area-inset-top ${
             isMobile 
-              ? 'bg-[#1f1f1f] border-[#2a2a2a] px-4 py-3' // 使用实色，消除透明度
-              : 'bg-white/95 dark:bg-gray-900/95 border-gray-200/60 dark:border-gray-700/60 p-4'
-          }`}
-          style={{
-            transform: `translateY(${keyboardState.isOpen && deviceInfo.isMobile ? `-${keyboardState.height}px` : '0'})`,
-            transition: 'transform 0.3s ease-out',
-          }}
-        >
-          <div className={!isMobile ? 'max-w-4xl mx-auto' : ''}>
-            <div className="flex items-end gap-3">
-              <div className="flex-1 relative">
-                <textarea
-                  ref={textareaRef}
-                  value={input}
-                  onChange={(e) => {
-                    setInput(e.target.value);
-                    requestAnimationFrame(() => {
-                      adjustTextareaHeight();
-                    });
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey && !loading) {
-                      e.preventDefault();
-                      handleAIGCSubmit();
-                    }
-                  }}
-                  placeholder="开始你的思考..."
-                  disabled={loading}
-                  rows={1}
-                  className={`w-full resize-none rounded-3xl placeholder-gray-500 pr-14 px-4 py-3 transition-all duration-200 ${
-                    isMobile 
-                      ? 'border border-[#3a3a3a] bg-[#252525] text-gray-100 text-base focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50' // 使用实色
-                      : 'border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-base focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500'
-                  }`}
-                  style={{ 
-                    minHeight: '44px',
-                    maxHeight: isMobile ? '100px' : '120px',
-                    overflow: 'hidden',
-                  }}
-                />
-                
+              ? 'bg-white/80 dark:bg-[#1a1a1a]/90 border-gray-200/40 dark:border-[#2a2a2a]/30 px-4 py-2' 
+              : 'bg-white/95 dark:bg-gray-900/95 border-gray-200/60 dark:border-gray-700/60 px-4 py-4'
+          }`}>
+            <div className={`flex items-center justify-between ${isMobile ? 'h-10' : 'max-w-4xl mx-auto'}`}>
+              {/* 左侧区域 */}
+              <div className="flex items-center gap-3 flex-1 min-w-0">
+                {/* 字号按钮 - 完全隐身的原生设计 */}
                 <button
-                  type="button"
+                  onClick={handleFontSizeClick}
+                  className={`transition-all duration-200 active:scale-95 ${
+                    isMobile 
+                      ? 'w-9 h-9 bg-transparent hover:bg-black/5 dark:hover:bg-white/5 active:bg-black/8 dark:active:bg-white/8 rounded-full flex items-center justify-center border-0 outline-none focus:outline-none focus:ring-0 aigc-native-button'
+                      : 'w-12 h-10 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center hover:shadow-lg'
+                  }`}
+                  title="调整字号"
+                >
+                  <div className={`flex items-baseline gap-0.5 ${
+                    isMobile 
+                      ? 'text-gray-600 dark:text-gray-300'
+                      : 'text-white'
+                  }`}>
+                    <span className="text-xs font-semibold">A</span>
+                    <span className="text-sm font-semibold">A</span>
+                  </div>
+                </button>
+                
+                {/* 标题和模型选择 - 移动端完全隐身的响应式设计 */}
+                {isMobile ? (
+                  <select
+                    value={model}
+                    onChange={(e) => {
+                      setModel(e.target.value);
+                      haptic.light();
+                    }}
+                    className="bg-transparent border-0 text-base font-medium text-gray-900 dark:text-gray-200 focus:outline-none focus:ring-0 cursor-pointer appearance-none hover:bg-black/5 dark:hover:bg-white/5 active:bg-black/8 dark:active:bg-white/8 outline-none ring-0 rounded-lg px-2 py-1 transition-all duration-200 aigc-native-select"
+                    style={{
+                      width: 'fit-content',
+                      minWidth: 'fit-content',
+                      maxWidth: `calc(100vw - 180px)`, // 为右侧关闭按钮留出足够空间
+                      paddingRight: '20px',
+                      backgroundImage: `url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236B7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E")`,
+                      backgroundPosition: 'right center',
+                      backgroundRepeat: 'no-repeat',
+                      backgroundSize: '16px'
+                    }}
+                  >
+                    <option value="openai">ChatGPT</option>
+                    <option value="qwen">通义千问</option>
+                  </select>
+                ) : (
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-bold text-gray-900 dark:text-gray-100 text-lg truncate">
+                      AIGC
+                    </h3>
+                    <div className="md:flex md:items-center md:gap-2">
+                      <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
+                        {model === 'qwen' ? '通义千问' : 'ChatGPT'}
+                      </p>
+                      <span className="hidden md:inline text-gray-400">·</span>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        {(() => {
+                          const currentFontConfig = FontSizeManager.getSizeConfig(fontSizeKey);
+                          return `${currentFontConfig.label} ${currentFontConfig.size}px`;
+                        })()}
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+              
+              {/* 右侧：模型选择器和关闭按钮 */}
+              <div className="flex items-center gap-3 flex-shrink-0">
+                {!isMobile && (
+                  <select
+                    value={model}
+                    onChange={(e) => {
+                      setModel(e.target.value);
+                      haptic.light();
+                    }}
+                    className="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 max-w-[120px]"
+                  >
+                    <option value="openai">ChatGPT*维护中</option>
+                    <option value="qwen">通义千问</option>
+                  </select>
+                )}
+                
+                {/* 关闭按钮 - 完全隐身的原生设计 */}
+                <button
                   onClick={() => {
-                    haptic.medium();
-                    handleAIGCSubmit();
+                    haptic.light();
+                    setIsFullscreen(false);
                   }}
-                  disabled={loading || !input.trim()}
-                  className={`absolute right-2 top-1/2 transform -translate-y-1/2 w-10 h-10 rounded-full transition-all duration-200 flex items-center justify-center ${
-                    !loading && input.trim()
-                      ? 'bg-gradient-to-br from-purple-500 to-indigo-600 text-white hover:from-purple-600 hover:to-indigo-700 active:scale-95 shadow-lg' 
-                      : isMobile 
-                        ? 'bg-[#2a2a2a] text-gray-500 cursor-not-allowed' // 使用实色
-                        : 'bg-gray-200 dark:bg-gray-600 text-gray-400 dark:text-gray-500 cursor-not-allowed'
+                  className={`transition-all duration-200 active:scale-95 ${
+                    isMobile 
+                      ? 'w-9 h-9 bg-transparent hover:bg-black/5 dark:hover:bg-white/5 active:bg-black/8 dark:active:bg-white/8 rounded-full flex items-center justify-center border-0 outline-none focus:outline-none focus:ring-0 aigc-native-button'
+                      : '!w-10 !h-10 !p-0 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full flex items-center justify-center'
                   }`}
                 >
-                  {loading ? (
-                    <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                  ) : (
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                    </svg>
-                  )}
+                  <svg className={`${isMobile ? 'w-4 h-4' : 'w-5 h-5'} text-gray-600 dark:text-gray-300`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
                 </button>
               </div>
             </div>
-            
-            {!isMobile && (
-              <div className="flex justify-center items-center mt-3">
-                <p className="text-xs text-gray-400 dark:text-gray-500">
-                  按 Enter 发送，Shift + Enter 换行
-                </p>
-              </div>
-            )}
           </div>
-        </div>
 
-        <FontSizeSelector
-          isOpen={showFontSelector}
-          onClose={handleCloseFontSelector}
-        />
-      </div>
-    );
-  }
+          {/* 对话内容区域 - 统一的灰黑色调 */}
+          <div
+            ref={chatBoxRef}
+            className={`flex-1 overflow-y-auto aigc-chat-content ${
+              isMobile 
+                ? 'bg-gradient-to-br from-[#fefdfb] via-[#fefcf9] to-[#fdf8f0] dark:bg-gradient-to-br dark:from-[#1a1a1a] dark:via-[#1c1c1c] dark:to-[#1e1e1e]'
+                : 'bg-white dark:bg-gray-900'
+            }`}
+            style={{
+              paddingBottom: `calc(80px + env(safe-area-inset-bottom, 0px) + ${keyboardState.isOpen ? keyboardState.height : 0}px)`,
+            }}
+          >
+            <div className={isMobile ? 'px-3 py-4' : 'max-w-4xl mx-auto px-4 py-6'}>
+              {aigcLog.length === 0 && (
+                <motion.div 
+                  className="flex flex-col items-center justify-center min-h-[50vh] text-center"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                >
+                  <div className={`${isMobile ? 'w-16 h-16' : 'w-20 h-20'} bg-gradient-to-br from-purple-100 to-indigo-100 dark:from-purple-900/30 dark:to-indigo-900/30 rounded-full flex items-center justify-center mb-4`}>
+                    <span className={`${isMobile ? 'text-3xl' : 'text-4xl'}`}>🤖</span>
+                  </div>
+                  <h3 className={`${isMobile ? 'text-xl' : 'text-2xl'} font-medium text-gray-900 dark:text-gray-100 mb-3`}>
+                    开始Thinking.
+                  </h3>
+                  <p className={`text-gray-500 dark:text-gray-400 ${isMobile ? 'text-sm' : 'max-w-md'} leading-relaxed`}>
+                    构建你的Thinking Chain
+                  </p>
+                </motion.div>
+              )}
+
+              <div className={isMobile ? 'space-y-2' : 'space-y-4'}>
+                {aigcLog.map((msg, idx) => (
+                  <motion.div
+                    key={idx}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: idx * 0.05 }}
+                    className={msg.role === 'user' ? 'flex justify-end' : ''}
+                  >
+                    {msg.role === 'user' ? (
+                      // 🎯 用户消息 - 移动端和桌面端不同样式
+                      <div className={isMobile ? 'max-w-[70%] min-w-0' : 'max-w-3xl min-w-0'}>
+                        <div className={`text-xs text-gray-500 dark:text-gray-400 mb-1 flex items-center gap-1 justify-end`}>
+                          <span>👤</span>
+                          <span>你</span>
+                        </div>
+                                                
+                        <div className={`rounded-2xl rounded-br-md border shadow-sm ${
+                          isMobile 
+                            ? 'bg-white dark:bg-black text-gray-900 dark:text-gray-100 border-gray-200/50 dark:border-gray-700/30 px-3 py-2'
+                            : 'bg-gradient-to-br from-gray-700 to-gray-800 text-white rounded-br-md px-4 py-3'
+                        }`}>
+                          <div className={`${isMobile ? 'text-sm' : 'text-base'} leading-normal break-words`}>
+                            <ReactMarkdown
+                              components={getMarkdownComponents(msg.role === 'user')}
+                              remarkPlugins={[remarkGfm]}
+                            >
+                              {msg.content}
+                            </ReactMarkdown>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      // 🎯 AIGC消息 - 移动端无气泡，桌面端有气泡
+                      <div className={isMobile ? 'w-full' : 'max-w-3xl'}>
+                        {!isMobile && (
+                          <div className="text-xs text-gray-500 dark:text-gray-400 mb-1 flex items-center gap-1">
+                            <span>🤖</span>
+                            <span>{msg.model === 'qwen' ? '通义千问' : 'ChatGPT'}</span>
+                          </div>
+                        )}
+                        
+                        <div className={isMobile 
+                          ? 'py-2 border-l-2 border-gray-200/30 dark:border-gray-600/30 pl-3'
+                          : 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-2xl rounded-bl-md px-4 py-3 border border-gray-200 dark:border-gray-600 shadow-sm'
+                        }>
+                          <div className={`${isMobile ? 'text-sm' : 'text-base'} leading-relaxed break-words`}>
+                            <ReactMarkdown
+                              components={getMarkdownComponents(msg.role === 'user')}
+                              remarkPlugins={[remarkGfm]}
+                            >
+                              {msg.content}
+                            </ReactMarkdown>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </motion.div>
+                ))}
+
+                {loading && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className={isMobile ? 'w-full' : 'flex justify-start'}
+                  >
+                    <div className={isMobile ? 'py-2' : 'max-w-3xl'}>
+                      {!isMobile && (
+                        <div className="text-xs text-gray-500 dark:text-gray-400 mb-1 flex items-center gap-1">
+                          <span>🤖</span>
+                          <span>{model === 'qwen' ? '通义千问' : 'ChatGPT'}</span>
+                        </div>
+                      )}
+                      <div className={isMobile 
+                        ? 'border-l-2 border-gray-200/30 dark:border-gray-600/30 pl-3'
+                        : 'bg-white dark:bg-gray-700 rounded-2xl rounded-bl-md px-4 py-3 border border-gray-200 dark:border-gray-600'
+                      }>
+                        <div className="flex items-center gap-2">
+                          <div className="flex gap-1">
+                            <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                            <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                            <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                          </div>
+                          <span className="text-sm text-gray-500 dark:text-gray-400">正在回复...</span>
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* 输入区域 - 原生应用级一体化设计 */}
+          <div 
+            className={`flex-shrink-0 backdrop-blur-xl border-t safe-area-inset-bottom ${
+              isMobile 
+                ? 'bg-white/80 dark:bg-[#1a1a1a]/90 border-gray-200/40 dark:border-[#2a2a2a]/30 px-4 py-3'
+                : 'bg-white/95 dark:bg-gray-900/95 border-gray-200/60 dark:border-gray-700/60 p-4'
+            }`}
+            style={{
+              transform: `translateY(${keyboardState.isOpen && deviceInfo.isMobile ? `-${keyboardState.height}px` : '0'})`,
+              transition: 'transform 0.3s ease-out',
+            }}
+          >
+            <div className={!isMobile ? 'max-w-4xl mx-auto' : ''}>
+              <div className="flex items-end gap-3">
+                <div className="flex-1 relative">
+                  <textarea
+                    ref={textareaRef}
+                    value={input}
+                    onChange={(e) => {
+                      setInput(e.target.value);
+                      requestAnimationFrame(() => {
+                        adjustTextareaHeight();
+                      });
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey && !loading) {
+                        e.preventDefault();
+                        handleAIGCSubmit();
+                      }
+                    }}
+                    placeholder="输入你的思考..."
+                    disabled={loading}
+                    rows={1}
+                    className={`w-full resize-none rounded-3xl placeholder-gray-400 dark:placeholder-gray-500 pr-14 px-4 py-3 transition-all duration-200 aigc-native-input ${
+                      isMobile 
+                        ? 'border border-gray-300/30 dark:border-gray-600/30 bg-white/10 dark:bg-white/10 text-gray-900 dark:text-gray-100 text-base focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500/50'
+                        : 'border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-base focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500'
+                    }`}
+                    style={{ 
+                      minHeight: '44px',
+                      maxHeight: isMobile ? '100px' : '120px',
+                      overflow: 'hidden',
+                    }}
+                  />
+                  
+                  <button
+                    type="button"
+                    onClick={() => {
+                      haptic.medium();
+                      handleAIGCSubmit();
+                    }}
+                    disabled={loading || !input.trim()}
+                    className={`absolute right-2 top-1/2 transform -translate-y-1/2 w-10 h-10 rounded-full transition-all duration-200 flex items-center justify-center aigc-native-button ${
+                      !loading && input.trim()
+                        ? 'bg-gradient-to-br from-purple-500 to-indigo-600 text-white hover:from-purple-600 hover:to-indigo-700 active:scale-95 shadow-lg' 
+                        : isMobile 
+                          ? 'bg-white/5 dark:bg-white/5 text-gray-400 dark:text-gray-500 cursor-not-allowed border border-gray-600/20 dark:border-gray-600/20'
+                          : 'bg-gray-200 dark:bg-gray-600 text-gray-400 dark:text-gray-500 cursor-not-allowed'
+                    }`}
+                  >
+                    {loading ? (
+                      <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                      </svg>
+                    )}
+                  </button>
+                </div>
+              </div>
+              
+              {!isMobile && (
+                <div className="flex justify-center items-center mt-3">
+                  <p className="text-xs text-gray-400 dark:text-gray-500">
+                    按 Enter 发送，Shift + Enter 换行
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <FontSizeSelector
+            isOpen={showFontSelector}
+            onClose={handleCloseFontSelector}
+          />
+        </div>
+      );
+    }
   // 🎯 主页面内容
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 py-4 sm:py-6 px-4 sm:px-6">

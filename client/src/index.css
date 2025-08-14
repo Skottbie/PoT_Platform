@@ -1,3 +1,4 @@
+/* client/src/index.css - 修复版本 */
 @import './styles/mobile.css';
 @import './styles/pullToRefresh.css';
 @import './styles/aigcFontSize.css';
@@ -6,7 +7,6 @@
 @tailwind utilities;
 
 /* 🎯 引入移动端优化样式 */
-
 
 /* 移动端优化基础样式 - 保留原有的但增强 */
 @layer base {
@@ -57,27 +57,30 @@
   }
 }
 
-/* 🎯 增强的暗色模式样式 */
+/* 🔧 修复：移除强制覆盖的暗色模式样式，改为更精准的选择器 */
 @media (prefers-color-scheme: dark) {
   html, body {
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%) !important;
-    color: #e2e8f0 !important;
-    -webkit-appearance: none !important;
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    color: #e2e8f0;
   }
 
-  input, textarea, select, button {
-    background-color: rgba(30, 41, 59, 0.8) !important;
-    color: #e2e8f0 !important;
-    border: 1px solid rgba(51, 65, 85, 0.6) !important;
-    -webkit-appearance: none !important;
-    appearance: none !important;
-    box-shadow: none !important;
-    backdrop-filter: blur(8px) !important;
+  /* 🔧 关键修复：只对非全屏AIGC模式的表单元素应用样式 */
+  :not(.aigc-fullscreen-mode) input:not([type="checkbox"]):not([type="radio"]), 
+  :not(.aigc-fullscreen-mode) textarea:not(.aigc-native-input), 
+  :not(.aigc-fullscreen-mode) select:not(.aigc-native-select), 
+  :not(.aigc-fullscreen-mode) button:not(.aigc-native-button) {
+    background-color: rgba(30, 41, 59, 0.8);
+    color: #e0e8f0;
+    border: 1px solid rgba(51, 65, 85, 0.6);
+    -webkit-appearance: none;
+    appearance: none;
+    box-shadow: none;
   }
 
-  ::placeholder {
-    color: #64748b !important;
-    opacity: 1 !important;
+  /* 占位符颜色 */
+  :not(.aigc-fullscreen-mode) ::placeholder {
+    color: #888;
+    opacity: 1;
   }
 
   /* 确保复选框在暗色模式下正常显示 */
@@ -90,9 +93,9 @@
   .dark input:focus,
   .dark textarea:focus,
   .dark select:focus {
-    ring-color: #3b82f6 !important;
-    border-color: #3b82f6 !important;
-    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3) !important;
+    ring-color: #3b82f6;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
   }
 
   /* 暗色模式下的滚动条 */
@@ -103,6 +106,25 @@
   ::-webkit-scrollbar-thumb:hover {
     background-color: rgba(156, 163, 175, 0.8);
   }
+}
+
+/* 🎯 AIGC全屏模式专用类 - 防止全局样式干扰 */
+.aigc-fullscreen-mode {
+  /* 确保在全屏模式下有独立的样式控制 */
+}
+
+/* 🎯 原生应用风格的表单元素（AIGC专用） */
+.aigc-native-input,
+.aigc-native-select{
+  /* 这些元素将完全由组件内联样式控制，不受全局CSS影响 */
+  background: inherit !important;
+  border: inherit !important;
+  color: inherit !important;
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
 }
 
 /* 🎯 增强的动画关键帧 */
@@ -234,16 +256,16 @@
     padding: 1rem;
   }
   
-  .mobile-form input,
-  .mobile-form textarea,
-  .mobile-form select {
+  .mobile-form input:not(.aigc-native-input),
+  .mobile-form textarea:not(.aigc-native-input),
+  .mobile-form select:not(.aigc-native-select) {
     font-size: 16px; /* 防止iOS缩放 */
     border-radius: 12px;
     padding: 12px 16px;
     min-height: 48px;
   }
   
-  .mobile-form button {
+  .mobile-form button:not(.aigc-native-button) {
     min-height: 48px;
     font-size: 16px;
     border-radius: 12px;
@@ -277,7 +299,7 @@
   }
   
   /* 增强触摸反馈 */
-  button:active,
+  button:active:not(.aigc-native-button),
   [role="button"]:active,
   .btn:active {
     transform: scale(0.95);
