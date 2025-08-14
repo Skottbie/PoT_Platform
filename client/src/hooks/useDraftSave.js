@@ -138,23 +138,52 @@ export const useDraftSave = (taskId, isFullscreen = false) => {
   // 🔥 关键修复：全屏模式下完全禁用所有定时器和自动保存
   const isAutoSaveEnabled = useRef(!isFullscreen);
 
-  // 🆕 数据标准化函数 - 确保数据结构一致性
+  // 🔧 修复：改进数据标准化函数，解决文件序列化问题
   const normalizeDataForComparison = useCallback((data) => {
     // 标准化数据结构，确保对比一致性
     return {
       content: data.content || '',
-      images: data.images || [],
-      file: data.file || null,
+      images: (data.images || []).map(img => {
+        // 🔧 修复：文件对象只保留关键信息用于对比
+        if (img instanceof File) {
+          return {
+            name: img.name,
+            size: img.size,
+            type: img.type,
+            lastModified: img.lastModified
+          };
+        }
+        return img;
+      }),
+      // 🔧 修复：文件对象只保留关键信息，避免序列化不稳定
+      file: data.file ? {
+        name: data.file.name,
+        size: data.file.size,
+        type: data.file.type,
+        lastModified: data.file.lastModified
+      } : null,
       fileInfo: data.fileInfo || {
         hasFile: !!data.file,
         fileName: data.file?.name || '',
         fileSize: data.file ? formatFileSize(data.file.size) : '',
         fileType: data.file?.type || ''
       },
+      // 🔧 修复：统一AIGC日志的判断标准
       aigcLog: data.aigcLog || [],
       model: data.model || 'qwen',
       shouldUploadAIGC: data.shouldUploadAIGC || false
     };
+  }, []);
+
+  // 🔧 修复：统一内容检查逻辑
+  const hasActualContent = useCallback((data) => {
+    return !!(
+      data.content?.trim() ||
+      data.images?.length > 0 ||
+      data.file ||
+      // 🔧 修复：统一使用 > 1 的判断标准（第一条通常是系统消息）
+      data.aigcLog?.length > 1
+    );
   }, []);
 
   // 监听全屏状态变化，立即清理定时器
@@ -177,7 +206,7 @@ export const useDraftSave = (taskId, isFullscreen = false) => {
     }
   }, [isFullscreen]);
 
-  // 检查是否有草稿
+  // 🔧 修复：改进检查草稿函数，确保初始状态正确
   const checkForDraft = useCallback(async () => {
     if (!taskId) return;
     
@@ -191,28 +220,35 @@ export const useDraftSave = (taskId, isFullscreen = false) => {
         setHasDraft(true);
         setDraftData(draft);
         setShowRestoreDialog(true);
-        // 🆕 设置最后保存时间和数据
+        // 🔧 修复：设置最后保存时间和数据，确保数据结构一致
         if (draft.lastSaved) {
           setLastSaveTime(draft.lastSaved);
-          // 构建草稿数据用于对比
+          // 🔧 修复：使用相同的标准化函数构建对比数据
           const draftDataForComparison = {
             content: draft.content || '',
             images: draft.images || [],
-            file: null, // 草稿中不保存文件
+            file: null, // 草稿中不保存实际文件对象
             fileInfo: draft.fileInfo || { hasFile: false },
             aigcLog: draft.aigcLog || [],
             model: draft.model || 'qwen',
             shouldUploadAIGC: draft.shouldUploadAIGC || false
           };
-          lastSaveDataRef.current = JSON.stringify(draftDataForComparison);
+          // 🔧 修复：使用标准化函数确保一致性
+          const normalizedDraft = normalizeDataForComparison(draftDataForComparison);
+          lastSaveDataRef.current = JSON.stringify(normalizedDraft);
+          
+          console.log('🔧 草稿恢复，设置lastSaveDataRef:', {
+            dataLength: lastSaveDataRef.current.length,
+            dataPreview: lastSaveDataRef.current.substring(0, 100) + '...'
+          });
         }
       }
     } catch (error) {
       console.error('检查草稿失败:', error);
     }
-  }, [taskId]);
+  }, [taskId, normalizeDataForComparison]);
 
-  // 保存草稿 - 添加全屏状态检查和时间跟踪
+  // 🔧 修复：改进保存草稿函数，确保数据一致性
   const saveDraft = useCallback(async (data, isManual = false) => {
     if (!taskId || !data) return false;
 
@@ -222,7 +258,7 @@ export const useDraftSave = (taskId, isFullscreen = false) => {
       return false;
     }
 
-    // 🆕 标准化数据后再比较
+    // 🔧 修复：使用相同的标准化函数
     const normalizedData = normalizeDataForComparison(data);
     const currentDataStr = JSON.stringify(normalizedData);
     
@@ -263,12 +299,17 @@ export const useDraftSave = (taskId, isFullscreen = false) => {
       
       if (success) {
         setSaveStatus('saved');
-        // 🆕 更新最后保存的数据和时间
+        // 🔧 修复：确保使用相同的数据结构更新lastSaveDataRef
         lastSaveDataRef.current = currentDataStr;
         // 🆕 清除pending状态（因为已经完成保存）
         pendingSaveDataRef.current = '';
         const saveTime = Date.now();
         setLastSaveTime(saveTime);
+        
+        console.log('🔧 保存成功，更新lastSaveDataRef:', {
+          dataLength: currentDataStr.length,
+          dataPreview: currentDataStr.substring(0, 100) + '...'
+        });
         
         if (isManual) {
           haptic.success();
@@ -294,7 +335,7 @@ export const useDraftSave = (taskId, isFullscreen = false) => {
     }
   }, [taskId, haptic, isFullscreen, normalizeDataForComparison]);
 
-  // 防抖的自动保存 - 加强全屏检查和pending状态管理
+  // 🔧 修复：改进防抖保存函数
   const debouncedSave = useCallback((data) => {
     // 🔥 双重检查：当前状态 + ref状态
     if (isFullscreen || !isAutoSaveEnabled.current) {
@@ -306,11 +347,11 @@ export const useDraftSave = (taskId, isFullscreen = false) => {
       clearTimeout(saveTimeoutRef.current);
     }
     
-    // 🆕 标准化数据后记录pending状态
+    // 🔧 修复：使用相同的标准化函数
     const normalizedData = normalizeDataForComparison(data);
     const currentDataStr = JSON.stringify(normalizedData);
     pendingSaveDataRef.current = currentDataStr;
-    console.log('🆕 记录即将保存的数据，用于智能退出判断');
+    console.log('🔧 记录即将保存的数据，用于智能退出判断');
     
     saveTimeoutRef.current = setTimeout(() => {
       // 🔥 执行前再次检查全屏状态
@@ -359,25 +400,17 @@ export const useDraftSave = (taskId, isFullscreen = false) => {
     pendingSaveDataRef.current = ''; // 🆕 清除pending状态
   }, [taskId]);
 
-  // 🆕 智能页面离开前检查 - 基于数据对比和pending状态
+  // 🔧 修复：改进智能页面离开前检查
   const checkBeforeLeave = useCallback((currentData) => {
     if (!currentData) return false;
     
-    // 检查是否有实际内容
-    const hasContent = !!(
-      currentData.content?.trim() ||
-      currentData.images?.length > 0 ||
-      currentData.file ||
-      currentData.aigcLog?.length > 0
-    );
-
-    // 如果没有内容，不需要提示
-    if (!hasContent) {
-      console.log('🆕 无内容，不需要保存提示');
+    // 🔧 修复：使用统一的内容检查逻辑
+    if (!hasActualContent(currentData)) {
+      console.log('🆕 无实际内容，不需要保存提示');
       return false;
     }
 
-    // 🆕 标准化当前数据后再比较
+    // 🔧 修复：使用相同的标准化函数确保数据一致性
     const normalizedData = normalizeDataForComparison(currentData);
     const currentDataStr = JSON.stringify(normalizedData);
     
@@ -385,26 +418,28 @@ export const useDraftSave = (taskId, isFullscreen = false) => {
     const isSameAsLastSave = currentDataStr === lastSaveDataRef.current;
     const isSameAsPendingSave = currentDataStr === pendingSaveDataRef.current;
     
-    console.log('🆕 退出检查:', {
-      hasContent,
+    console.log('🔧 退出检查详情:', {
+      hasActualContent: hasActualContent(currentData),
       isSameAsLastSave,
       isSameAsPendingSave,
       saveStatus,
-      lastSaveExists: !!lastSaveDataRef.current,
-      pendingSaveExists: !!pendingSaveDataRef.current,
-      currentDataStr: currentDataStr.substring(0, 100) + '...',
-      lastSaveStr: lastSaveDataRef.current.substring(0, 100) + '...',
-      pendingSaveStr: pendingSaveDataRef.current.substring(0, 100) + '...'
+      currentDataLength: currentDataStr.length,
+      lastSaveDataLength: lastSaveDataRef.current.length,
+      pendingSaveDataLength: pendingSaveDataRef.current.length,
+      // 🔧 添加详细的数据对比信息
+      contentMatch: (currentData.content || '') === (lastSaveDataRef.current ? JSON.parse(lastSaveDataRef.current).content : ''),
+      imagesMatch: (currentData.images || []).length === (lastSaveDataRef.current ? JSON.parse(lastSaveDataRef.current).images.length : 0),
+      fileMatch: !!currentData.file === (lastSaveDataRef.current ? !!JSON.parse(lastSaveDataRef.current).file : false)
     });
 
     if (isSameAsLastSave || isSameAsPendingSave) {
-      console.log('🆕 数据已保存或即将保存，无需提示');
+      console.log('🔧 数据已保存或即将保存，无需提示');
       return false;
     }
 
-    console.log('🆕 检测到未保存的更改，需要提示');
+    console.log('🔧 检测到未保存的更改，需要提示');
     return true;
-  }, [normalizeDataForComparison]);
+  }, [normalizeDataForComparison, hasActualContent]);
 
   // 初始化检查草稿
   useEffect(() => {

@@ -54,11 +54,11 @@ const BeforeUnloadDialog = ({
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                    内容尚未保存
+                    退出任务界面
                   </h3>
                   <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                     {hasFile 
-                      ? '是否保存为草稿？文件需要下次重新上传。'
+                      ? '是否保存为草稿？文件需要重新上传。'
                       : '是否保存为草稿？'
                     }
                   </p>
