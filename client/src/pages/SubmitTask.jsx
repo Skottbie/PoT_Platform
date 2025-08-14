@@ -63,6 +63,26 @@ const SubmitTask = () => {
   const { currentSize, currentConfig } = useFontSize();
   const [fontSizeKey, setFontSizeKey] = useState(currentSize);
   const [showFontSelector, setShowFontSelector] = useState(false);
+
+  // 🎯 草稿保存相关
+  const {
+    saveStatus,
+    hasDraft,
+    showRestoreDialog,
+    draftData,
+    debouncedSave,
+    manualSave,
+    restoreDraft,
+    ignoreDraft,
+    deleteDraft,
+    checkBeforeLeave
+  } = useDraftSave(taskId);
+
+  // 离开页面前的提醒状态
+  const [showBeforeUnloadDialog, setShowBeforeUnloadDialog] = useState(false);
+  const [pendingNavigation, setPendingNavigation] = useState(null);
+
+
   const handleFontSizeClick = useCallback(() => {
     //console.log('字号按钮被点击了');
     haptic.light();
@@ -145,23 +165,7 @@ const SubmitTask = () => {
       }
     };
 
-  // 🎯 草稿保存相关
-  const {
-    saveStatus,
-    hasDraft,
-    showRestoreDialog,
-    draftData,
-    debouncedSave,
-    manualSave,
-    restoreDraft,
-    ignoreDraft,
-    deleteDraft,
-    checkBeforeLeave
-  } = useDraftSave(taskId);
 
-  // 离开页面前的提醒状态
-  const [showBeforeUnloadDialog, setShowBeforeUnloadDialog] = useState(false);
-  const [pendingNavigation, setPendingNavigation] = useState(null);
 
 
     return {
@@ -807,6 +811,16 @@ const SubmitTask = () => {
     textarea.style.height = `${newHeight}px`;
   }, [isFullscreen]);
 
+
+    // 12. 工具函数
+  const formatFileSize = (bytes) => {
+    if (bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+  };
+
   useEffect(() => {
     adjustTextareaHeight();
   }, [input, adjustTextareaHeight]);
@@ -996,18 +1010,7 @@ const SubmitTask = () => {
     setPendingNavigation(null);
   }, []);
 
-  // 9. 成功提交后删除草稿
-  const originalHandleSubmit = handleSubmit; // 保存原来的提交函数
-  const enhancedHandleSubmit = useCallback(async (e) => {
-    const result = await originalHandleSubmit(e);
-    
-    // 如果提交成功，删除草稿
-    if (result !== false) { // 假设提交失败时返回false
-      await deleteDraft();
-    }
-    
-    return result;
-  }, [originalHandleSubmit, deleteDraft]);
+
 
   // 10. 注册beforeunload事件
   useEffect(() => {
@@ -1026,14 +1029,7 @@ const SubmitTask = () => {
     navigate(-1);
   }, [handleNavigation, navigate]);
 
-  // 12. 工具函数
-  const formatFileSize = (bytes) => {
-    if (bytes === 0) return '0 B';
-    const k = 1024;
-    const sizes = ['B', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
-  };
+
 
 
   // 🚀 优化提交处理
@@ -1130,6 +1126,21 @@ const SubmitTask = () => {
       setMessage(`❌ 提交失败：${err.response?.data?.message || err.message}`);
     }
   }, [taskStatus, task, file, images, content, aigcLog, shouldUploadAIGC, taskId, navigate, haptic]);
+
+
+
+    // 9. 成功提交后删除草稿
+  const originalHandleSubmit = handleSubmit; // 保存原来的提交函数
+  const enhancedHandleSubmit = useCallback(async (e) => {
+    const result = await originalHandleSubmit(e);
+    
+    // 如果提交成功，删除草稿
+    if (result !== false) { // 假设提交失败时返回false
+      await deleteDraft();
+    }
+    
+    return result;
+  }, [originalHandleSubmit, deleteDraft]);
 
   if (initialLoading) {
     return (
