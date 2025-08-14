@@ -28,7 +28,13 @@ const SubmitTask = () => {
   const deviceInfo = useDeviceDetection();
   const keyboardState = useVirtualKeyboard();
   const haptic = useHapticFeedback();
-  const [selectWidth, setSelectWidth] = useState('auto');
+
+  const MODEL_OPTIONS = [
+  { value: 'openai', label: 'ChatGPT(维护中)' },
+  { value: 'qwen', label: '通义千问' },
+  // 未来可以在这里添加更多模型
+  ];
+
 
   // 基础状态
   const [task, setTask] = useState(null);
@@ -64,10 +70,55 @@ const SubmitTask = () => {
     setFontSizeKey(latestSize);
   }, []);
 
+  const getCurrentModelLabel = useCallback((modelValue) => {
+    const selectedModel = MODEL_OPTIONS.find(option => option.value === modelValue);
+    return selectedModel ? selectedModel.label : modelValue;
+  }, []);
+
+  const updateSelectWidth = useCallback((selectElement) => {
+    if (!selectElement || !isMobile || !isFullscreen) return;
+    
+    const measurer = document.createElement('span');
+    const selectStyles = window.getComputedStyle(selectElement);
+    
+    measurer.style.cssText = `
+      visibility: hidden;
+      position: absolute;
+      top: -9999px;
+      left: -9999px;
+      white-space: nowrap;
+      font-size: ${selectStyles.fontSize};
+      font-weight: ${selectStyles.fontWeight};
+      font-family: ${selectStyles.fontFamily};
+      padding-left: ${selectStyles.paddingLeft};
+      letter-spacing: ${selectStyles.letterSpacing};
+    `;
+    
+    const selectedOption = selectElement.options[selectElement.selectedIndex];
+    const selectedText = selectedOption ? selectedOption.textContent.trim() : '';
+    
+    if (!selectedText) return;
+    
+    measurer.textContent = selectedText;
+    document.body.appendChild(measurer);
+    
+    try {
+      const textWidth = measurer.offsetWidth;
+      const arrowAndPadding = 32;
+      const minSelectWidth = 80;
+      const finalWidth = Math.max(textWidth + arrowAndPadding, minSelectWidth);
+      
+      selectElement.style.width = `${finalWidth}px`;
+      selectElement.style.minWidth = `${finalWidth}px`;
+    } finally {
+      document.body.removeChild(measurer);
+    }
+  }, [isMobile, isFullscreen]);
+
   // 引用
   const chatBoxRef = useRef(null);
   const textareaRef = useRef(null);
-
+  const selectRef = useRef(null);
 
   const getMarkdownComponents = (isUserMessage) => {
     // 复制到剪贴板的工具函数
@@ -437,31 +488,36 @@ const SubmitTask = () => {
     };
   };
 
-  //宽度测量
   useEffect(() => {
-    if (!isFullscreen || !isMobile) return; // 只在手机端全屏模式执行
-    
-    const measureSelectWidth = () => {
-      // 创建临时测量元素
-      const measurer = document.createElement('span');
-      measurer.style.visibility = 'hidden';
-      measurer.style.position = 'absolute';
-      measurer.style.fontSize = '16px';
-      measurer.style.fontWeight = '500'; // 与select相同的字重
-      measurer.style.fontFamily = getComputedStyle(document.body).fontFamily;
-      measurer.style.padding = '0 20px 0 8px'; // 左边距8px，右边预留20px给箭头
-      measurer.textContent = model === 'qwen' ? '通义千问' : 'ChatGPT';
-      document.body.appendChild(measurer);
+    if (selectRef.current && isMobile && isFullscreen) {
+      const selectElement = selectRef.current;
       
-      const textWidth = measurer.offsetWidth;
-      document.body.removeChild(measurer);
+      updateSelectWidth(selectElement);
       
-      // 设置select的精确宽度，确保文字完整显示且箭头位置合适
-      setSelectWidth(`${textWidth + 24}px`); // 额外增加24px确保箭头显示
-    };
+      let resizeObserver;
+      if (window.ResizeObserver) {
+        resizeObserver = new ResizeObserver(() => {
+          updateSelectWidth(selectElement);
+        });
+        resizeObserver.observe(selectElement);
+      }
+      
+      return () => {
+        if (resizeObserver) {
+          resizeObserver.disconnect();
+        }
+      };
+    }
+  }, [isFullscreen, isMobile, updateSelectWidth]);
 
-    measureSelectWidth();
-  }, [model, isFullscreen, isMobile]); // 依赖model变化重新计算
+  useEffect(() => {
+    if (selectRef.current && isMobile && isFullscreen) {
+      requestAnimationFrame(() => {
+        updateSelectWidth(selectRef.current);
+      });
+    }
+  }, [model, updateSelectWidth, isMobile, isFullscreen]);
+
 
   useEffect(() => {
     const handleFontSizeChange = () => {
@@ -972,33 +1028,47 @@ const SubmitTask = () => {
                 {/* 标题和模型选择 - 移动端完全隐身的响应式设计 */}
                 {isMobile ? (
                   <select
+                    ref={selectRef}
                     value={model}
                     onChange={(e) => {
-                      setModel(e.target.value);
+                      const newModel = e.target.value;
+                      setModel(newModel);
                       haptic.light();
+                      
+                      requestAnimationFrame(() => {
+                        if (selectRef.current) {
+                          updateSelectWidth(selectRef.current);
+                        }
+                      });
                     }}
                     className="bg-transparent border-0 text-base font-medium text-gray-900 dark:text-gray-200 focus:outline-none focus:ring-0 cursor-pointer appearance-none hover:bg-black/5 dark:hover:bg-white/5 active:bg-black/8 dark:active:bg-white/8 outline-none ring-0 rounded-lg px-2 py-1 transition-all duration-200 aigc-native-select"
                     style={{
-                      width: 'fit-content',
-                      minWidth: 'fit-content',
-                      maxWidth: `calc(100vw - 180px)`, // 为右侧关闭按钮留出足够空间
+                      maxWidth: `calc(100vw - 180px)`,
                       paddingRight: '20px',
-                      backgroundImage: `url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='${document.documentElement.classList.contains('dark') ? '%23FFFFFF' : '%236B7280'}' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E")`,                       backgroundPosition: 'right center',
+                      backgroundImage: `url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='${document.documentElement.classList.contains('dark') ? '%23FFFFFF' : '%236B7280'}' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E")`,
+                      backgroundPosition: 'right 4px center',
                       backgroundRepeat: 'no-repeat',
-                      backgroundSize: '16px'
+                      backgroundSize: '16px',
+                      width: 'auto',
+                      minWidth: 'auto',
+                      transition: 'width 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
                     }}
                   >
-                    <option value="openai">ChatGPT(维护中)</option>
-                    <option value="qwen">通义千问</option>
+                    {MODEL_OPTIONS.map(option => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
                   </select>
                 ) : (
+                  // 桌面端保持原有逻辑但更新显示文本
                   <div className="flex-1 min-w-0">
                     <h3 className="font-bold text-gray-900 dark:text-gray-100 text-lg truncate">
                       AIGC
                     </h3>
                     <div className="md:flex md:items-center md:gap-2">
                       <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
-                        {model === 'qwen' ? '通义千问' : 'ChatGPT'}
+                        {getCurrentModelLabel(model)}
                       </p>
                       <span className="hidden md:inline text-gray-400">·</span>
                       <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -1010,22 +1080,26 @@ const SubmitTask = () => {
                     </div>
                   </div>
                 )}
+
               </div>
               
               {/* 右侧：模型选择器和关闭按钮 */}
               <div className="flex items-center gap-3 flex-shrink-0">
                 {!isMobile && (
-                  <select
-                    value={model}
-                    onChange={(e) => {
-                      setModel(e.target.value);
-                      haptic.light();
-                    }}
-                    className="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 max-w-[120px]"
-                  >
-                    <option value="openai">ChatGPT*维护中</option>
-                    <option value="qwen">通义千问</option>
-                  </select>
+                <select
+                  value={model}
+                  onChange={(e) => {
+                    setModel(e.target.value);
+                    haptic.light();
+                  }}
+                  className="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 max-w-[120px]"
+                >
+                  {MODEL_OPTIONS.map(option => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
                 )}
                 
                 {/* 关闭按钮 - 完全隐身的原生设计 */}
