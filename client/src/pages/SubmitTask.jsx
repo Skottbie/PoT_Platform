@@ -904,8 +904,9 @@ const SubmitTask = () => {
       </div>
     );
   }
-  // 🎯 AIGC 全屏模式组件 - 完美的灰黑色调统一界面
-  // 🎯 AIGC 全屏模式组件 - 完美的灰黑色调统一界面
+
+  // 🎯 AIGC 全屏模式组件 - 原生应用级设计
+  // 🎯 AIGC 全屏模式组件 - 原生应用级设计
   if (isFullscreen) {
     return (
       <div className={`fixed inset-0 z-[9999] flex flex-col ${
@@ -913,7 +914,7 @@ const SubmitTask = () => {
           ? 'bg-gradient-to-br from-[#fefdfb] via-[#fefcf9] to-[#fdf8f0] dark:bg-gradient-to-br dark:from-[#1a1a1a] dark:via-[#1c1c1c] dark:to-[#1e1e1e]' 
           : 'bg-white dark:bg-gray-900'
       }`}>
-        {/* 顶部导航栏 - 深色模式完全隐身设计 */}
+        {/* 顶部导航栏 - 原生应用级隐身设计 */}
         <div className={`flex-shrink-0 backdrop-blur-xl border-b safe-area-inset-top ${
           isMobile 
             ? 'bg-white/80 dark:bg-[#1a1a1a]/90 border-gray-200/40 dark:border-[#2a2a2a]/30 px-4 py-2' 
@@ -922,12 +923,12 @@ const SubmitTask = () => {
           <div className={`flex items-center justify-between ${isMobile ? 'h-10' : 'max-w-4xl mx-auto'}`}>
             {/* 左侧区域 */}
             <div className="flex items-center gap-3 flex-1 min-w-0">
-              {/* 字号按钮 - 完全隐身设计 */}
+              {/* 字号按钮 - 完全隐身的原生设计 */}
               <button
                 onClick={handleFontSizeClick}
                 className={`transition-all duration-200 active:scale-95 ${
                   isMobile 
-                    ? 'w-9 h-9 bg-transparent hover:bg-white/8 dark:hover:bg-white/8 rounded-full flex items-center justify-center border-0 outline-0 focus:outline-0 focus:ring-0'
+                    ? 'w-9 h-9 bg-transparent hover:bg-black/5 dark:hover:bg-white/5 active:bg-black/8 dark:active:bg-white/8 rounded-full flex items-center justify-center border-0 outline-none focus:outline-none focus:ring-0'
                     : 'w-12 h-10 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center hover:shadow-lg'
                 }`}
                 title="调整字号"
@@ -942,7 +943,7 @@ const SubmitTask = () => {
                 </div>
               </button>
               
-              {/* 标题和模型选择 - 移动端完全隐身 */}
+              {/* 标题和模型选择 - 移动端完全隐身的响应式设计 */}
               {isMobile ? (
                 <select
                   value={model}
@@ -950,11 +951,11 @@ const SubmitTask = () => {
                     setModel(e.target.value);
                     haptic.light();
                   }}
-                  className="bg-transparent border-0 text-base font-medium text-gray-900 dark:text-gray-200 focus:outline-0 focus:ring-0 cursor-pointer appearance-none hover:bg-transparent focus:bg-transparent outline-0 ring-0"
+                  className="bg-transparent border-0 text-base font-medium text-gray-900 dark:text-gray-200 focus:outline-none focus:ring-0 cursor-pointer appearance-none hover:bg-black/5 dark:hover:bg-white/5 active:bg-black/8 dark:active:bg-white/8 outline-none ring-0 rounded-lg px-2 py-1 transition-all duration-200"
                   style={{
                     width: 'fit-content',
-                    minWidth: '80px',
-                    maxWidth: 'calc(100vw - 140px)',
+                    minWidth: 'fit-content',
+                    maxWidth: `calc(100vw - 180px)`, // 为右侧关闭按钮留出足够空间
                     paddingRight: '20px',
                     backgroundImage: `url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236B7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E")`,
                     backgroundPosition: 'right center',
@@ -962,7 +963,7 @@ const SubmitTask = () => {
                     backgroundSize: '16px'
                   }}
                 >
-                  <option value="openai">ChatGPT</option>
+                  <option value="openai">ChatGPT*维护中</option>
                   <option value="qwen">通义千问</option>
                 </select>
               ) : (
@@ -1002,7 +1003,7 @@ const SubmitTask = () => {
                 </select>
               )}
               
-              {/* 关闭按钮 - 完全隐身设计 */}
+              {/* 关闭按钮 - 完全隐身的原生设计 */}
               <button
                 onClick={() => {
                   haptic.light();
@@ -1010,7 +1011,7 @@ const SubmitTask = () => {
                 }}
                 className={`transition-all duration-200 active:scale-95 ${
                   isMobile 
-                    ? 'w-9 h-9 bg-transparent hover:bg-white/8 dark:hover:bg-white/8 rounded-full flex items-center justify-center border-0 outline-0 focus:outline-0 focus:ring-0'
+                    ? 'w-9 h-9 bg-transparent hover:bg-black/5 dark:hover:bg-white/5 active:bg-black/8 dark:active:bg-white/8 rounded-full flex items-center justify-center border-0 outline-none focus:outline-none focus:ring-0'
                     : '!w-10 !h-10 !p-0 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full flex items-center justify-center'
                 }`}
               >
@@ -1146,7 +1147,7 @@ const SubmitTask = () => {
           </div>
         </div>
 
-        {/* 输入区域 - 统一的深空灰色调 */}
+        {/* 输入区域 - 原生应用级一体化设计 */}
         <div 
           className={`flex-shrink-0 backdrop-blur-xl border-t safe-area-inset-bottom ${
             isMobile 
@@ -1176,12 +1177,12 @@ const SubmitTask = () => {
                       handleAIGCSubmit();
                     }
                   }}
-                  placeholder="输入你的问题..."
+                  placeholder="开始你的思考..."
                   disabled={loading}
                   rows={1}
                   className={`w-full resize-none rounded-3xl placeholder-gray-400 dark:placeholder-gray-500 pr-14 px-4 py-3 transition-all duration-200 ${
                     isMobile 
-                      ? 'border border-gray-300/50 dark:border-gray-600/50 bg-white/90 dark:bg-gray-900/90 text-gray-900 dark:text-gray-100 text-base focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500/50'
+                      ? 'border border-gray-300/30 dark:border-gray-600/30 bg-white/10 dark:bg-white/10 text-gray-900 dark:text-gray-100 text-base focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500/50'
                       : 'border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-base focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500'
                   }`}
                   style={{ 
@@ -1201,7 +1202,9 @@ const SubmitTask = () => {
                   className={`absolute right-2 top-1/2 transform -translate-y-1/2 w-10 h-10 rounded-full transition-all duration-200 flex items-center justify-center ${
                     !loading && input.trim()
                       ? 'bg-gradient-to-br from-purple-500 to-indigo-600 text-white hover:from-purple-600 hover:to-indigo-700 active:scale-95 shadow-lg' 
-                      : 'bg-gray-200 dark:bg-gray-600 text-gray-400 dark:text-gray-500 cursor-not-allowed'
+                      : isMobile 
+                        ? 'bg-white/5 dark:bg-white/5 text-gray-400 dark:text-gray-500 cursor-not-allowed border border-gray-600/20 dark:border-gray-600/20'
+                        : 'bg-gray-200 dark:bg-gray-600 text-gray-400 dark:text-gray-500 cursor-not-allowed'
                   }`}
                 >
                   {loading ? (
