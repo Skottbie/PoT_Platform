@@ -117,7 +117,7 @@
 .aigc-native-input,
 .aigc-native-select{
   /* 这些元素将完全由组件内联样式控制，不受全局CSS影响 */
-  background: inherit !important;
+  background-color: inherit !important;
   border: inherit !important;
   color: inherit !important;
   -webkit-appearance: none !important;

@@ -437,26 +437,31 @@ const SubmitTask = () => {
     };
   };
 
+  //宽度测量
   useEffect(() => {
-    if (!isFullscreen) return; // 只在全屏时执行
+    if (!isFullscreen || !isMobile) return; // 只在手机端全屏模式执行
     
     const measureSelectWidth = () => {
+      // 创建临时测量元素
       const measurer = document.createElement('span');
       measurer.style.visibility = 'hidden';
       measurer.style.position = 'absolute';
       measurer.style.fontSize = '16px';
+      measurer.style.fontWeight = '500'; // 与select相同的字重
       measurer.style.fontFamily = getComputedStyle(document.body).fontFamily;
-      measurer.textContent = model === 'qwen' ? '通义千问' : 'ChatGPT*维护中';
+      measurer.style.padding = '0 20px 0 8px'; // 左边距8px，右边预留20px给箭头
+      measurer.textContent = model === 'qwen' ? '通义千问' : 'ChatGPT';
       document.body.appendChild(measurer);
       
       const textWidth = measurer.offsetWidth;
       document.body.removeChild(measurer);
       
-      setSelectWidth(`${textWidth + 40}px`);
+      // 设置select的精确宽度，确保文字完整显示且箭头位置合适
+      setSelectWidth(`${textWidth + 24}px`); // 额外增加24px确保箭头显示
     };
 
     measureSelectWidth();
-  }, [model, isFullscreen]); 
+  }, [model, isFullscreen, isMobile]); // 依赖model变化重新计算
 
   useEffect(() => {
     const handleFontSizeChange = () => {
@@ -978,13 +983,12 @@ const SubmitTask = () => {
                       minWidth: 'fit-content',
                       maxWidth: `calc(100vw - 180px)`, // 为右侧关闭按钮留出足够空间
                       paddingRight: '20px',
-                      backgroundImage: `url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236B7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E")`,
-                      backgroundPosition: 'right center',
+                      backgroundImage: `url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='${document.documentElement.classList.contains('dark') ? '%23FFFFFF' : '%236B7280'}' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E")`,                       backgroundPosition: 'right center',
                       backgroundRepeat: 'no-repeat',
                       backgroundSize: '16px'
                     }}
                   >
-                    <option value="openai">ChatGPT</option>
+                    <option value="openai">ChatGPT(维护中)</option>
                     <option value="qwen">通义千问</option>
                   </select>
                 ) : (
