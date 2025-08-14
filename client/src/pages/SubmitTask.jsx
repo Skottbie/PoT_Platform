@@ -906,18 +906,42 @@ const SubmitTask = () => {
   }
 
   // 🎯 AIGC 全屏模式组件 - 原生应用级设计
-  // 🎯 AIGC 全屏模式组件 - 原生应用级设计
+  // 🎯 AIGC 全屏模式组件 - 原生应用级设计（消除色偏版本）
   if (isFullscreen) {
+    // 动态测量select宽度的Hook
+    const [selectWidth, setSelectWidth] = React.useState('auto');
+    
+    React.useEffect(() => {
+      const measureSelectWidth = () => {
+        // 创建隐藏的测量元素
+        const measurer = document.createElement('span');
+        measurer.style.visibility = 'hidden';
+        measurer.style.position = 'absolute';
+        measurer.style.fontSize = '16px';
+        measurer.style.fontFamily = getComputedStyle(document.body).fontFamily;
+        measurer.textContent = model === 'qwen' ? '通义千问' : 'ChatGPT*维护中';
+        document.body.appendChild(measurer);
+        
+        const textWidth = measurer.offsetWidth;
+        document.body.removeChild(measurer);
+        
+        // 添加padding和下拉箭头的空间
+        setSelectWidth(`${textWidth + 40}px`);
+      };
+
+      measureSelectWidth();
+    }, [model]);
+
     return (
       <div className={`fixed inset-0 z-[9999] flex flex-col ${
         isMobile 
-          ? 'bg-gradient-to-br from-[#fefdfb] via-[#fefcf9] to-[#fdf8f0] dark:bg-gradient-to-br dark:from-[#1a1a1a] dark:via-[#1c1c1c] dark:to-[#1e1e1e]' 
+          ? 'bg-[#1a1a1a] dark:bg-[#1a1a1a]' // 使用纯色背景，消除渐变
           : 'bg-white dark:bg-gray-900'
       }`}>
         {/* 顶部导航栏 - 原生应用级隐身设计 */}
         <div className={`flex-shrink-0 backdrop-blur-xl border-b safe-area-inset-top ${
           isMobile 
-            ? 'bg-white/80 dark:bg-[#1a1a1a]/90 border-gray-200/40 dark:border-[#2a2a2a]/30 px-4 py-2' 
+            ? 'bg-[#1f1f1f] dark:bg-[#1f1f1f] border-[#2a2a2a] px-4 py-2' // 使用实色，消除透明度
             : 'bg-white/95 dark:bg-gray-900/95 border-gray-200/60 dark:border-gray-700/60 px-4 py-4'
         }`}>
           <div className={`flex items-center justify-between ${isMobile ? 'h-10' : 'max-w-4xl mx-auto'}`}>
@@ -928,14 +952,14 @@ const SubmitTask = () => {
                 onClick={handleFontSizeClick}
                 className={`transition-all duration-200 active:scale-95 ${
                   isMobile 
-                    ? 'w-9 h-9 bg-transparent hover:bg-black/5 dark:hover:bg-white/5 active:bg-black/8 dark:active:bg-white/8 rounded-full flex items-center justify-center border-0 outline-none focus:outline-none focus:ring-0'
+                    ? 'w-9 h-9 hover:opacity-80 active:opacity-70 rounded-full flex items-center justify-center border-0 outline-none focus:outline-none focus:ring-0 bg-transparent'
                     : 'w-12 h-10 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center hover:shadow-lg'
                 }`}
                 title="调整字号"
               >
                 <div className={`flex items-baseline gap-0.5 ${
                   isMobile 
-                    ? 'text-gray-600 dark:text-gray-300'
+                    ? 'text-gray-300'
                     : 'text-white'
                 }`}>
                   <span className="text-xs font-semibold">A</span>
@@ -951,16 +975,16 @@ const SubmitTask = () => {
                     setModel(e.target.value);
                     haptic.light();
                   }}
-                  className="bg-transparent border-0 text-base font-medium text-gray-900 dark:text-gray-200 focus:outline-none focus:ring-0 cursor-pointer appearance-none hover:bg-black/5 dark:hover:bg-white/5 active:bg-black/8 dark:active:bg-white/8 outline-none ring-0 rounded-lg px-2 py-1 transition-all duration-200"
+                  className="bg-transparent border-0 text-base font-medium text-gray-200 focus:outline-none focus:ring-0 cursor-pointer hover:opacity-80 active:opacity-70 outline-none ring-0 rounded-lg px-2 py-1 transition-all duration-200"
                   style={{
-                    width: 'fit-content',
+                    width: selectWidth,
                     minWidth: 'fit-content',
-                    maxWidth: `calc(100vw - 180px)`, // 为右侧关闭按钮留出足够空间
-                    paddingRight: '20px',
-                    backgroundImage: `url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236B7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E")`,
-                    backgroundPosition: 'right center',
+                    appearance: 'none',
+                    backgroundImage: `url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%23D1D5DB' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E")`,
+                    backgroundPosition: 'right 8px center',
                     backgroundRepeat: 'no-repeat',
-                    backgroundSize: '16px'
+                    backgroundSize: '16px',
+                    paddingRight: '32px'
                   }}
                 >
                   <option value="openai">ChatGPT*维护中</option>
@@ -1011,11 +1035,11 @@ const SubmitTask = () => {
                 }}
                 className={`transition-all duration-200 active:scale-95 ${
                   isMobile 
-                    ? 'w-9 h-9 bg-transparent hover:bg-black/5 dark:hover:bg-white/5 active:bg-black/8 dark:active:bg-white/8 rounded-full flex items-center justify-center border-0 outline-none focus:outline-none focus:ring-0'
+                    ? 'w-9 h-9 hover:opacity-80 active:opacity-70 rounded-full flex items-center justify-center border-0 outline-none focus:outline-none focus:ring-0 bg-transparent'
                     : '!w-10 !h-10 !p-0 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full flex items-center justify-center'
                 }`}
               >
-                <svg className={`${isMobile ? 'w-4 h-4' : 'w-5 h-5'} text-gray-600 dark:text-gray-300`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className={`${isMobile ? 'w-4 h-4' : 'w-5 h-5'} text-gray-300`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
@@ -1023,12 +1047,12 @@ const SubmitTask = () => {
           </div>
         </div>
 
-        {/* 对话内容区域 - 统一的灰黑色调 */}
+        {/* 对话内容区域 - 纯色背景 */}
         <div
           ref={chatBoxRef}
           className={`flex-1 overflow-y-auto aigc-chat-content ${
             isMobile 
-              ? 'bg-gradient-to-br from-[#fefdfb] via-[#fefcf9] to-[#fdf8f0] dark:bg-gradient-to-br dark:from-[#1a1a1a] dark:via-[#1c1c1c] dark:to-[#1e1e1e]'
+              ? 'bg-[#1a1a1a]' // 使用纯色，消除渐变
               : 'bg-white dark:bg-gray-900'
           }`}
           style={{
@@ -1045,10 +1069,10 @@ const SubmitTask = () => {
                 <div className={`${isMobile ? 'w-16 h-16' : 'w-20 h-20'} bg-gradient-to-br from-purple-100 to-indigo-100 dark:from-purple-900/30 dark:to-indigo-900/30 rounded-full flex items-center justify-center mb-4`}>
                   <span className={`${isMobile ? 'text-3xl' : 'text-4xl'}`}>🤖</span>
                 </div>
-                <h3 className={`${isMobile ? 'text-xl' : 'text-2xl'} font-medium text-gray-900 dark:text-gray-100 mb-3`}>
+                <h3 className={`${isMobile ? 'text-xl' : 'text-2xl'} font-medium text-gray-100 mb-3`}>
                   开始Thinking.
                 </h3>
-                <p className={`text-gray-500 dark:text-gray-400 ${isMobile ? 'text-sm' : 'max-w-md'} leading-relaxed`}>
+                <p className={`text-gray-400 ${isMobile ? 'text-sm' : 'max-w-md'} leading-relaxed`}>
                   构建你的Thinking Chain
                 </p>
               </motion.div>
@@ -1097,10 +1121,10 @@ const SubmitTask = () => {
                       )}
                       
                       <div className={isMobile 
-                        ? 'py-2 border-l-2 border-gray-200/30 dark:border-gray-600/30 pl-3'
+                        ? 'py-2 border-l-2 border-gray-600/50 pl-3'
                         : 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-2xl rounded-bl-md px-4 py-3 border border-gray-200 dark:border-gray-600 shadow-sm'
                       }>
-                        <div className={`${isMobile ? 'text-sm' : 'text-base'} leading-relaxed break-words`}>
+                        <div className={`${isMobile ? 'text-sm text-gray-200' : 'text-base'} leading-relaxed break-words`}>
                           <ReactMarkdown
                             components={getMarkdownComponents(msg.role === 'user')}
                             remarkPlugins={[remarkGfm]}
@@ -1128,7 +1152,7 @@ const SubmitTask = () => {
                       </div>
                     )}
                     <div className={isMobile 
-                      ? 'border-l-2 border-gray-200/30 dark:border-gray-600/30 pl-3'
+                      ? 'border-l-2 border-gray-600/50 pl-3'
                       : 'bg-white dark:bg-gray-700 rounded-2xl rounded-bl-md px-4 py-3 border border-gray-200 dark:border-gray-600'
                     }>
                       <div className="flex items-center gap-2">
@@ -1137,7 +1161,7 @@ const SubmitTask = () => {
                           <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
                           <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
                         </div>
-                        <span className="text-sm text-gray-500 dark:text-gray-400">正在回复...</span>
+                        <span className="text-sm text-gray-400">正在回复...</span>
                       </div>
                     </div>
                   </div>
@@ -1151,7 +1175,7 @@ const SubmitTask = () => {
         <div 
           className={`flex-shrink-0 backdrop-blur-xl border-t safe-area-inset-bottom ${
             isMobile 
-              ? 'bg-white/80 dark:bg-[#1a1a1a]/90 border-gray-200/40 dark:border-[#2a2a2a]/30 px-4 py-3'
+              ? 'bg-[#1f1f1f] border-[#2a2a2a] px-4 py-3' // 使用实色，消除透明度
               : 'bg-white/95 dark:bg-gray-900/95 border-gray-200/60 dark:border-gray-700/60 p-4'
           }`}
           style={{
@@ -1180,9 +1204,9 @@ const SubmitTask = () => {
                   placeholder="开始你的思考..."
                   disabled={loading}
                   rows={1}
-                  className={`w-full resize-none rounded-3xl placeholder-gray-400 dark:placeholder-gray-500 pr-14 px-4 py-3 transition-all duration-200 ${
+                  className={`w-full resize-none rounded-3xl placeholder-gray-500 pr-14 px-4 py-3 transition-all duration-200 ${
                     isMobile 
-                      ? 'border border-gray-300/30 dark:border-gray-600/30 bg-white/10 dark:bg-white/10 text-gray-900 dark:text-gray-100 text-base focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500/50'
+                      ? 'border border-[#3a3a3a] bg-[#252525] text-gray-100 text-base focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50' // 使用实色
                       : 'border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-base focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500'
                   }`}
                   style={{ 
@@ -1203,7 +1227,7 @@ const SubmitTask = () => {
                     !loading && input.trim()
                       ? 'bg-gradient-to-br from-purple-500 to-indigo-600 text-white hover:from-purple-600 hover:to-indigo-700 active:scale-95 shadow-lg' 
                       : isMobile 
-                        ? 'bg-white/5 dark:bg-white/5 text-gray-400 dark:text-gray-500 cursor-not-allowed border border-gray-600/20 dark:border-gray-600/20'
+                        ? 'bg-[#2a2a2a] text-gray-500 cursor-not-allowed' // 使用实色
                         : 'bg-gray-200 dark:bg-gray-600 text-gray-400 dark:text-gray-500 cursor-not-allowed'
                   }`}
                 >
@@ -1235,7 +1259,6 @@ const SubmitTask = () => {
       </div>
     );
   }
-
   // 🎯 主页面内容
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 py-4 sm:py-6 px-4 sm:px-6">
