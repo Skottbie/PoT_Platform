@@ -17,6 +17,12 @@ import FontSizeSelector from '../components/FontSizeSelector';
 import { useFontSize } from '../utils/fontSizeUtils';
 import { FontSizeManager} from '../utils/fontSizeUtils';
 import '../styles/aigcFontSize.css';
+import { useDraftSave } from '../hooks/useDraftSave';
+import DraftRestoreDialog from '../components/DraftRestoreDialog';
+import DraftSaveIndicator from '../components/DraftSaveIndicator';
+import BeforeUnloadDialog from '../components/BeforeUnloadDialog';
+
+
 SyntaxHighlighter.registerLanguage('javascript', javascript);
 SyntaxHighlighter.registerLanguage('python', python);
 
@@ -138,6 +144,25 @@ const SubmitTask = () => {
         return true;
       }
     };
+
+  // 🎯 草稿保存相关
+  const {
+    saveStatus,
+    hasDraft,
+    showRestoreDialog,
+    draftData,
+    debouncedSave,
+    manualSave,
+    restoreDraft,
+    ignoreDraft,
+    deleteDraft,
+    checkBeforeLeave
+  } = useDraftSave(taskId);
+
+  // 离开页面前的提醒状态
+  const [showBeforeUnloadDialog, setShowBeforeUnloadDialog] = useState(false);
+  const [pendingNavigation, setPendingNavigation] = useState(null);
+
 
     return {
       // 🎯 代码块处理 - 增加复制功能
@@ -786,6 +811,231 @@ const SubmitTask = () => {
     adjustTextareaHeight();
   }, [input, adjustTextareaHeight]);
 
+  // 3. 自动保存逻辑 - 监听表单数据变化
+  useEffect(() => {
+    // 只有在有实际内容时才触发自动保存
+    const hasContent = !!(
+      content?.trim() ||
+      images?.length > 0 ||
+      file ||
+      aigcLog?.length > 0
+    );
+
+    if (hasContent && task) {
+      const currentData = {
+        content,
+        images,
+        file,
+        fileInfo: file ? {
+          hasFile: true,
+          fileName: file.name,
+          fileSize: formatFileSize(file.size),
+          fileType: file.type
+        } : { hasFile: false },
+        aigcLog,
+        model,
+        shouldUploadAIGC
+      };
+
+      debouncedSave(currentData);
+    }
+  }, [content, images, file, aigcLog, model, shouldUploadAIGC, debouncedSave, task]);
+
+  // 4. 恢复草稿的处理函数
+  const handleRestoreDraft = useCallback(() => {
+    if (!draftData) return;
+
+    const restored = restoreDraft();
+    if (restored) {
+      // 恢复文本内容
+      if (restored.content) {
+        setContent(restored.content);
+      }
+
+      // 恢复图片
+      if (restored.images && restored.images.length > 0) {
+        const restoredImages = restored.images.map(img => {
+          if (img.file instanceof File) {
+            return img.file;
+          }
+          // 如果不是File对象，尝试重建
+          return new File([new Blob()], img.name || 'restored_image', {
+            type: img.type || 'image/jpeg',
+            lastModified: img.lastModified || Date.now()
+          });
+        });
+        setImages(restoredImages);
+        
+        // 重建预览URL
+        const previewIds = restoredImages.map((_, index) => `restored_${index}`);
+        setImagePreviewIds(previewIds);
+      }
+
+      // 恢复AIGC相关
+      if (restored.aigcLog) {
+        setAigcLog(restored.aigcLog);
+      }
+      if (restored.model) {
+        setModel(restored.model);
+      }
+      if (typeof restored.shouldUploadAIGC === 'boolean') {
+        setShouldUploadAIGC(restored.shouldUploadAIGC);
+      }
+
+      // 如果有文件信息，显示提示
+      if (restored.fileInfo?.hasFile) {
+        setMessage(`📋 草稿已恢复！请重新上传文件：${restored.fileInfo.fileName}`);
+        setTimeout(() => setMessage(''), 5000);
+      } else {
+        setMessage('📋 草稿已恢复！');
+        setTimeout(() => setMessage(''), 3000);
+      }
+    }
+  }, [draftData, restoreDraft]);
+
+  // 5. 手动保存处理函数
+  const handleManualSave = useCallback(() => {
+    const currentData = {
+      content,
+      images,
+      file,
+      fileInfo: file ? {
+        hasFile: true,
+        fileName: file.name,
+        fileSize: formatFileSize(file.size),
+        fileType: file.type
+      } : { hasFile: false },
+      aigcLog,
+      model,
+      shouldUploadAIGC
+    };
+
+    manualSave(currentData);
+  }, [content, images, file, aigcLog, model, shouldUploadAIGC, manualSave]);
+
+  // 6. 页面离开前的检查
+  const handleBeforeUnload = useCallback((e) => {
+    const currentData = {
+      content,
+      images,
+      file,
+      aigcLog,
+      model,
+      shouldUploadAIGC
+    };
+
+    if (checkBeforeLeave(currentData)) {
+      e.preventDefault();
+      e.returnValue = '';
+      return '';
+    }
+  }, [content, images, file, aigcLog, model, shouldUploadAIGC, checkBeforeLeave]);
+
+  // 7. 拦截导航
+  const handleNavigation = useCallback((targetPath) => {
+    const currentData = {
+      content,
+      images,
+      file,
+      aigcLog,
+      model,
+      shouldUploadAIGC
+    };
+
+    if (checkBeforeLeave(currentData)) {
+      setPendingNavigation(targetPath);
+      setShowBeforeUnloadDialog(true);
+      return false;
+    }
+    return true;
+  }, [content, images, file, aigcLog, model, shouldUploadAIGC, checkBeforeLeave]);
+
+  // 8. 离开页面对话框的处理函数
+  const handleSaveAndLeave = useCallback(async () => {
+    const currentData = {
+      content,
+      images,
+      file,
+      fileInfo: file ? {
+        hasFile: true,
+        fileName: file.name,
+        fileSize: formatFileSize(file.size),
+        fileType: file.type
+      } : { hasFile: false },
+      aigcLog,
+      model,
+      shouldUploadAIGC
+    };
+
+    await manualSave(currentData);
+    setShowBeforeUnloadDialog(false);
+    
+    if (pendingNavigation) {
+      if (pendingNavigation === 'back') {
+        navigate(-1);
+      } else {
+        navigate(pendingNavigation);
+      }
+    }
+  }, [content, images, file, aigcLog, model, shouldUploadAIGC, manualSave, pendingNavigation, navigate]);
+
+  const handleLeaveWithoutSave = useCallback(() => {
+    setShowBeforeUnloadDialog(false);
+    
+    if (pendingNavigation) {
+      if (pendingNavigation === 'back') {
+        navigate(-1);
+      } else {
+        navigate(pendingNavigation);
+      }
+    }
+  }, [pendingNavigation, navigate]);
+
+  const handleCancelLeave = useCallback(() => {
+    setShowBeforeUnloadDialog(false);
+    setPendingNavigation(null);
+  }, []);
+
+  // 9. 成功提交后删除草稿
+  const originalHandleSubmit = handleSubmit; // 保存原来的提交函数
+  const enhancedHandleSubmit = useCallback(async (e) => {
+    const result = await originalHandleSubmit(e);
+    
+    // 如果提交成功，删除草稿
+    if (result !== false) { // 假设提交失败时返回false
+      await deleteDraft();
+    }
+    
+    return result;
+  }, [originalHandleSubmit, deleteDraft]);
+
+  // 10. 注册beforeunload事件
+  useEffect(() => {
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [handleBeforeUnload]);
+
+  // 11. 修改返回按钮的点击处理
+  const handleBackClick = useCallback((e) => {
+    e.preventDefault();
+    if (!handleNavigation('back')) {
+      return;
+    }
+    navigate(-1);
+  }, [handleNavigation, navigate]);
+
+  // 12. 工具函数
+  const formatFileSize = (bytes) => {
+    if (bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+  };
+
+
   // 🚀 优化提交处理
   const handleSubmit = useCallback(async (e) => {
     e.preventDefault();
@@ -1341,24 +1591,50 @@ const SubmitTask = () => {
   // 🎯 主页面内容
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 py-4 sm:py-6 px-4 sm:px-6">
+      {/* 草稿恢复对话框 */}
+      <DraftRestoreDialog
+        isOpen={showRestoreDialog}
+        draftData={draftData}
+        onRestore={handleRestoreDraft}
+        onIgnore={ignoreDraft}
+      />
+
+      {/* 离开页面提醒对话框 */}
+      <BeforeUnloadDialog
+        isOpen={showBeforeUnloadDialog}
+        hasFile={!!file}
+        onSaveAndLeave={handleSaveAndLeave}
+        onLeaveWithoutSave={handleLeaveWithoutSave}
+        onCancel={handleCancelLeave}
+      />
+
       <div className="max-w-2xl mx-auto">
-        {/* 返回按钮 */}
-        <motion.div 
-          className="mb-6"
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
+        {/* 修改现有的返回按钮区域，添加草稿保存指示器 */}
+        <motion.div
+          className="flex items-center justify-between mb-6"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
         >
-          <SecondaryButton
-            size="sm"
-            onClick={() => {
-              haptic.light();
-              navigate('/student');
-            }}
-            icon="👈"
-            className="w-full sm:w-auto"
+          <button
+            onClick={handleBackClick} // 使用新的处理函数
+            className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition-colors group"
           >
-            返回任务列表
-          </SecondaryButton>
+            <motion.div
+              whileHover={{ x: -2 }}
+              className="flex items-center gap-2"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+              <span className="font-medium">返回</span>
+            </motion.div>
+          </button>
+
+          {/* 草稿保存指示器 */}
+          <DraftSaveIndicator
+            saveStatus={saveStatus}
+            onManualSave={handleManualSave}
+          />
         </motion.div>
 
         {/* 主内容卡片 */}
