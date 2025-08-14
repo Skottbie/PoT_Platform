@@ -7,6 +7,7 @@ import Button from '../components/Button';
 import PullToRefreshContainer from '../components/PullToRefreshContainer';
 import useAutoRefresh from '../hooks/useAutoRefresh';
 import { useCallback } from 'react';
+import toast from 'react-hot-toast';
 
 const ClassStudents = () => {
   const { classId } = useParams();
