@@ -1,4 +1,4 @@
-// src/hooks/useDraftSave.js
+// src/hooks/useDraftSave.js - 完整修复版
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useHapticFeedback } from './useDeviceDetetion';
 
@@ -132,6 +132,27 @@ export const useDraftSave = (taskId, isFullscreen = false) => {
   const haptic = useHapticFeedback();
   const saveTimeoutRef = useRef(null);
   const lastSaveDataRef = useRef('');
+  
+  // 🔥 关键修复：全屏模式下完全禁用所有定时器和自动保存
+  const isAutoSaveEnabled = useRef(!isFullscreen);
+
+  // 监听全屏状态变化，立即清理定时器
+  useEffect(() => {
+    isAutoSaveEnabled.current = !isFullscreen;
+    
+    if (isFullscreen) {
+      // 立即清理所有定时器
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+        saveTimeoutRef.current = null;
+      }
+      // 停止任何正在进行的保存操作
+      setSaveStatus('idle');
+      console.log('🔥 全屏模式：已禁用自动保存');
+    } else {
+      console.log('🔥 非全屏模式：已启用自动保存');
+    }
+  }, [isFullscreen]);
 
   // 检查是否有草稿
   const checkForDraft = useCallback(async () => {
@@ -153,9 +174,15 @@ export const useDraftSave = (taskId, isFullscreen = false) => {
     }
   }, [taskId]);
 
-  // 保存草稿
+  // 保存草稿 - 添加全屏状态检查
   const saveDraft = useCallback(async (data, isManual = false) => {
     if (!taskId || !data) return false;
+
+    // 🔥 全屏模式下只允许手动保存
+    if (isFullscreen && !isManual) {
+      console.log('🔥 全屏模式下跳过自动保存');
+      return false;
+    }
 
     // 检查数据是否有变化
     const currentDataStr = JSON.stringify(data);
@@ -220,27 +247,37 @@ export const useDraftSave = (taskId, isFullscreen = false) => {
       setTimeout(() => setSaveStatus('idle'), 3000);
       return false;
     }
-  }, [taskId, haptic]);
+  }, [taskId, haptic, isFullscreen]);
 
-  // 防抖的自动保存
+  // 防抖的自动保存 - 加强全屏检查
   const debouncedSave = useCallback((data) => {
-    if (isFullscreen) {
-    return;
+    // 🔥 双重检查：当前状态 + ref状态
+    if (isFullscreen || !isAutoSaveEnabled.current) {
+      console.log('🔥 跳过自动保存：全屏模式或已禁用');
+      return;
     }
+    
     if (saveTimeoutRef.current) {
       clearTimeout(saveTimeoutRef.current);
     }
     
     saveTimeoutRef.current = setTimeout(() => {
-      saveDraft(data, false);
+      // 🔥 执行前再次检查全屏状态
+      if (!isFullscreen && isAutoSaveEnabled.current) {
+        console.log('🔥 执行自动保存');
+        saveDraft(data, false);
+      } else {
+        console.log('🔥 取消自动保存：状态已变化');
+      }
     }, 3000);
-  }, [saveDraft, isFullscreen]);
+  }, [isFullscreen, saveDraft]);
 
   // 手动保存
   const manualSave = useCallback((data) => {
     if (saveTimeoutRef.current) {
       clearTimeout(saveTimeoutRef.current);
     }
+    console.log('🔥 执行手动保存');
     return saveDraft(data, true);
   }, [saveDraft]);
 
@@ -283,12 +320,15 @@ export const useDraftSave = (taskId, isFullscreen = false) => {
     checkForDraft();
   }, [checkForDraft]);
 
-  // 清理定时器
+  // 🔥 加强清理逻辑
   useEffect(() => {
     return () => {
       if (saveTimeoutRef.current) {
         clearTimeout(saveTimeoutRef.current);
+        saveTimeoutRef.current = null;
       }
+      isAutoSaveEnabled.current = false;
+      console.log('🔥 组件卸载：已清理所有定时器');
     };
   }, []);
 
