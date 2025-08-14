@@ -123,7 +123,7 @@ class DraftStorage {
 // 创建单例实例
 const draftStorage = new DraftStorage();
 
-export const useDraftSave = (taskId) => {
+export const useDraftSave = (taskId, isFullscreen = false) => {
   const [saveStatus, setSaveStatus] = useState('idle'); // idle, saving, saved, error
   const [hasDraft, setHasDraft] = useState(false);
   const [draftData, setDraftData] = useState(null);
@@ -224,6 +224,9 @@ export const useDraftSave = (taskId) => {
 
   // 防抖的自动保存
   const debouncedSave = useCallback((data) => {
+    if (isFullscreen) {
+    return;
+    }
     if (saveTimeoutRef.current) {
       clearTimeout(saveTimeoutRef.current);
     }
@@ -231,7 +234,7 @@ export const useDraftSave = (taskId) => {
     saveTimeoutRef.current = setTimeout(() => {
       saveDraft(data, false);
     }, 3000);
-  }, [saveDraft]);
+  }, [saveDraft, isFullscreen]);
 
   // 手动保存
   const manualSave = useCallback((data) => {

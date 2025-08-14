@@ -76,7 +76,7 @@ const SubmitTask = () => {
     ignoreDraft,
     deleteDraft,
     checkBeforeLeave
-  } = useDraftSave(taskId);
+  } = useDraftSave(taskId, isFullscreen);
 
   // 离开页面前的提醒状态
   const [showBeforeUnloadDialog, setShowBeforeUnloadDialog] = useState(false);
@@ -927,6 +927,48 @@ const SubmitTask = () => {
     manualSave(currentData);
   }, [content, images, file, aigcLog, model, shouldUploadAIGC, manualSave]);
 
+
+  // 在其他 useCallback 函数附近添加
+const handleExitFullscreen = useCallback(async () => {
+  try {
+    // 构建当前数据
+    const currentData = {
+      content,
+      images,
+      file,
+      fileInfo: file ? {
+        hasFile: true,
+        fileName: file.name,
+        fileSize: formatFileSize(file.size),
+        fileType: file.type
+      } : { hasFile: false },
+      aigcLog,
+      model,
+      shouldUploadAIGC
+    };
+
+    // 只有当有实际内容时才保存
+    const hasContent = !!(
+      content?.trim() ||
+      images?.length > 0 ||
+      file ||
+      aigcLog?.length > 1
+    );
+
+    if (hasContent) {
+      await manualSave(currentData);
+    }
+
+    // 关闭全屏
+    setIsFullscreen(false);
+    haptic.light();
+    
+  } catch (error) {
+    console.error('退出全屏保存失败:', error);
+    setIsFullscreen(false); // 即使保存失败也要关闭全屏
+  }
+}, [content, images, file, aigcLog, model, shouldUploadAIGC, manualSave, haptic]);
+
   // 6. 页面离开前的检查
   const handleBeforeUnload = useCallback((e) => {
     const currentData = {
@@ -1365,10 +1407,7 @@ const SubmitTask = () => {
                 
                 {/* 关闭按钮 - 完全隐身的原生设计 */}
                 <button
-                  onClick={() => {
-                    haptic.light();
-                    setIsFullscreen(false);
-                  }}
+                  onClick={handleExitFullscreen}
                   className={`transition-all duration-200 active:scale-95 ${
                     isMobile 
                       ? 'w-9 h-9 bg-transparent hover:bg-black/5 dark:hover:bg-white/5 active:bg-black/8 dark:active:bg-white/8 rounded-full flex items-center justify-center border-0 outline-none focus:outline-none focus:ring-0 aigc-native-button'
