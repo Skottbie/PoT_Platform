@@ -54,8 +54,20 @@ const MyClasses = () => {
     }
   }, []);
 
-  // 班级列表更新频率较低
-  useAutoRefresh(handlePullRefresh, {
+  // 🔕 静默自动刷新函数
+  const handleSilentRefresh = useCallback(async () => {
+    try {
+      const res = await api.get('/class/my-classes');
+      if (res.data.success) {
+        setClasses(res.data.classes);
+      }
+    } catch (error) {
+      console.error('静默刷新失败:', error);
+    }
+  }, []);
+
+  // ⏰ 自动定时刷新（使用静默函数）
+  useAutoRefresh(handleSilentRefresh, {
     interval: 180000, // 3分钟
     enabled: true,
     pauseOnHidden: true,

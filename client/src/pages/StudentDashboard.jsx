@@ -108,7 +108,7 @@ const StudentDashboard = () => {
   }, [tasks.active]);
 
 
-  // 🔄 下拉刷新处理函数
+  // 🔄 下拉刷新处理函数（包含toast）
   const handlePullRefresh = useCallback(async () => {
     try {
       await fetchUserAndTasks();
@@ -119,23 +119,62 @@ const StudentDashboard = () => {
     }
   }, [fetchUserAndTasks]);
 
-  // ⏰ 自动定时刷新
-  useAutoRefresh(
-    useCallback(async () => {
-      // 静默刷新，不显示toast
-      try {
-        await fetchUserAndTasks();
-      } catch (error) {
-        console.error('自动刷新失败:', error);
+  // 🔕 静默自动刷新函数（完全无感）
+  const handleSilentRefresh = useCallback(async () => {
+    try {
+      // 静默获取数据，不显示任何loading或toast
+      const [userRes, activeTasksRes, archivedTasksRes] = await Promise.allSettled([
+        api.get('/user/profile'),
+        api.get('/task/all?category=active'),
+        api.get('/task/all?category=archived')
+      ]);
+
+      // 静默处理用户信息
+      if (userRes.status === 'fulfilled') {
+        setUser(userRes.value.data);
       }
-    }, [fetchUserAndTasks]),
-    {
-      interval: 60000,      // 60秒间隔
-      enabled: true,
-      pauseOnHidden: true,
-      pauseOnOffline: true,
+
+      // 静默处理任务数据
+      const activeTaskList = activeTasksRes.status === 'fulfilled' ? activeTasksRes.value.data : [];
+      const archivedTaskList = archivedTasksRes.status === 'fulfilled' ? archivedTasksRes.value.data : [];
+
+      // 静默检查提交状态
+      const checkSubmissions = async (taskList) => {
+        const submissionPromises = taskList.map(async (task) => {
+          try {
+            const r = await api.get(`/submission/check/${task._id}`);
+            return { ...task, submitted: r.data.submitted, submissionInfo: r.data.submission };
+          } catch {
+            return { ...task, submitted: false, submissionInfo: null };
+          }
+        });
+        return Promise.all(submissionPromises);
+      };
+
+      const [activeResults, archivedResults] = await Promise.all([
+        checkSubmissions(activeTaskList),
+        checkSubmissions(archivedTaskList)
+      ]);
+
+      // 静默更新状态
+      setTasks({
+        active: activeResults,
+        archived: archivedResults
+      });
+
+    } catch (error) {
+      // 只记录到控制台，不显示给用户
+      console.error('静默刷新失败:', error);
     }
-  );
+  }, []);
+
+  // ⏰ 自动定时刷新（使用静默函数）
+  useAutoRefresh(handleSilentRefresh, {
+    interval: 60000,
+    enabled: true,
+    pauseOnHidden: true,
+    pauseOnOffline: true,
+  });
 
   // 📌 切换任务分类
   const handleCategoryChange = useCallback((category) => {

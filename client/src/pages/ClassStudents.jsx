@@ -76,12 +76,27 @@ const ClassStudents = () => {
     }
   }, [classId]);
 
-  // 自动刷新
-  useAutoRefresh(handlePullRefresh, {
+  // 🔕 静默自动刷新函数
+  const handleSilentRefresh = useCallback(async () => {
+    try {
+      const res = await api.get(`/class/${classId}`);
+      if (res.data.success) {
+        const cls = res.data.class;
+        setClassData(cls);
+        const activeStudents = cls.studentList?.filter(s => !s.isRemoved) || [];
+        setStudents(activeStudents);
+      }
+    } catch (error) {
+      console.error('静默刷新失败:', error);
+    }
+  }, [classId]);
+
+  // ⏰ 自动定时刷新（使用静默函数）
+  useAutoRefresh(handleSilentRefresh, {
     interval: 90000, // 90秒
     enabled: true,
     pauseOnHidden: true,
-});
+  });
 
   return (
     <PullToRefreshContainer 

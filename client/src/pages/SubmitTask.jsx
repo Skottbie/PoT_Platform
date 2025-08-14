@@ -1142,13 +1142,13 @@ const SubmitTask = () => {
                   animate={{ opacity: 1, y: 0 }}
                 >
                   <div className={`${isMobile ? 'w-16 h-16' : 'w-20 h-20'} bg-gradient-to-br from-purple-100 to-indigo-100 dark:from-purple-900/30 dark:to-indigo-900/30 rounded-full flex items-center justify-center mb-4`}>
-                    <span className={`${isMobile ? 'text-3xl' : 'text-4xl'}`}>🤖</span>
+                    <span className={`${isMobile ? 'text-3xl' : 'text-4xl'}`}>🧠</span>
                   </div>
                   <h3 className={`${isMobile ? 'text-xl' : 'text-2xl'} font-medium text-gray-900 dark:text-gray-100 mb-3`}>
                     开始Thinking.
                   </h3>
                   <p className={`text-gray-500 dark:text-gray-400 ${isMobile ? 'text-sm' : 'max-w-md'} leading-relaxed`}>
-                    构建你的Thinking Chain
+                    构建你的Thinking Chain。
                   </p>
                 </motion.div>
               )}

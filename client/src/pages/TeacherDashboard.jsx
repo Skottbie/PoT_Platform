@@ -732,28 +732,33 @@ const TeacherDashboard = () => {
     }
   }, [fetchInitialData, fetchTasks, currentCategory]);
 
-  // ⏰ 自动定时刷新
-  useAutoRefresh(
-    useCallback(async () => {
-      try {
-        // 静默刷新任务数据
-        await fetchTasks(currentCategory);
-        // 检查是否有新的班级或统计变化
-        const classRes = await api.get('/class/my-classes');
-        if (classRes.data.success) {
-          setMyClasses(classRes.data.classes);
-        }
-      } catch (error) {
-        console.error('自动刷新失败:', error);
+  // 🔕 静默自动刷新函数（完全无感）
+  const handleSilentRefresh = useCallback(async () => {
+    try {
+      // 静默获取任务数据
+      const taskRes = await api.get(`/task/mine?category=${currentCategory}`);
+      if (taskRes.data) {
+        setTasks(prev => ({ ...prev, [currentCategory]: taskRes.data }));
       }
-    }, [fetchTasks, currentCategory]),
-    {
-      interval: 45000,      // 45秒间隔
-      enabled: true,
-      pauseOnHidden: true,
-      pauseOnOffline: true,
+      
+      // 静默获取班级数据
+      const classRes = await api.get('/class/my-classes');
+      if (classRes.data.success) {
+        setMyClasses(classRes.data.classes);
+      }
+    } catch (error) {
+      // 只记录到控制台，不显示给用户
+      console.error('静默刷新失败:', error);
     }
-  );
+  }, [currentCategory]);
+
+  // ⏰ 自动定时刷新（使用静默函数）
+  useAutoRefresh(handleSilentRefresh, {
+    interval: 45000,
+    enabled: true,
+    pauseOnHidden: true,
+    pauseOnOffline: true,
+  });
 
   if (loading) {
     return (
