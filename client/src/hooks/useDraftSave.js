@@ -401,70 +401,91 @@ export const useDraftSave = (taskId, isFullscreen = false) => {
   }, [taskId]);
 
   // 🔧 修复：改进智能页面离开前检查
-  const checkBeforeLeave = useCallback((currentData) => {
-    console.log('🔧 ===== 开始退出检查 =====');
-    
-    if (!currentData) {
-      console.log('🔧 退出检查：currentData 为空，允许退出');
-      return false;
-    }
-    
-    // 🔧 修复：使用统一的内容检查逻辑
-    const hasContent = !!(
-      currentData.content?.trim() ||
-      currentData.images?.length > 0 ||
-      currentData.file ||
-      currentData.aigcLog?.length > 1 // 第一条通常是系统消息
-    );
-    
-    if (!hasContent) {
-      console.log('🔧 退出检查：无实际内容，允许退出');
-      return false;
-    }
+const checkBeforeLeave = useCallback((currentData) => {
+  console.log('🔧 ===== 开始退出检查 =====');
+  console.log('🔧 checkBeforeLeave 被调用，currentData:', currentData);
+  
+  if (!currentData) {
+    console.log('🔧 退出检查：currentData 为空，允许退出');
+    return false;
+  }
+  
+  // 🔧 修复：使用统一的内容检查逻辑
+  const hasContent = !!(
+    currentData.content?.trim() ||
+    currentData.images?.length > 0 ||
+    currentData.file ||
+    currentData.aigcLog?.length > 1 // 第一条通常是系统消息
+  );
+  
+  console.log('🔧 hasContent 检查结果:', hasContent);
+  
+  if (!hasContent) {
+    console.log('🔧 退出检查：无实际内容，允许退出');
+    return false;
+  }
 
-    console.log('🔧 退出检查：检测到有内容，开始数据对比...');
-    
-    // 🔧 修复：使用相同的标准化函数确保数据一致性
-    const normalizedData = normalizeDataForComparison(currentData);
-    const currentDataStr = JSON.stringify(normalizedData);
-    
-    // 🆕 检查当前数据是否已保存或即将保存
-    const isSameAsLastSave = currentDataStr === lastSaveDataRef.current;
-    const isSameAsPendingSave = currentDataStr === pendingSaveDataRef.current;
-    
-    // 🔧 添加详细的调试信息
-    console.log('🔧 退出检查详情:', {
-      hasContent,
-      isSameAsLastSave,
-      isSameAsPendingSave,
-      saveStatus,
-      currentDataLength: currentDataStr.length,
-      lastSaveDataLength: lastSaveDataRef.current?.length || 0,
-      pendingSaveDataLength: pendingSaveDataRef.current?.length || 0,
-      // 🔧 添加内容对比
-      contentPreview: {
-        current: currentData.content?.substring(0, 50) + '...',
-        lastSave: lastSaveDataRef.current ? 
-          JSON.parse(lastSaveDataRef.current).content?.substring(0, 50) + '...' : 
-          'no data'
-      },
-      fileInfo: {
-        currentHasFile: !!currentData.file,
-        lastSaveFileInfo: lastSaveDataRef.current ? 
-          JSON.parse(lastSaveDataRef.current).fileInfo : 
-          'no data'
-      }
-    });
-
-    if (isSameAsLastSave || isSameAsPendingSave) {
-      console.log('🔧 退出检查：数据已保存或即将保存，允许退出');
-      return false;
+  console.log('🔧 退出检查：检测到有内容，开始数据对比...');
+  
+  // 🔧 修复：使用相同的标准化函数确保数据一致性
+  const normalizedData = normalizeDataForComparison(currentData);
+  const currentDataStr = JSON.stringify(normalizedData);
+  
+  console.log('🔧 当前数据字符串长度:', currentDataStr.length);
+  console.log('🔧 lastSaveDataRef.current:', lastSaveDataRef.current?.substring(0, 100) + '...');
+  console.log('🔧 pendingSaveDataRef.current:', pendingSaveDataRef.current?.substring(0, 100) + '...');
+  
+  // 🆕 检查当前数据是否已保存或即将保存
+  const isSameAsLastSave = currentDataStr === lastSaveDataRef.current;
+  const isSameAsPendingSave = currentDataStr === pendingSaveDataRef.current;
+  
+  // 🔧 添加详细的调试信息
+  console.log('🔧 退出检查详情:', {
+    hasContent,
+    isSameAsLastSave,
+    isSameAsPendingSave,
+    saveStatus,
+    currentDataLength: currentDataStr.length,
+    lastSaveDataLength: lastSaveDataRef.current?.length || 0,
+    pendingSaveDataLength: pendingSaveDataRef.current?.length || 0,
+    // 🔧 添加内容对比
+    contentPreview: {
+      current: currentData.content?.substring(0, 50) + '...',
+      lastSave: lastSaveDataRef.current ? 
+        (() => {
+          try {
+            return JSON.parse(lastSaveDataRef.current).content?.substring(0, 50) + '...';
+          } catch (e) {
+            console.error('🔧 解析lastSaveDataRef失败:', e);
+            return 'parse error';
+          }
+        })() : 'no data'
+    },
+    fileInfo: {
+      currentHasFile: !!currentData.file,
+      lastSaveFileInfo: lastSaveDataRef.current ? 
+        (() => {
+          try {
+            return JSON.parse(lastSaveDataRef.current).fileInfo;
+          } catch (e) {
+            console.error('🔧 解析lastSaveDataRef fileInfo失败:', e);
+            return 'parse error';
+          }
+        })() : 'no data'
     }
+  });
 
-    console.log('🔧 退出检查：检测到未保存的更改，需要提示保存');
-    console.log('🔧 ===== 退出检查结束 =====');
-    return true;
-  }, [normalizeDataForComparison, saveStatus]);
+  if (isSameAsLastSave || isSameAsPendingSave) {
+    console.log('🔧 退出检查：数据已保存或即将保存，允许退出');
+    return false;
+  }
+
+  console.log('🔧 退出检查：检测到未保存的更改，需要提示保存');
+  console.log('🔧 ===== 退出检查结束 =====');
+  return true;
+}, [normalizeDataForComparison, saveStatus]); // 🔧 确保依赖正确
+
+
   // 初始化检查草稿
   useEffect(() => {
     checkForDraft();

@@ -518,6 +518,11 @@ const SubmitTask = () => {
     };
   };
 
+
+  useEffect(() => {
+    console.log('🔧 SubmitTask 组件挂载，checkBeforeLeave:', typeof checkBeforeLeave);
+  }, [checkBeforeLeave]);
+
   useEffect(() => {
     if (selectRef.current && isMobile && isFullscreen) {
       const selectElement = selectRef.current;
@@ -988,10 +993,11 @@ const handleExitFullscreen = useCallback(async () => {
     }
   }, [content, images, file, aigcLog, model, shouldUploadAIGC, checkBeforeLeave]);
 
-  // 7. 拦截导航
+  // 7. 拦截导航 - 添加更多调试信息
   const handleNavigation = useCallback((targetPath) => {
     console.log('🔧 ===== handleNavigation 被调用 =====');
     console.log('🔧 targetPath:', targetPath);
+    console.log('🔧 checkBeforeLeave 函数是否存在:', typeof checkBeforeLeave);
     
     const currentData = {
       content,
@@ -1012,8 +1018,17 @@ const handleExitFullscreen = useCallback(async () => {
     });
 
     console.log('🔧 调用 checkBeforeLeave...');
-    const shouldShowDialog = checkBeforeLeave(currentData);
-    console.log('🔧 checkBeforeLeave 返回值:', shouldShowDialog);
+    
+    // 🔧 添加 try-catch 来捕获任何错误
+    let shouldShowDialog = false;
+    try {
+      shouldShowDialog = checkBeforeLeave(currentData);
+      console.log('🔧 checkBeforeLeave 返回值:', shouldShowDialog);
+    } catch (error) {
+      console.error('🔧 checkBeforeLeave 执行出错:', error);
+      // 出错时默认显示对话框，保险起见
+      shouldShowDialog = true;
+    }
 
     if (shouldShowDialog) {
       console.log('🔧 显示退出确认对话框');
@@ -1082,19 +1097,31 @@ const handleExitFullscreen = useCallback(async () => {
     };
   }, [handleBeforeUnload]);
 
-  // 11. 修改返回按钮的点击处理
+  // 11. 修改返回按钮的点击处理 - 添加更多调试
   const handleBackClick = useCallback((e) => {
     console.log('🔧 ===== 返回按钮被点击 =====');
+    console.log('🔧 事件对象:', e);
     e.preventDefault();
     
+    console.log('🔧 handleNavigation 函数是否存在:', typeof handleNavigation);
     console.log('🔧 调用 handleNavigation(back)...');
-    if (!handleNavigation('back')) {
-      console.log('🔧 handleNavigation 返回 false，停止导航');
-      return;
-    }
     
-    console.log('🔧 handleNavigation 返回 true，执行导航');
-    navigate(-1);
+    try {
+      const result = handleNavigation('back');
+      console.log('🔧 handleNavigation 返回结果:', result);
+      
+      if (!result) {
+        console.log('🔧 handleNavigation 返回 false，停止导航');
+        return;
+      }
+      
+      console.log('🔧 handleNavigation 返回 true，执行导航');
+      navigate(-1);
+    } catch (error) {
+      console.error('🔧 handleNavigation 执行出错:', error);
+      // 出错时直接导航，避免卡死
+      navigate(-1);
+    }
   }, [handleNavigation, navigate]);
 
 
