@@ -17,6 +17,7 @@ import ClassSubmissionStatus from './pages/ClassSubmissionStatus';
 import EditClassStudents from './pages/EditClassStudents';
 import ClassHistory from './pages/ClassHistory';
 import ViewSubmission from './pages/ViewSubmission';
+import Footer from './components/Footer';
 
 import Test from './Test'; // 导入测试组件
 
@@ -33,27 +34,32 @@ function App() {
   }, []);
   return (
     <Router>
-      <Routes>
-        <Route path="/" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/teacher" element={<ProtectedLayout><TeacherDashboard /></ProtectedLayout>} />
-        <Route path="/student" element={<ProtectedLayout><StudentDashboard /></ProtectedLayout>} />
-        <Route path="/submit/:taskId" element={<SubmitTask />} />
-        <Route path="/task/:taskId/submissions" element={<TeacherTaskSubmissions />} />
-        <Route path="/create-class" element={<CreateClass />} />
+      <div className="min-h-screen flex flex-col"> 
+        <div className="flex-1"> 
+          <Routes>
+            <Route path="/" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/teacher" element={<ProtectedLayout><TeacherDashboard /></ProtectedLayout>} />
+            <Route path="/student" element={<ProtectedLayout><StudentDashboard /></ProtectedLayout>} />
+            <Route path="/submit/:taskId" element={<SubmitTask />} />
+            <Route path="/task/:taskId/submissions" element={<TeacherTaskSubmissions />} />
+            <Route path="/create-class" element={<CreateClass />} />
 
-        <Route path="/student/join" element={<StudentJoinClass />} />
-        <Route path="/my-classes" element={<MyClasses />} />
-        <Route path="/class/:classId/students" element={<ClassStudents />} />
-        <Route path="/join-class" element={<JoinClass />} />
-        <Route path="/task/:taskId/class-status" element={<ClassSubmissionStatus />} />
-        <Route path="/class/:classId/edit-students" element={<EditClassStudents />} />
-        <Route path="/class/:classId/history" element={<ClassHistory />} />
-        <Route path="/view-submission/:taskId" element={<ViewSubmission />} />
+            <Route path="/student/join" element={<StudentJoinClass />} />
+            <Route path="/my-classes" element={<MyClasses />} />
+            <Route path="/class/:classId/students" element={<ClassStudents />} />
+            <Route path="/join-class" element={<JoinClass />} />
+            <Route path="/task/:taskId/class-status" element={<ClassSubmissionStatus />} />
+            <Route path="/class/:classId/edit-students" element={<EditClassStudents />} />
+            <Route path="/class/:classId/history" element={<ClassHistory />} />
+            <Route path="/view-submission/:taskId" element={<ViewSubmission />} />
 
 
-        <Route path="/test" element={<Test />} />
-      </Routes>
+            <Route path="/test" element={<Test />} />
+          </Routes>
+        </div>
+        <Footer />
+      </div>
       {!hideFeedback && <FeedbackWidget />}
     </Router>
   );
