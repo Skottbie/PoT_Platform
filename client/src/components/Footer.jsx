@@ -12,7 +12,7 @@ const Footer = ({ variant = 'elegant', className = '' }) => {
         <div className="border-t border-gray-200 dark:border-gray-700"></div>
         
         <div className="py-6 sm:py-8">
-          <div className="max-w-2xl mx-auto px-4 sm:px-6">
+          <div className="max-w-md mx-auto px-4 sm:px-6">
             <div className="flex flex-col items-center justify-center space-y-2">
               
               {/* 版权信息 - 主要层级 */}

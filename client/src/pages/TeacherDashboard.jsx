@@ -1096,8 +1096,8 @@ const TeacherDashboard = () => {
           {/* 任务管理区域 */}
           <div>
             {/* 任务分类标签 */}
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
-              <div className={`flex bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl border border-gray-200/60 dark:border-gray-700/60 p-1.5 rounded-mobile-2xl shadow-mobile ${
+            <div className="flex flex-col lg:flex-row lg:items-center gap-4 mb-6">
+              <div className={`flex flex-1 bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl border border-gray-200/60 dark:border-gray-700/60 p-1.5 rounded-mobile-2xl shadow-mobile ${
                 isMobile ? 'gap-1' : 'gap-1'
               }`}>
                 {[
@@ -1112,12 +1112,12 @@ const TeacherDashboard = () => {
                       currentCategory === key
                         ? `bg-gradient-to-r ${
                             color === 'blue' 
-                              ? 'from-blue-500 to-cyan-500 text-white shadow-mobile-lg transform scale-[1.02]' 
-                              : color === 'red'
-                              ? 'from-red-500 to-rose-500 text-white shadow-mobile-lg transform scale-[1.02]'
-                              : 'from-gray-500 to-slate-500 text-white shadow-mobile-lg transform scale-[1.02]'
+                              ? 'from-blue-500 to-cyan-500 text-white shadow-mobile'
+                              : color === 'gray'
+                              ? 'from-gray-500 to-slate-500 text-white shadow-mobile'
+                              : 'from-red-500 to-rose-500 text-white shadow-mobile'
                           }`
-                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100/50 dark:hover:bg-gray-700/50'
+                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100/50 dark:hover:bg-gray-700/50'
                     }`}
                   >
                     <div className="flex items-center justify-center gap-2">
@@ -1128,7 +1128,7 @@ const TeacherDashboard = () => {
                         </div>
                       ) : (
                         <>
-                          <span>{label}</span>
+                          <span className="truncate">{label}</span>
                           <span className={`inline-flex items-center justify-center w-6 h-6 text-xs font-bold rounded-full ${
                             currentCategory === key
                               ? 'bg-white/20 text-white'

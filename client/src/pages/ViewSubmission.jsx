@@ -251,7 +251,7 @@ const ViewSubmission = () => {
               </div>
               
               {/* 教师反馈显示 */}
-              {submission.feedback && (
+              {submission.feedback && submission.feedback.content && submission.feedback.createdAt && (
                 <div className="w-full">
                   <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-4">
                     <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-2">
