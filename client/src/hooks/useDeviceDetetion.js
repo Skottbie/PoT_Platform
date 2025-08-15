@@ -139,6 +139,12 @@ export function useHapticFeedback() {
     }
   }, [deviceInfo.supportsVibration]);
 
+  const warning = useCallback(() => {
+    if (deviceInfo.supportsVibration) {
+      HapticFeedback.warning();
+    }
+  }, [deviceInfo.supportsVibration]);
+
   return {
     vibrate,
     light,
@@ -146,6 +152,7 @@ export function useHapticFeedback() {
     heavy,
     success,
     error,
+    warning,
     isSupported: deviceInfo.supportsVibration
   };
 }

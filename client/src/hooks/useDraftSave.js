@@ -418,6 +418,7 @@ export const useDraftSave = (taskId, isFullscreen = false) => {
     const isSameAsLastSave = currentDataStr === lastSaveDataRef.current;
     const isSameAsPendingSave = currentDataStr === pendingSaveDataRef.current;
     
+    // 🔧 添加更详细的调试信息
     console.log('🔧 退出检查详情:', {
       hasActualContent: hasActualContent(currentData),
       isSameAsLastSave,
@@ -426,10 +427,16 @@ export const useDraftSave = (taskId, isFullscreen = false) => {
       currentDataLength: currentDataStr.length,
       lastSaveDataLength: lastSaveDataRef.current.length,
       pendingSaveDataLength: pendingSaveDataRef.current.length,
-      // 🔧 添加详细的数据对比信息
-      contentMatch: (currentData.content || '') === (lastSaveDataRef.current ? JSON.parse(lastSaveDataRef.current).content : ''),
-      imagesMatch: (currentData.images || []).length === (lastSaveDataRef.current ? JSON.parse(lastSaveDataRef.current).images.length : 0),
-      fileMatch: !!currentData.file === (lastSaveDataRef.current ? !!JSON.parse(lastSaveDataRef.current).file : false)
+      // 🔧 添加文件信息对比
+      currentFileInfo: normalizedData.fileInfo,
+      lastSaveFileInfo: lastSaveDataRef.current ? JSON.parse(lastSaveDataRef.current).fileInfo : null,
+      // 检查各个字段是否匹配
+      fieldsMatch: {
+        content: normalizedData.content === (lastSaveDataRef.current ? JSON.parse(lastSaveDataRef.current).content : ''),
+        images: normalizedData.images.length === (lastSaveDataRef.current ? JSON.parse(lastSaveDataRef.current).images.length : 0),
+        fileInfo: JSON.stringify(normalizedData.fileInfo) === JSON.stringify(lastSaveDataRef.current ? JSON.parse(lastSaveDataRef.current).fileInfo : {}),
+        aigcLog: normalizedData.aigcLog.length === (lastSaveDataRef.current ? JSON.parse(lastSaveDataRef.current).aigcLog.length : 0)
+      }
     });
 
     if (isSameAsLastSave || isSameAsPendingSave) {

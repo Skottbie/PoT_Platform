@@ -426,6 +426,11 @@ export class HapticFeedback {
   static error() {
     this.vibrate([50, 25, 50]);
   }
+  
+  static warning() {
+    // 为警告提供一个适中的震动模式，介于medium和heavy之间
+    this.vibrate([25, 10, 25]);
+  }
 }
 
 export default {
