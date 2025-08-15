@@ -84,14 +84,14 @@ app.use('/api/submission', require('./routes/submissionFeedback'));
 // 数据库连接
 mongoose.connect(process.env.MONGO_URI)
   .then(() => {
-    console.log('✅ MongoDB 连接成功');
+    console.log('✅ MongoDB 连接成功！');
     startCleanupTasks();
   })
   .catch(err => console.error('❌ MongoDB 连接失败：', err));
 
 // 📌 新增：定时清理任务函数
 const startCleanupTasks = () => {
-  console.log('🧹 启动定时清理任务...');
+  console.log('🧹 清理任务...');
 
   // 每天凌晨2点执行清理任务
   const scheduleCleanup = () => {
