@@ -519,9 +519,7 @@ const SubmitTask = () => {
   };
 
 
-  useEffect(() => {
-    console.log('🔧 SubmitTask 组件挂载，checkBeforeLeave:', typeof checkBeforeLeave);
-  }, [checkBeforeLeave]);
+  
 
   useEffect(() => {
     if (selectRef.current && isMobile && isFullscreen) {
