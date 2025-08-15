@@ -1,13 +1,14 @@
-// client/src/components/ProgressiveLogo.jsx
+// client/src/components/ProgressiveLogo.jsx - 增强版
 
 import { useState, useEffect } from 'react';
 import logo from '../assets/logo.png';
 import logoSmall from '../assets/logo-small.png';
-// import logoThumb from '../assets/logo-thumb.webp'; // 如果有的话
-// import logoBlur from '../assets/logo-blur.jpg'; // 如果有的话
+// 如果有WebP版本，优先使用
+import logoWebP from '../assets/logo.webp';
+import logoSmallWebP from '../assets/logo-small.webp';
 
 const ProgressiveLogo = ({ 
-  size = "medium", // "small" | "medium" | "large"
+  size = "medium", 
   className = "",
   alt = "PoTAcademy Logo",
   onClick,
@@ -17,23 +18,33 @@ const ProgressiveLogo = ({
   const [currentSrc, setCurrentSrc] = useState(null);
   const [isHighQualityLoaded, setIsHighQualityLoaded] = useState(false);
 
-  // 根据尺寸决定加载策略
+  // 检测浏览器是否支持WebP
+  const supportsWebP = () => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 1;
+    canvas.height = 1;
+    return canvas.toDataURL('image/webp').indexOf('data:image/webp') === 0;
+  };
+
+  // 根据尺寸和浏览器支持决定加载策略
   const getSources = () => {
+    const webpSupported = supportsWebP();
+    
     switch (size) {
       case "small":
         return {
-          immediate: logoSmall, // 立即显示小图
-          final: logo // 后台加载高质量图
+          immediate: webpSupported && logoSmallWebP ? logoSmallWebP : logoSmall,
+          final: webpSupported && logoWebP ? logoWebP : logo
         };
       case "large":
         return {
-          immediate: logoSmall, // 先显示小图
-          final: logo
+          immediate: webpSupported && logoSmallWebP ? logoSmallWebP : logoSmall,
+          final: webpSupported && logoWebP ? logoWebP : logo
         };
       default: // medium
         return {
-          immediate: logoSmall,
-          final: logo
+          immediate: webpSupported && logoSmallWebP ? logoSmallWebP : logoSmall,
+          final: webpSupported && logoWebP ? logoWebP : logo
         };
     }
   };
@@ -44,25 +55,45 @@ const ProgressiveLogo = ({
     // 立即显示低质量图片
     setCurrentSrc(sources.immediate);
 
-    // 预加载高质量图片
+    // 🚀 关键优化：对于Login页面的priority logo，立即开始加载高质量版本
     const loadHighQuality = () => {
       const img = new Image();
+      
       img.onload = () => {
         setCurrentSrc(sources.final);
         setIsHighQualityLoaded(true);
       };
+      
       img.onerror = () => {
-        // 如果高质量图片加载失败，保持低质量图片
         console.warn('High quality logo failed to load');
+        // 如果WebP失败，尝试PNG
+        if (sources.final.includes('.webp')) {
+          const fallbackImg = new Image();
+          fallbackImg.onload = () => {
+            setCurrentSrc(logo);
+            setIsHighQualityLoaded(true);
+          };
+          fallbackImg.src = logo;
+        }
       };
+      
+      // 🔥 为Login页面预连接资源
+      if (priority) {
+        // 预连接到图片域名（如果使用CDN）
+        const link = document.createElement('link');
+        link.rel = 'preconnect';
+        link.href = new URL(sources.final, window.location.origin).origin;
+        document.head.appendChild(link);
+      }
+      
       img.src = sources.final;
     };
 
     if (priority) {
-      // 优先加载，立即开始
+      // 🚀 优先加载：立即开始，无延迟
       loadHighQuality();
     } else {
-      // 延迟加载，给其他资源让路
+      // 延迟加载：给关键资源让路
       const timer = setTimeout(loadHighQuality, 300);
       return () => clearTimeout(timer);
     }
@@ -84,11 +115,19 @@ const ProgressiveLogo = ({
     <img
       src={currentSrc}
       alt={alt}
-      className={`${getSizeClasses()} ${className} transition-all duration-300 ${
-        isHighQualityLoaded ? 'opacity-100' : 'opacity-90'
+      className={`${getSizeClasses()} ${className} transition-all duration-200 ${
+        isHighQualityLoaded ? 'opacity-100' : 'opacity-95'
       }`}
       onClick={onClick}
       loading={priority ? "eager" : "lazy"}
+      // 🔥 关键优化：为重要的logo添加fetchpriority
+      fetchPriority={priority ? "high" : "auto"}
+      // 防止布局偏移
+      style={{ 
+        objectFit: 'contain',
+        minWidth: 'auto',
+        minHeight: 'auto'
+      }}
       {...props}
     />
   );
