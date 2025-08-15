@@ -1,4 +1,5 @@
-// src/components/BeforeUnloadDialog.jsx
+// 完全替换 src/components/BeforeUnloadDialog.jsx 的内容
+
 import { motion, AnimatePresence } from 'framer-motion';
 import { PrimaryButton, SecondaryButton, WarningButton } from './EnhancedButton';
 import { useHapticFeedback } from '../hooks/useDeviceDetetion';
@@ -13,17 +14,40 @@ const BeforeUnloadDialog = ({
   const haptic = useHapticFeedback();
 
   const handleSaveAndLeave = () => {
-    haptic.success();
+    // 🔧 修复：安全调用 haptic 方法
+    try {
+      if (haptic && typeof haptic.success === 'function') {
+        haptic.success();
+      }
+    } catch (error) {
+      console.warn('Haptic feedback failed:', error);
+    }
     onSaveAndLeave();
   };
 
   const handleLeaveWithoutSave = () => {
-    haptic.warning();
+    // 🔧 修复：完全移除对 warning 方法的调用，使用替代方案
+    try {
+      if (haptic && typeof haptic.medium === 'function') {
+        haptic.medium(); // 使用 medium 作为警告替代
+      } else if (haptic && typeof haptic.light === 'function') {
+        haptic.light(); // 退而求其次使用 light
+      }
+    } catch (error) {
+      console.warn('Haptic feedback failed:', error);
+    }
     onLeaveWithoutSave();
   };
 
   const handleCancel = () => {
-    haptic.light();
+    // 🔧 修复：安全调用 haptic 方法
+    try {
+      if (haptic && typeof haptic.light === 'function') {
+        haptic.light();
+      }
+    } catch (error) {
+      console.warn('Haptic feedback failed:', error);
+    }
     onCancel();
   };
 

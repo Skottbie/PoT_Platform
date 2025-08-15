@@ -990,6 +990,9 @@ const handleExitFullscreen = useCallback(async () => {
 
   // 7. 拦截导航
   const handleNavigation = useCallback((targetPath) => {
+    console.log('🔧 ===== handleNavigation 被调用 =====');
+    console.log('🔧 targetPath:', targetPath);
+    
     const currentData = {
       content,
       images,
@@ -999,11 +1002,27 @@ const handleExitFullscreen = useCallback(async () => {
       shouldUploadAIGC
     };
 
-    if (checkBeforeLeave(currentData)) {
+    console.log('🔧 当前数据状态:', {
+      contentLength: content?.length || 0,
+      imagesCount: images?.length || 0,
+      hasFile: !!file,
+      aigcLogCount: aigcLog?.length || 0,
+      model,
+      shouldUploadAIGC
+    });
+
+    console.log('🔧 调用 checkBeforeLeave...');
+    const shouldShowDialog = checkBeforeLeave(currentData);
+    console.log('🔧 checkBeforeLeave 返回值:', shouldShowDialog);
+
+    if (shouldShowDialog) {
+      console.log('🔧 显示退出确认对话框');
       setPendingNavigation(targetPath);
       setShowBeforeUnloadDialog(true);
       return false;
     }
+    
+    console.log('🔧 直接允许导航');
     return true;
   }, [content, images, file, aigcLog, model, shouldUploadAIGC, checkBeforeLeave]);
 
@@ -1065,10 +1084,16 @@ const handleExitFullscreen = useCallback(async () => {
 
   // 11. 修改返回按钮的点击处理
   const handleBackClick = useCallback((e) => {
+    console.log('🔧 ===== 返回按钮被点击 =====');
     e.preventDefault();
+    
+    console.log('🔧 调用 handleNavigation(back)...');
     if (!handleNavigation('back')) {
+      console.log('🔧 handleNavigation 返回 false，停止导航');
       return;
     }
+    
+    console.log('🔧 handleNavigation 返回 true，执行导航');
     navigate(-1);
   }, [handleNavigation, navigate]);
 
