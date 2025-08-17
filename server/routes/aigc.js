@@ -2,22 +2,16 @@
 const express = require('express');
 const dotenv = require('dotenv');
 const axios = require('axios');
-// const OpenAI = require('openai'); // 已移除 OpenAI 库的引入
 
 dotenv.config();
 const router = express.Router();
 
-// 📌 已移除 OpenAI 客户端的初始化
-// const openai = new OpenAI({
-//   apiKey: process.env.OPENAI_API_KEY,
-// });
-
-// ✅ 通义千问请求函数
-const callQwen = async (messages) => {
+// ✅ 扩展通义千问请求函数 - 支持动态模型
+const callQwen = async (messages, modelName = 'qwen-turbo') => {
   const res = await axios.post(
     'https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation',
     {
-      model: 'qwen-turbo',
+      model: modelName, // 使用传入的模型名
       input: { messages },
       parameters: { temperature: 0.7 },
     },
@@ -32,16 +26,19 @@ const callQwen = async (messages) => {
 };
 
 router.post('/chat', async (req, res) => {
-  const { messages, model = 'qwen' } = req.body; // 📌 将默认模型改为 'qwen'
+  const { messages, model = 'qwen' } = req.body;
 
   try {
     let reply = '';
 
-    // 📌 只保留了通义千问的调用逻辑
     if (model === 'qwen') {
+      // 保持原有调用方式
       reply = await callQwen(messages);
+    } else if (model === 'qwen-flash') {
+      reply = await callQwen(messages, 'qwen-flash');
+    } else if (model === 'qwen-plus') {
+      reply = await callQwen(messages, 'qwen-plus');
     } else {
-      // 如果客户端请求了 OpenAI，由于服务器端已禁用，返回错误
       return res.status(400).json({ error: 'OpenAI服务已暂时禁用' });
     }
 

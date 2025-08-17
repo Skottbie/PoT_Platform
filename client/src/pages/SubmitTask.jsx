@@ -36,9 +36,9 @@ const SubmitTask = () => {
   const haptic = useHapticFeedback();
 
   const MODEL_OPTIONS = [
-  { value: 'openai', label: 'ChatGPT(维护中)' },
-  { value: 'qwen', label: '通义千问' },
-  // 未来可以在这里添加更多模型
+    { value: 'openai', label: 'ChatGPT(维护中)' },
+    { value: 'qwen-flash', label: '通义千问-Flash' },
+    { value: 'qwen-plus', label: '通义千问-Plus' },
   ];
 
 
@@ -49,7 +49,7 @@ const SubmitTask = () => {
   const [imagePreviewIds, setImagePreviewIds] = useState([]);
   const [content, setContent] = useState('');
   const [message, setMessage] = useState('');
-  const [model, setModel] = useState('qwen');
+  const [model, setModel] = useState('qwen-flash');
   
   const [aigcLog, setAigcLog] = useState([]);
   const [input, setInput] = useState('');
@@ -1542,7 +1542,11 @@ const handleExitFullscreen = useCallback(async () => {
                         {!isMobile && (
                           <div className="text-xs text-gray-500 dark:text-gray-400 mb-1 flex items-center gap-1">
                             <span>🤖</span>
-                            <span>{msg.model === 'qwen' ? '通义千问' : 'ChatGPT'}</span>
+                            <span>
+                              {msg.model === 'qwen-flash' ? '通义千问-Flash' : 
+                              msg.model === 'qwen-plus' ? '通义千问-Plus' : 
+                              'ChatGPT'}
+                            </span>
                           </div>
                         )}
                         
@@ -1574,7 +1578,11 @@ const handleExitFullscreen = useCallback(async () => {
                       {!isMobile && (
                         <div className="text-xs text-gray-500 dark:text-gray-400 mb-1 flex items-center gap-1">
                           <span>🤖</span>
-                          <span>{model === 'qwen' ? '通义千问' : 'ChatGPT'}</span>
+                          <span>
+                          {model === 'qwen-flash' ? '通义千问-Flash' : 
+                          model === 'qwen-plus' ? '通义千问-Plus' : 
+                          'ChatGPT'}
+                        </span>
                         </div>
                       )}
                       <div className={isMobile 
@@ -1982,7 +1990,8 @@ const handleExitFullscreen = useCallback(async () => {
                       className="w-full border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-4 py-3 text-base focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500"
                     >
                       <option value="openai">ChatGPT*(维护中)</option>
-                      <option value="qwen">通义千问</option>
+                      <option value="qwen-flash">通义千问-Flash</option>
+                      <option value="qwen-plus">通义千问-Plus</option>
                     </select>
                   </div>
 
@@ -2010,7 +2019,12 @@ const handleExitFullscreen = useCallback(async () => {
                                 msg.role === 'user' ? 'justify-end' : 'justify-start'
                               }`}>
                                 <span>{msg.role === 'user' ? '👤' : '🤖'}</span>
-                                <span>{msg.role === 'user' ? '你' : (msg.model === 'qwen' ? '通义千问' : 'ChatGPT')}</span>
+                                <span>
+                                  {msg.role === 'user' ? '你' : 
+                                  (msg.model === 'qwen-flash' ? '通义千问-Flash' : 
+                                    msg.model === 'qwen-plus' ? '通义千问-Plus' : 
+                                    'ChatGPT')}
+                                </span>
                               </div>
                               
                               <div className={`rounded-xl px-3 py-2 text-sm ${
@@ -2034,7 +2048,11 @@ const handleExitFullscreen = useCallback(async () => {
                             <div className="max-w-[80%]">
                               <div className="text-xs text-gray-500 dark:text-gray-400 mb-1 flex items-center gap-1">
                                 <span>🤖</span>
-                                <span>{model === 'qwen' ? '通义千问' : 'ChatGPT'}</span>
+                                <span>
+                                {model === 'qwen-flash' ? '通义千问-Flash' : 
+                                model === 'qwen-plus' ? '通义千问-Plus' : 
+                                'ChatGPT'}
+                              </span>
                               </div>
                               <div className="bg-white dark:bg-gray-700 rounded-xl rounded-bl-sm px-3 py-2 border border-gray-200 dark:border-gray-600">
                                 <div className="flex items-center gap-2">
