@@ -35,11 +35,31 @@ const SubmitTask = () => {
   const keyboardState = useVirtualKeyboard();
   const haptic = useHapticFeedback();
 
-  const MODEL_OPTIONS = [
-    { value: 'openai', label: 'ChatGPT(维护中)' },
-    { value: 'qwen-flash', label: '通义千问-Flash' },
-    { value: 'qwen-plus', label: '通义千问-Plus' },
-  ];
+
+const MODEL_OPTIONS = [
+  { value: 'qwen-flash', label: '通义千问-Flash' },
+  { value: 'qwen-plus', label: '通义千问-Plus' },
+  { value: 'deepseek-r1-distill', label: 'DeepSeek-R1' },
+  { value: 'ernie-speed', label: 'ERNIE Speed' },
+  { value: 'openai', label: 'ChatGPT(维护中)' },
+];
+
+const getCurrentModelLabel = useCallback((modelValue) => {
+  const option = MODEL_OPTIONS.find(opt => opt.value === modelValue);
+  return option ? option.label : modelValue;
+}, []);
+
+// 获取简短模型名 - 用于对话显示
+const getModelDisplayName = useCallback((modelValue) => {
+  switch(modelValue) {
+    case 'qwen-flash': return '通义千问-Flash';
+    case 'qwen-plus': return '通义千问-Plus'; 
+    case 'deepseek-r1-distill': return 'DeepSeek-R1';
+    case 'ernie-speed': return 'ERNIE Speed';
+    case 'openai': return 'ChatGPT';
+    default: return modelValue;
+  }
+}, []);
 
 
   // 基础状态
@@ -97,10 +117,6 @@ const SubmitTask = () => {
     setFontSizeKey(latestSize);
   }, []);
 
-  const getCurrentModelLabel = useCallback((modelValue) => {
-    const selectedModel = MODEL_OPTIONS.find(option => option.value === modelValue);
-    return selectedModel ? selectedModel.label : modelValue;
-  }, []);
 
   const updateSelectWidth = useCallback((selectElement) => {
     if (!selectElement || !isMobile || !isFullscreen) return;
@@ -725,7 +741,9 @@ const SubmitTask = () => {
       const aiMessage = { 
         role: 'assistant', 
         content: res.data.reply, 
-        model: model 
+        model: model,
+        // 新增：DeepSeek模型的思考过程
+        reasoning_content: res.data.reasoning_content || null
       };
       setAigcLog((prev) => [...prev, aiMessage]);
       haptic.success();
@@ -1543,9 +1561,7 @@ const handleExitFullscreen = useCallback(async () => {
                           <div className="text-xs text-gray-500 dark:text-gray-400 mb-1 flex items-center gap-1">
                             <span>🤖</span>
                             <span>
-                              {msg.model === 'qwen-flash' ? '通义千问-Flash' : 
-                              msg.model === 'qwen-plus' ? '通义千问-Plus' : 
-                              'ChatGPT'}
+                              {getModelDisplayName(msg.model)}
                             </span>
                           </div>
                         )}
@@ -1579,9 +1595,7 @@ const handleExitFullscreen = useCallback(async () => {
                         <div className="text-xs text-gray-500 dark:text-gray-400 mb-1 flex items-center gap-1">
                           <span>🤖</span>
                           <span>
-                          {model === 'qwen-flash' ? '通义千问-Flash' : 
-                          model === 'qwen-plus' ? '通义千问-Plus' : 
-                          'ChatGPT'}
+                            {getModelDisplayName(model)}
                         </span>
                         </div>
                       )}
@@ -1989,9 +2003,11 @@ const handleExitFullscreen = useCallback(async () => {
                       }}
                       className="w-full border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-4 py-3 text-base focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500"
                     >
-                      <option value="openai">ChatGPT*(维护中)</option>
                       <option value="qwen-flash">通义千问-Flash</option>
                       <option value="qwen-plus">通义千问-Plus</option>
+                      <option value="deepseek-r1-distill">DeepSeek-R1</option>
+                      <option value="ernie-speed">ERNIE-Speed</option>
+                      <option value="openai">ChatGPT*(维护中)</option>
                     </select>
                   </div>
 
@@ -2018,12 +2034,11 @@ const handleExitFullscreen = useCallback(async () => {
                               <div className={`text-xs text-gray-500 dark:text-gray-400 mb-1 flex items-center gap-1 ${
                                 msg.role === 'user' ? 'justify-end' : 'justify-start'
                               }`}>
-                                <span>{msg.role === 'user' ? '👤' : '🤖'}</span>
                                 <span>
-                                  {msg.role === 'user' ? '你' : 
-                                  (msg.model === 'qwen-flash' ? '通义千问-Flash' : 
-                                    msg.model === 'qwen-plus' ? '通义千问-Plus' : 
-                                    'ChatGPT')}
+                                  {msg.role === 'user' ? '👤' : '🤖'}
+                                </span>
+                                <span>
+                                  {msg.role === 'user' ? '你' : getModelDisplayName(msg.model)}
                                 </span>
                               </div>
                               
@@ -2049,9 +2064,7 @@ const handleExitFullscreen = useCallback(async () => {
                               <div className="text-xs text-gray-500 dark:text-gray-400 mb-1 flex items-center gap-1">
                                 <span>🤖</span>
                                 <span>
-                                {model === 'qwen-flash' ? '通义千问-Flash' : 
-                                model === 'qwen-plus' ? '通义千问-Plus' : 
-                                'ChatGPT'}
+                                  {getModelDisplayName(model)}
                               </span>
                               </div>
                               <div className="bg-white dark:bg-gray-700 rounded-xl rounded-bl-sm px-3 py-2 border border-gray-200 dark:border-gray-600">

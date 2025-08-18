@@ -5,7 +5,7 @@ import axios from 'axios';
 const instance = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || 'https://api.potacademy.net/api/',
   withCredentials: true,
-  timeout: 15000, // 15秒超时
+  timeout: 5000, // 5秒超时
 });
 
 // 简化的token管理

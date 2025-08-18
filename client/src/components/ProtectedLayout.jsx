@@ -59,13 +59,13 @@ const ProtectedLayout = ({ children }) => {
 
     fetchUser();
 
-    // 设置15秒超时
+    // 设置5秒超时
     const timeoutId = setTimeout(() => {
       if (loading) {
         setLoading(false);
         setError('连接超时，请检查网络连接');
       }
-    }, 15000);
+    }, 5000);
 
     return () => clearTimeout(timeoutId);
   }, [fetchUser, clearAuthAndRedirect, loading]);
