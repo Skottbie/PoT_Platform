@@ -1,139 +1,145 @@
-// client/src/api/axiosInstance.js - 优化版本
+// client/src/api/axiosInstance.js - 简化优化版本
 import axios from 'axios';
 
 // 创建axios实例
 const instance = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || 'https://api.potacademy.net/api/',
   withCredentials: true,
+  timeout: 15000, // 15秒超时
 });
 
-// Token管理
+// 简化的token管理
 let isRefreshing = false;
-let refreshSubscribers = [];
+let failedQueue = [];
 
-// 添加到刷新等待队列
-const subscribeTokenRefresh = (callback) => {
-  refreshSubscribers.push(callback);
+// 处理队列中的请求
+const processQueue = (error, token = null) => {
+  failedQueue.forEach(({ resolve, reject }) => {
+    if (error) {
+      reject(error);
+    } else {
+      resolve(token);
+    }
+  });
+  
+  failedQueue = [];
 };
 
-// 通知所有等待的请求
-const onRefreshed = (token) => {
-  refreshSubscribers.map(callback => callback(token));
-  refreshSubscribers = [];
-};
-
-// 清理认证数据并跳转 - 统一处理函数
+// 清理认证数据并跳转
 const clearAuthAndRedirect = () => {
   localStorage.removeItem('token');
   localStorage.removeItem('role');
   localStorage.removeItem('tokenExpiresAt');
   
-  // 只有在非登录页面时才跳转，减少延迟
   if (!window.location.pathname.includes('/login') && 
       !window.location.pathname === '/') {
-    console.log('🔄 自动跳转到登录页');
-    // 移除延迟，立即跳转
     window.location.href = '/';
   }
 };
 
-// 刷新token - 优化版本
-const refreshToken = async () => {
+// 简化的token刷新
+const refreshAccessToken = async () => {
   try {
-    console.log('🔄 尝试刷新token...');
-    
-    const response = await instance.post('/auth/refresh', {}, {
+    const response = await axios.post('/auth/refresh', {}, {
+      baseURL: instance.defaults.baseURL,
       withCredentials: true,
-      timeout: 10000, // 10秒超时
-      _skipAuthRefresh: true
+      timeout: 10000,
     });
     
-    const { token } = response.data;
+    const { token, expiresIn = 7200 } = response.data; // 默认2小时
+    
     localStorage.setItem('token', token);
+    localStorage.setItem('tokenExpiresAt', (Date.now() + expiresIn * 1000).toString());
     
-    // 更新过期时间
-    const expiresAt = Date.now() + (15 * 60 * 1000); // 15分钟
-    localStorage.setItem('tokenExpiresAt', expiresAt.toString());
-    
-    console.log('✅ Token刷新成功');
     return token;
   } catch (error) {
-    console.error('❌ Refresh token失败:', error);
-    
-    // 统一使用清理函数
+    console.error('Token刷新失败:', error);
     clearAuthAndRedirect();
     throw error;
   }
 };
 
-// 请求拦截器 - 自动携带token
-instance.interceptors.request.use((config) => {
-  // 跳过refresh请求的token检查
-  if (config._skipAuthRefresh) {
-    delete config._skipAuthRefresh;
-    return config;
-  }
+// 检查token是否即将过期（提前5分钟刷新）
+const shouldRefreshToken = () => {
+  const expiresAt = localStorage.getItem('tokenExpiresAt');
+  if (!expiresAt) return false;
   
-  const token = localStorage.getItem('token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-}, (error) => {
-  return Promise.reject(error);
-});
+  const now = Date.now();
+  const expireTime = parseInt(expiresAt);
+  const fiveMinutes = 5 * 60 * 1000;
+  
+  return (expireTime - now) < fiveMinutes;
+};
 
-// 响应拦截器 - 处理token过期
+// 请求拦截器
+instance.interceptors.request.use(
+  async (config) => {
+    const token = localStorage.getItem('token');
+    
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+      
+      // 主动刷新即将过期的token
+      if (shouldRefreshToken() && !isRefreshing) {
+        try {
+          isRefreshing = true;
+          const newToken = await refreshAccessToken();
+          config.headers.Authorization = `Bearer ${newToken}`;
+        } catch (error) {
+          // 刷新失败，继续使用原token
+        } finally {
+          isRefreshing = false;
+        }
+      }
+    }
+    
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+// 响应拦截器
 instance.interceptors.response.use(
   (response) => response,
   async (error) => {
-    const { config, response } = error;
+    const originalRequest = error.config;
     
-    // 如果是401错误且不是登录/刷新请求
-    if (response?.status === 401 && 
-        !config.url.includes('/auth/login') && 
-        !config.url.includes('/auth/refresh') &&
-        !config._retry) {
-      
-      console.log('🔒 检测到401错误，尝试刷新token');
+    // 处理401错误且不是刷新请求
+    if (error.response?.status === 401 && 
+        !originalRequest.url.includes('/auth/refresh') &&
+        !originalRequest.url.includes('/auth/login') &&
+        !originalRequest._retry) {
       
       if (isRefreshing) {
-        // 如果正在刷新，加入等待队列
-        return new Promise((resolve) => {
-          subscribeTokenRefresh((token) => {
-            if (token) {
-              config.headers.Authorization = `Bearer ${token}`;
-              resolve(instance(config));
-            } else {
-              clearAuthAndRedirect();
-              resolve(Promise.reject(error));
-            }
-          });
+        // 正在刷新token，将请求加入队列
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        }).then(token => {
+          originalRequest.headers.Authorization = `Bearer ${token}`;
+          return instance(originalRequest);
+        }).catch(err => {
+          return Promise.reject(err);
         });
       }
 
-      config._retry = true;
+      originalRequest._retry = true;
       isRefreshing = true;
 
       try {
-        const newToken = await refreshToken();
-        onRefreshed(newToken);
+        const newToken = await refreshAccessToken();
+        processQueue(null, newToken);
         
-        // 重新发送原请求
-        config.headers.Authorization = `Bearer ${newToken}`;
-        return instance(config);
+        originalRequest.headers.Authorization = `Bearer ${newToken}`;
+        return instance(originalRequest);
       } catch (refreshError) {
-        console.error('❌ Token刷新失败，清理认证状态');
-        onRefreshed(null);
+        processQueue(refreshError, null);
         clearAuthAndRedirect();
         return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;
-        refreshSubscribers = [];
       }
     }
 
-    // 其他错误直接返回
     return Promise.reject(error);
   }
 );
