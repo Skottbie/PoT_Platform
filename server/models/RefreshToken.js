@@ -1,35 +1,32 @@
 // server/models/RefreshToken.js
-
 const mongoose = require('mongoose');
 
-const refreshTokenSchema = new mongoose.Schema({
+const RefreshTokenSchema = new mongoose.Schema({
   token: {
     type: String,
     required: true,
-    unique: true
+    unique: true,
+    index: true
   },
   userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: true
+    required: true,
+    index: true
   },
   expiresAt: {
     type: Date,
-    required: true
+    required: true,
+    index: true
   },
   isRevoked: {
     type: Boolean,
-    default: false
+    default: false,
+    index: true
   },
   rememberMe: {
     type: Boolean,
     default: false
-  },
-  // 设备信息（可选，用于多设备管理）
-  deviceInfo: {
-    userAgent: String,
-    ip: String,
-    deviceName: String
   },
   lastUsedAt: {
     type: Date,
@@ -39,10 +36,14 @@ const refreshTokenSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// 自动删除过期token
-refreshTokenSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
+// 自动清理过期token
+RefreshTokenSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
-// 清理被撤销的token（定期任务）
-refreshTokenSchema.index({ isRevoked: 1, createdAt: 1 });
+// 复合索引优化查询
+RefreshTokenSchema.index({ 
+  userId: 1, 
+  isRevoked: 1, 
+  expiresAt: 1 
+});
 
-module.exports = mongoose.model('RefreshToken', refreshTokenSchema);
+module.exports = mongoose.model('RefreshToken', RefreshTokenSchema);
