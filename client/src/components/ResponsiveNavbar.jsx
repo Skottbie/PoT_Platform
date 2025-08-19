@@ -1,9 +1,10 @@
-// src/components/ResponsiveNavbar.jsx - 响应式导航容器
+// client/src/components/ResponsiveNavbar.jsx - 更新版本
+
 import { useState, useEffect } from 'react';
 import Navbar from './Navbar';
 import MobileNavbar from './MobileNavbar';
 
-const ResponsiveNavbar = ({ user }) => {
+const ResponsiveNavbar = ({ user, onUserUpdate }) => {
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -17,9 +18,9 @@ const ResponsiveNavbar = ({ user }) => {
   }, []);
 
   return isMobile ? (
-    <MobileNavbar user={user} />
+    <MobileNavbar user={user} onUserUpdate={onUserUpdate} />
   ) : (
-    <Navbar user={user} />
+    <Navbar user={user} onUserUpdate={onUserUpdate} />
   );
 };
 

@@ -10,6 +10,8 @@ import ConfirmDialog from '../components/ConfirmDialog';
 import toast from 'react-hot-toast';
 import PullToRefreshContainer from '../components/PullToRefreshContainer';
 import useAutoRefresh from '../hooks/useAutoRefresh';
+import { getGreeting } from '../utils/greetings';
+
 
 const TeacherDashboard = () => {
   const [user, setUser] = useState(null);
@@ -786,66 +788,72 @@ const TeacherDashboard = () => {
       disabled={loading || submitting}
     >
       <div className="max-w-4xl mx-auto space-y-6">
-          {/* 欢迎区域 */}
-          <motion.div
-            className="mb-6"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
-            <div className="bg-gradient-to-r from-white via-blue-50/30 to-purple-50/30 dark:from-gray-800 dark:via-blue-900/10 dark:to-purple-900/10 rounded-mobile-2xl border border-gray-200/60 dark:border-gray-700/60 backdrop-blur-xl shadow-mobile p-6">
-              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
-                <div className="flex-1 min-w-0">
-                  <h1 className={`font-bold mb-2 text-gray-800 dark:text-gray-100 ${
-                    isMobile ? 'text-xl' : 'text-2xl'
-                  }`}>
-                    <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                      欢迎回来
+        {/* 欢迎区域 - 使用智能欢迎词 */}
+        <motion.div
+          className="mb-6"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <div className="bg-gradient-to-r from-white via-blue-50/30 to-purple-50/30 dark:from-gray-800 dark:via-blue-900/10 dark:to-purple-900/10 rounded-mobile-2xl border border-gray-200/60 dark:border-gray-700/60 backdrop-blur-xl shadow-mobile p-6">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
+              <div className="flex-1 min-w-0">
+                <h1 className={`font-bold mb-2 text-gray-800 dark:text-gray-100 ${
+                  isMobile ? 'text-xl' : 'text-2xl'
+                }`}>
+                  <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                    {/* 🆕 使用智能欢迎词系统 */}
+                    {user ? getGreeting('teacher', user.nickname, user.email) : '欢迎回来'}
+                  </span>
+                </h1>
+                
+                {/* 🆕 添加时间段显示（可选，用于调试） */}
+                {process.env.NODE_ENV === 'development' && (
+                  <p className="text-xs text-gray-400 mb-2">
+                    🕐 {new Date().toLocaleTimeString()} - 当前时段
+                  </p>
+                )}
+                
+                {/* 快速统计 */}
+                <div className="flex items-center gap-4 mt-3">
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                      {tasks.active.length} 个活跃任务
                     </span>
-                    <span className="block sm:inline text-gray-700 dark:text-gray-300 mt-1 sm:mt-0">
-                      {user.email}
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                      {myClasses.length} 个班级
                     </span>
-                  </h1>
-                  
-                  {/* 快速统计 */}
-                  <div className="flex items-center gap-4 mt-3">
-                    <div className="flex items-center gap-1.5">
-                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                      <span className="text-sm text-gray-600 dark:text-gray-400">
-                        {tasks.active.length} 个活跃任务
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                      <span className="text-sm text-gray-600 dark:text-gray-400">
-                        {myClasses.length} 个班级
-                      </span>
-                    </div>
                   </div>
                 </div>
+              </div>
 
-                <div className="flex gap-2 flex-shrink-0">
-                  <PrimaryButton
-                    size={isMobile ? "md" : "md"}
-                    icon="➕"
-                    haptic
-                    onClick={() => navigate('/create-class')}
-                    gradient
-                    className="flex-1 sm:flex-none"
-                  >
-                    创建班级
-                  </PrimaryButton>
-                  <SecondaryButton
-                    size={isMobile ? "md" : "md"}
-                    icon="📚"
-                    onClick={() => navigate('/my-classes')}
-                    className="flex-1 sm:flex-none"
-                  >
-                    管理班级
-                  </SecondaryButton>
-                </div>
+              <div className="flex gap-2 flex-shrink-0">
+                <PrimaryButton
+                  size={isMobile ? "md" : "md"}
+                  icon="➕"
+                  haptic
+                  onClick={() => navigate('/create-class')}
+                  gradient
+                  className="flex-1 sm:flex-none"
+                >
+                  创建班级
+                </PrimaryButton>
+                <SecondaryButton
+                  size={isMobile ? "md" : "md"}
+                  icon="📚"
+                  haptic
+                  onClick={() => navigate('/my-classes')}
+                  className="flex-1 sm:flex-none"
+                >
+                  我的班级
+                </SecondaryButton>
               </div>
             </div>
-          </motion.div>
+          </div>
+        </motion.div>
 
           {/* 发布新任务表单 */}
           <motion.div

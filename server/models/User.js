@@ -1,4 +1,4 @@
-// server/models/User.js - 更新版本
+// server/models/User.js - 更新版本（添加昵称支持）
 
 const mongoose = require('mongoose');
 
@@ -18,11 +18,21 @@ const UserSchema = new mongoose.Schema({
     enum: ['teacher', 'student'],
     required: true
   },
+  
+  // 🆕 新增：用户昵称
+  nickname: {
+    type: String,
+    trim: true,
+    maxlength: 20,
+    default: null
+  },
+  
   // 📌 新增：token版本控制，用于全局登出
   tokenVersion: {
     type: Number,
     default: 0
   },
+  
   // 📌 新增：用户偏好设置
   preferences: {
     rememberMe: {
@@ -37,8 +47,14 @@ const UserSchema = new mongoose.Schema({
     language: {
       type: String,
       default: 'zh-CN'
+    },
+    // 🆕 新增：欢迎词相关偏好
+    showNicknamePrompt: {
+      type: Boolean,
+      default: true  // 新用户默认显示昵称设置提醒
     }
   },
+  
   // 📌 新增：安全相关字段
   security: {
     lastLoginAt: Date,
@@ -54,6 +70,7 @@ const UserSchema = new mongoose.Schema({
       default: false
     }
   },
+  
   // 📌 新增：用户状态
   status: {
     type: String,
@@ -67,6 +84,11 @@ const UserSchema = new mongoose.Schema({
 // 虚拟字段：检查账户是否被锁定
 UserSchema.virtual('isLocked').get(function() {
   return !!(this.security.lockedUntil && this.security.lockedUntil > Date.now());
+});
+
+// 🆕 虚拟字段：获取显示名称（昵称优先，否则使用邮箱前缀）
+UserSchema.virtual('displayName').get(function() {
+  return this.nickname || this.email.split('@')[0];
 });
 
 // 账户锁定逻辑
@@ -103,6 +125,18 @@ UserSchema.methods.resetLoginAttempts = function() {
       'security.lastLoginIP': this.security.lastLoginIP
     }
   });
+};
+
+// 🆕 设置昵称的便捷方法
+UserSchema.methods.setNickname = function(nickname) {
+  this.nickname = nickname ? nickname.trim() : null;
+  return this.save();
+};
+
+// 🆕 禁用昵称提醒的便捷方法
+UserSchema.methods.disableNicknamePrompt = function() {
+  this.preferences.showNicknamePrompt = false;
+  return this.save();
 };
 
 module.exports = mongoose.model('User', UserSchema);

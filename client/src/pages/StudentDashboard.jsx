@@ -10,6 +10,8 @@ import { PrimaryButton, SecondaryButton, WarningButton, DangerButton } from '../
 import PullToRefreshContainer from '../components/PullToRefreshContainer';
 import useAutoRefresh from '../hooks/useAutoRefresh';
 import toast from 'react-hot-toast';
+import { getGreeting } from '../utils/greetings';
+
 
 const StudentDashboard = () => {
   const [user, setUser] = useState(null);
@@ -599,58 +601,63 @@ const StudentDashboard = () => {
     >
       <div className="overflow-y-auto">
         <div className="max-w-4xl mx-auto px-4 py-6">
-          {/* 欢迎区域 */}
-          <motion.div
-            className="mb-6"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
-            <div className="bg-gradient-to-r from-white via-blue-50/30 to-purple-50/30 dark:from-gray-800 dark:via-blue-900/10 dark:to-purple-900/10 rounded-mobile-2xl border border-gray-200/60 dark:border-gray-700/60 backdrop-blur-xl shadow-mobile p-6">
-              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
-                <div className="flex-1 min-w-0">
-                  <h1 className={`font-bold mb-2 text-gray-800 dark:text-gray-100 ${
-                    isMobile ? 'text-xl' : 'text-2xl'
-                  }`}>
-                    <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                      总裁欢迎回家
+        {/* 欢迎区域 - 使用智能欢迎词 */}
+        <motion.div
+          className="mb-6"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <div className="bg-gradient-to-r from-white via-blue-50/30 to-purple-50/30 dark:from-gray-800 dark:via-blue-900/10 dark:to-purple-900/10 rounded-mobile-2xl border border-gray-200/60 dark:border-gray-700/60 backdrop-blur-xl shadow-mobile p-6">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
+              <div className="flex-1 min-w-0">
+                <h1 className={`font-bold mb-2 text-gray-800 dark:text-gray-100 ${
+                  isMobile ? 'text-xl' : 'text-2xl'
+                }`}>
+                  <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                    {/* 🆕 使用智能欢迎词系统 */}
+                    {user ? getGreeting('student', user.nickname, user.email) : '欢迎回来'}
+                  </span>
+                </h1>
+                
+                {/* 🆕 添加时间段显示（可选，用于调试） */}
+                {process.env.NODE_ENV === 'development' && (
+                  <p className="text-xs text-gray-400 mb-2">
+                    🕐 {new Date().toLocaleTimeString()} - 当前时段
+                  </p>
+                )}
+                
+                {/* 快速统计 */}
+                <div className="flex items-center gap-4 mt-3">
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                      {tasks.active.length} 个当前任务
                     </span>
-                    <span className="block sm:inline text-gray-700 dark:text-gray-300 mt-1 sm:mt-0 sm:ml-2">
-                      {user.email}
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                      {tasks.active.filter(t => t.submitted).length} 个已完成
                     </span>
-                  </h1>
-                  
-                  {/* 快速统计 */}
-                  <div className="flex items-center gap-4 mt-3">
-                    <div className="flex items-center gap-1.5">
-                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                      <span className="text-sm text-gray-600 dark:text-gray-400">
-                        {tasks.active.length} 个当前任务
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                      <span className="text-sm text-gray-600 dark:text-gray-400">
-                        {tasks.active.filter(t => t.submitted).length} 个已完成
-                      </span>
-                    </div>
                   </div>
                 </div>
+              </div>
 
-                <div className="flex-shrink-0">
-                  <PrimaryButton
-                    size={isMobile ? "md" : "md"}
-                    icon="➕"
-                    haptic
-                    onClick={() => navigate('/join-class')}
-                    gradient
-                    className="min-w-[120px]"
-                  >
-                    加入班级
-                  </PrimaryButton>
-                </div>
+              <div className="flex-shrink-0">
+                <PrimaryButton
+                  size={isMobile ? "md" : "md"}
+                  icon="➕"
+                  haptic
+                  onClick={() => navigate('/join-class')}
+                  gradient
+                  className="min-w-[120px]"
+                >
+                  加入班级
+                </PrimaryButton>
               </div>
             </div>
-          </motion.div>
+          </div>
+        </motion.div>
 
           {/* 任务分类标签 - 移动端优化 */}
           <div className="mb-6">

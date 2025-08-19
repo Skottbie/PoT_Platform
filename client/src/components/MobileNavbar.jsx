@@ -1,20 +1,29 @@
-// src/components/MobileNavbar.jsx - 保留原版设计，只更新下拉菜单
+// client/src/components/MobileNavbar.jsx - 添加用户设置功能
+
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ProgressiveLogo from './ProgressiveLogo';
+import UserProfileModal from './UserProfileModal';
+import { getGreeting } from '../utils/greetings';
 
-const MobileNavbar = ({ user }) => {
+const MobileNavbar = ({ user, onUserUpdate }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('role');
     setIsMenuOpen(false);
     navigate('/');
+  };
+
+  const handleOpenProfile = () => {
+    setIsMenuOpen(false);
+    setShowProfileModal(true);
   };
 
   useEffect(() => {
@@ -44,7 +53,7 @@ const MobileNavbar = ({ user }) => {
 
   return (
     <>
-      {/* 主导航栏 - 保持原版设计 */}
+      {/* 主导航栏 */}
       <motion.div
         className={`
           fixed top-0 left-0 right-0 z-[100]
@@ -99,7 +108,7 @@ const MobileNavbar = ({ user }) => {
         </div>
       </motion.div>
 
-      {/* 下拉菜单 - 更新设计 */}
+      {/* 下拉菜单 */}
       <AnimatePresence>
         {isMenuOpen && (
           <>
@@ -112,7 +121,7 @@ const MobileNavbar = ({ user }) => {
               onClick={() => setIsMenuOpen(false)}
             />
 
-            {/* 菜单内容 - 高级设计 */}
+            {/* 菜单内容 */}
             <motion.div
               className="fixed top-[73px] left-4 right-4 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-gray-200/50 dark:border-gray-700/50 z-[95] overflow-hidden"
               style={{
@@ -124,27 +133,35 @@ const MobileNavbar = ({ user }) => {
               exit={{ opacity: 0, y: -20, scale: 0.95 }}
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
             >
-              {/* 用户信息区域 - Apple风格 */}
+              {/* 🆕 用户信息区域 - 支持智能问候语 */}
               <div className="p-6 border-b border-gray-200/30 dark:border-gray-700/30 bg-gradient-to-r from-gray-50/50 to-gray-100/50 dark:from-gray-800/50 dark:to-gray-900/50">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center shadow-sm">
-                    <span className="text-xl">
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-sm">
+                    <span className="text-xl text-white">
                       {isTeacher ? '👨‍🏫' : '👨‍🎓'}
                     </span>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-gray-900 dark:text-gray-100 truncate">
+                    {/* 🆕 显示智能问候语 */}
+                    <p className="font-semibold text-gray-900 dark:text-gray-100 mb-1">
+                      {getGreeting(user.role, user.nickname, user.email)}
+                    </p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
                       {user.email}
                     </p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      {isTeacher ? '教师账户' : '学生账户'}
-                    </p>
                   </div>
-                  <div className="w-2 h-2 bg-green-500 rounded-full shadow-sm" />
+                  {/* 🆕 设置按钮 */}
+                  <motion.button
+                    onClick={handleOpenProfile}
+                    className="w-8 h-8 rounded-lg bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    ⚙️
+                  </motion.button>
                 </div>
               </div>
 
-              {/* 菜单项 - Apple风格简洁设计 */}
+              {/* 菜单项 */}
               <div className="py-2">
                 {menuItems.map((item, index) => (
                   <motion.button
@@ -165,13 +182,31 @@ const MobileNavbar = ({ user }) => {
                   </motion.button>
                 ))}
 
+                {/* 🆕 个人设置菜单项 */}
+                <motion.button
+                  onClick={handleOpenProfile}
+                  className="w-full flex items-center gap-4 px-6 py-4 text-left hover:bg-gray-50/80 dark:hover:bg-gray-800/50 transition-all duration-200 active:bg-gray-100/80 dark:active:bg-gray-700/50"
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: menuItems.length * 0.05 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <div className="w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+                    <span className="text-lg">⚙️</span>
+                  </div>
+                  <span className="font-medium text-gray-700 dark:text-gray-200">
+                    个人设置
+                  </span>
+                </motion.button>
+
+                {/* 登出按钮 */}
                 <div className="border-t border-gray-200/50 dark:border-gray-700/50 mt-2 pt-2">
                   <motion.button
                     onClick={handleLogout}
                     className="w-full flex items-center gap-4 px-6 py-4 text-left hover:bg-red-50/80 dark:hover:bg-red-900/20 transition-all duration-200 text-red-600 dark:text-red-400 active:bg-red-100/80 dark:active:bg-red-900/30"
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: menuItems.length * 0.05 }}
+                    transition={{ delay: (menuItems.length + 1) * 0.05 }}
                     whileTap={{ scale: 0.98 }}
                   >
                     <div className="w-8 h-8 rounded-lg bg-red-100 dark:bg-red-900/50 flex items-center justify-center">
@@ -185,6 +220,14 @@ const MobileNavbar = ({ user }) => {
           </>
         )}
       </AnimatePresence>
+
+      {/* 🆕 用户设置弹窗 */}
+      <UserProfileModal
+        isOpen={showProfileModal}
+        onClose={() => setShowProfileModal(false)}
+        user={user}
+        onUserUpdate={onUserUpdate}
+      />
 
       {/* 页面内容的顶部占位 */}
       <div className="h-[65px]" />

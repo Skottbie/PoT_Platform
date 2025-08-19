@@ -1,4 +1,5 @@
-// src/components/ProtectedLayout.jsx - 简化优化版本
+// client/src/components/ProtectedLayout.jsx - 支持用户信息更新
+
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/axiosInstance';
@@ -41,6 +42,11 @@ const ProtectedLayout = ({ children }) => {
     }
   }, [clearAuthAndRedirect]);
 
+  // 🆕 用户信息更新回调
+  const handleUserUpdate = useCallback((updatedUser) => {
+    setUser(updatedUser);
+  }, []);
+
   // 重试处理
   const handleRetry = useCallback(() => {
     setLoading(true);
@@ -73,35 +79,20 @@ const ProtectedLayout = ({ children }) => {
   // 加载状态
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center">
-        <div className="text-center max-w-sm mx-auto p-8">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-center space-y-6 p-8">
           {/* 加载动画 */}
-          <div className="relative mb-8">
-            <div className="w-16 h-16 mx-auto">
-              <div className="absolute inset-0 border-4 border-blue-100 dark:border-blue-900/30 rounded-full"></div>
-              <div className="absolute inset-0 border-4 border-transparent border-t-blue-500 rounded-full animate-spin"></div>
-              <div className="absolute inset-2 border-2 border-transparent border-t-purple-400 rounded-full animate-spin" style={{ animationDirection: 'reverse', animationDuration: '1.5s' }}></div>
-            </div>
+          <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto shadow-lg">
+            <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
           </div>
           
-          <div className="space-y-4">
+          <div className="space-y-2">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-              验证身份中
+              正在验证身份
             </h3>
-            <p className="text-gray-600 dark:text-gray-400 text-sm">
-              正在安全验证您的登录信息
+            <p className="text-gray-600 dark:text-gray-400">
+              请稍候，正在加载用户信息...
             </p>
-          </div>
-          
-          <div className="mt-8">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={clearAuthAndRedirect}
-              className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
-            >
-              返回登录页
-            </Button>
           </div>
         </div>
       </div>
@@ -109,12 +100,12 @@ const ProtectedLayout = ({ children }) => {
   }
 
   // 错误状态
-  if (error && !user) {
+  if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center">
-        <div className="text-center max-w-md mx-auto p-8">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 text-center border border-gray-200 dark:border-gray-700">
           {/* 错误图标 */}
-          <div className="w-20 h-20 bg-gradient-to-br from-red-100 to-red-50 dark:from-red-900/30 dark:to-red-800/20 rounded-full flex items-center justify-center mx-auto mb-6">
+          <div className="w-16 h-16 bg-gradient-to-br from-red-100 to-red-200 dark:from-red-900/30 dark:to-red-800/20 rounded-full flex items-center justify-center mx-auto mb-6">
             <svg className="w-10 h-10 text-red-500 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
             </svg>
@@ -164,7 +155,7 @@ const ProtectedLayout = ({ children }) => {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <ResponsiveNavbar user={user} />
+      <ResponsiveNavbar user={user} onUserUpdate={handleUserUpdate} />
       <main className="px-4 py-6 md:px-6">
         {children}
       </main>
