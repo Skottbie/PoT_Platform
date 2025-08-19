@@ -37,15 +37,17 @@ const ReasoningDisplay = ({
       }`}>
         {/* 折叠/展开头部 */}
         <button
-          onClick={(e) => {
+        type="button"  // 添加这行，明确指定按钮类型
+        onClick={(e) => {
+            e.preventDefault(); // 添加这行，阻止默认行为
             e.stopPropagation(); 
             setIsExpanded(!isExpanded)
-          }}
-          className={`w-full flex items-center justify-between p-3 text-left transition-colors duration-200 ${
+        }}
+        className={`w-full flex items-center justify-between p-3 text-left transition-colors duration-200 ${
             isMobile
-              ? 'hover:bg-blue-100/50 dark:hover:bg-blue-800/30'
-              : 'hover:bg-purple-100/50 dark:hover:bg-purple-800/30'
-          }`}
+            ? 'hover:bg-blue-100/50 dark:hover:bg-blue-800/30'
+            : 'hover:bg-purple-100/50 dark:hover:bg-purple-800/30'
+        }`}
         >
           <div className="flex items-center gap-2">
             <span className={`text-lg ${isMobile ? '🧠' : '🤔'}`}>
