@@ -22,7 +22,7 @@ import DraftRestoreDialog from '../components/DraftRestoreDialog';
 import DraftSaveIndicator from '../components/DraftSaveIndicator';
 import BeforeUnloadDialog from '../components/BeforeUnloadDialog';
 import ReasoningDisplay from '../components/ReasoningDisplay';
-
+import ReasoningToggle from '../components/ReasoningToggle';
 
 SyntaxHighlighter.registerLanguage('javascript', javascript);
 SyntaxHighlighter.registerLanguage('python', python);
@@ -84,6 +84,12 @@ const getModelDisplayName = useCallback((modelValue) => {
   const { currentSize, currentConfig } = useFontSize();
   const [fontSizeKey, setFontSizeKey] = useState(currentSize);
   const [showFontSelector, setShowFontSelector] = useState(false);
+  const [showReasoning, setShowReasoning] = useState(true); // 思考过程显示开关
+  const [showDeepSeekTip, setShowDeepSeekTip] = useState(false); // DeepSeek延迟提示
+  
+  const supportsReasoning = useCallback((modelValue) => {
+    return modelValue === 'deepseek-r1-distill';
+  }, []);
 
   // 🎯 草稿保存相关
   const {
@@ -626,28 +632,47 @@ const getModelDisplayName = useCallback((modelValue) => {
   const fetchTaskData = useCallback(async () => {
     try {
       setInitialLoading(true);
-  
-      const promises = [
-        api.get(`/task/${taskId}`),
-        api.get(`/submission/check/${taskId}`)
-      ];
-
-      const [taskRes, submissionRes] = await Promise.allSettled(promises);
-
-      if (taskRes.status === 'fulfilled') {
-        setTask(taskRes.value.data);
+      
+      // 创建超时Promise
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('TIMEOUT')), 5000);
+      });
+      
+      // 创建请求Promise
+      const requestPromise = api.get(`/task/${taskId}`);
+      
+      // 使用Promise.race实现5秒超时
+      const res = await Promise.race([requestPromise, timeoutPromise]);
+      
+      if (res.data) {
+        setTask(res.data);
       } else {
-        navigate('/student');
+        setMessage('任务不存在');
+        setTimeout(() => navigate('/student'), 3000);
+      }
+    } catch (error) {
+      console.error('获取任务数据失败:', error);
+      
+      if (error.message === 'TIMEOUT') {
+        // 超时处理：清除token并跳转登录
+        localStorage.removeItem('token');
+        localStorage.removeItem('role');
+        localStorage.removeItem('tokenExpiresAt');
+        navigate('/', { replace: true });
         return;
       }
-
-      if (submissionRes.status === 'fulfilled') {
-        setAlreadySubmitted(submissionRes.value.data.submitted);
+      
+      if (error.response?.status === 401) {
+        // Token过期
+        localStorage.removeItem('token');
+        localStorage.removeItem('role');
+        localStorage.removeItem('tokenExpiresAt');
+        navigate('/', { replace: true });
+        return;
       }
-
-    } catch (err) {
-      console.error('获取任务数据失败:', err);
-      navigate('/student');
+      
+      setMessage('获取任务失败，请稍后重试');
+      setTimeout(() => navigate('/student'), 3000);
     } finally {
       setInitialLoading(false);
     }
@@ -723,7 +748,7 @@ const getModelDisplayName = useCallback((modelValue) => {
   }, [task]);
 
   // 🚀 优化 AIGC 提交
-  const handleAIGCSubmit = useCallback(async () => {
+  const handleAigcSubmit = useCallback(async () => {
     if (!input.trim()) return;
 
     haptic.light();
@@ -732,20 +757,27 @@ const getModelDisplayName = useCallback((modelValue) => {
     setAigcLog((prev) => [...prev, userMessage]);
     setInput('');
     setLoading(true);
+    
+    // 🆕 DeepSeek延迟提示逻辑
+    let deepSeekTipTimer = null;
+    if (model === 'deepseek-r1-distill') {
+      deepSeekTipTimer = setTimeout(() => {
+        setShowDeepSeekTip(true);
+      }, 4000); // 4秒后显示延迟提示
+    }
 
     try {
       const res = await api.post('/aigc/chat', {
         messages: [...aigcLog, userMessage],
         model,
-    }, {
-      timeout: 60000
-    });
+      }, {
+        timeout: 60000
+      });
 
       const aiMessage = { 
         role: 'assistant', 
         content: res.data.reply, 
         model: model,
-        // 新增：DeepSeek模型的思考过程
         reasoning_content: res.data.reasoning_content || null
       };
       setAigcLog((prev) => [...prev, aiMessage]);
@@ -761,6 +793,12 @@ const getModelDisplayName = useCallback((modelValue) => {
       haptic.error();
     } finally {
       setLoading(false);
+      setShowDeepSeekTip(false);
+      
+      // 🆕 清理延迟提示定时器
+      if (deepSeekTipTimer) {
+        clearTimeout(deepSeekTipTimer);
+      }
     }
   }, [input, aigcLog, model, haptic]);
 
@@ -1402,6 +1440,7 @@ const handleExitFullscreen = useCallback(async () => {
                 
                 {/* 标题和模型选择 - 移动端完全隐身的响应式设计 */}
                 {isMobile ? (
+                  <div className="flex items-center gap-2 flex-1 min-w-0">
                   <select
                     ref={selectRef}
                     value={model}
@@ -1435,6 +1474,17 @@ const handleExitFullscreen = useCallback(async () => {
                       </option>
                     ))}
                   </select>
+
+                  {/* 🆕 思考过程开关 - 移动端全屏模式：在下拉箭头右侧 */}
+                  {supportsReasoning(model) && (
+                    <ReasoningToggle
+                      showReasoning={showReasoning}
+                      setShowReasoning={setShowReasoning}
+                      isMobile={true}
+                      position="fullscreen-mobile"
+                    />
+                  )}
+                </div>
                 ) : (
                   // 桌面端保持原有逻辑但更新显示文本
                   <div className="flex-1 min-w-0">
@@ -1461,20 +1511,32 @@ const handleExitFullscreen = useCallback(async () => {
               {/* 右侧：模型选择器和关闭按钮 */}
               <div className="flex items-center gap-3 flex-shrink-0">
                 {!isMobile && (
-                <select
-                  value={model}
-                  onChange={(e) => {
-                    setModel(e.target.value);
-                    haptic.light();
-                  }}
-                  className="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 max-w-[120px]"
-                >
-                  {MODEL_OPTIONS.map(option => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
+                  <div className="flex items-center gap-3">
+                    {/* 🆕 思考过程开关 - 桌面端全屏模式：在AI选择器左侧 */}
+                    {supportsReasoning(model) && (
+                      <ReasoningToggle
+                        showReasoning={showReasoning}
+                        setShowReasoning={setShowReasoning}
+                        isMobile={false}
+                        position="fullscreen-desktop"
+                      />
+                    )}
+                    
+                    <select
+                      value={model}
+                      onChange={(e) => {
+                        setModel(e.target.value);
+                        haptic.light();
+                      }}
+                      className="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 max-w-[120px]"
+                    >
+                      {MODEL_OPTIONS.map(option => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 )}
                 
                 {/* 关闭按钮 - 完全隐身的原生设计 */}
@@ -1995,11 +2057,24 @@ const handleExitFullscreen = useCallback(async () => {
                     </PrimaryButton>
                   </div>
 
+
                   {/* 模型选择 */}
                   <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      选择 AI 模型
-                    </label>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        选择 AI 模型
+                      </label>
+                      
+                      {/* 🆕 思考过程开关 - 只在支持的模型下显示 */}
+                      {supportsReasoning(model) && (
+                        <ReasoningToggle
+                          showReasoning={showReasoning}
+                          setShowReasoning={setShowReasoning}
+                          isMobile={isMobile}
+                          position="default"
+                        />
+                      )}
+                    </div>
                     <select
                       value={model}
                       onChange={(e) => {
@@ -2055,7 +2130,7 @@ const handleExitFullscreen = useCallback(async () => {
                               {/* 🎯 对于AI消息，使用ReasoningDisplay组件 */}
                               {msg.role === 'assistant' ? (
                                 <ReasoningDisplay
-                                  reasoningContent={msg.reasoning_content}
+                                  reasoningContent={showReasoning ? msg.reasoning_content : null}
                                   finalAnswer={msg.content}
                                   isFullscreen={false}  // 🔧 修复：非全屏模式
                                   isMobile={isMobile}
@@ -2092,6 +2167,12 @@ const handleExitFullscreen = useCallback(async () => {
                                     <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
                                   </div>
                                   <span className="text-xs text-gray-500 dark:text-gray-400">正在回复...</span>
+                                              {/* 🆕 DeepSeek延迟提示 */}
+                                {showDeepSeekTip && model === 'deepseek-r1-distill' && (
+                                  <div className="text-xs text-blue-600 dark:text-blue-400 animate-fade-in">
+                                    🧠 DeepSeek思考模式正在深度分析，请稍候...
+                                  </div>
+                                )}
                                 </div>
                               </div>
                             </div>
