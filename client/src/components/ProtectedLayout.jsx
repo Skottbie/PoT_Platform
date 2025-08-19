@@ -1,18 +1,21 @@
-// client/src/components/ProtectedLayout.jsx - 支持用户信息更新和主题同步
+// client/src/components/ProtectedLayout.jsx - 修复主题同步冲突
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/axiosInstance';
 import ResponsiveNavbar from './ResponsiveNavbar';
 import Button from './Button';
-import { useTheme } from '../contexts/ThemeContext'; // 🆕 使用主题系统
+import { useTheme } from '../contexts/ThemeContext';
 
 const ProtectedLayout = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
-  const { syncUserTheme } = useTheme(); // 🆕 使用主题同步功能
+  const { syncUserTheme, theme } = useTheme();
+  
+  // 🔧 使用 ref 来标记是否是初始加载，避免重复同步主题
+  const isInitialLoad = useRef(true);
 
   // 清理认证数据并跳转
   const clearAuthAndRedirect = useCallback(() => {
@@ -30,9 +33,11 @@ const ProtectedLayout = ({ children }) => {
       const userData = res.data;
       setUser(userData);
       
-      // 🆕 同步用户的主题偏好
-      if (userData.preferences?.theme) {
+      // 🔧 只在初始加载时同步用户主题偏好，避免后续更新冲突
+      if (isInitialLoad.current && userData.preferences?.theme) {
+        console.log('Initial theme sync:', userData.preferences.theme);
         syncUserTheme(userData.preferences.theme);
+        isInitialLoad.current = false;
       }
     } catch (err) {
       console.error('获取用户信息失败:', err);
@@ -48,11 +53,13 @@ const ProtectedLayout = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  }, [clearAuthAndRedirect, syncUserTheme]); // 🆕 添加 syncUserTheme 依赖
+  }, [clearAuthAndRedirect, syncUserTheme]);
 
-  // 🆕 用户信息更新回调
+  // 🔧 用户信息更新回调 - 不触发主题同步
   const handleUserUpdate = useCallback((updatedUser) => {
+    console.log('User updated, but not syncing theme to avoid conflicts');
     setUser(updatedUser);
+    // 🔧 关键：不在这里同步主题，让设置页面自己管理主题状态
   }, []);
 
   // 重试处理

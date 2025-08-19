@@ -1,14 +1,14 @@
-// client/src/components/UserProfileModal.jsx - 用户信息设置弹窗（集成主题系统）
+// client/src/components/UserProfileModal.jsx - 修复主题同步冲突的完整版本
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../api/axiosInstance';
 import toast from 'react-hot-toast';
 import { X, User, Settings, Save, RotateCcw } from 'lucide-react';
-import { useTheme } from '../contexts/ThemeContext'; // 🆕 使用主题系统
+import { useTheme } from '../contexts/ThemeContext';
 
 const UserProfileModal = ({ isOpen, onClose, user, onUserUpdate }) => {
-  const { theme, setTheme } = useTheme(); // 🆕 使用主题系统
+  const { theme, setTheme } = useTheme();
   const [formData, setFormData] = useState({
     nickname: '',
     theme: 'auto',
@@ -22,13 +22,13 @@ const UserProfileModal = ({ isOpen, onClose, user, onUserUpdate }) => {
     if (user && isOpen) {
       const initialData = {
         nickname: user.nickname || '',
-        theme: user.preferences?.theme || theme, // 🆕 使用当前主题作为默认值
+        theme: user.preferences?.theme || theme,
         showNicknamePrompt: user.preferences?.showNicknamePrompt !== false
       };
       setFormData(initialData);
       setOriginalData(initialData);
     }
-  }, [user, isOpen, theme]); // 🆕 添加 theme 依赖
+  }, [user, isOpen, theme]);
 
   // 检查是否有变更
   const hasChanges = () => {
@@ -42,7 +42,7 @@ const UserProfileModal = ({ isOpen, onClose, user, onUserUpdate }) => {
       [field]: value
     }));
     
-    // 🆕 主题变更时立即应用
+    // 主题变更时立即应用
     if (field === 'theme') {
       setTheme(value);
     }
@@ -51,9 +51,13 @@ const UserProfileModal = ({ isOpen, onClose, user, onUserUpdate }) => {
   // 重置表单
   const handleReset = () => {
     setFormData(originalData);
+    // 重置主题到原始状态
+    if (originalData.theme !== theme) {
+      setTheme(originalData.theme);
+    }
   };
 
-  // 保存设置
+  // 🔧 修复后的保存设置
   const handleSave = async () => {
     if (!hasChanges()) {
       toast.success('没有需要保存的更改');
@@ -90,30 +94,34 @@ const UserProfileModal = ({ isOpen, onClose, user, onUserUpdate }) => {
       }
       
       // 等待所有请求完成
-      const results = await Promise.all(promises);
+      await Promise.all(promises);
       
-      // 获取最新的用户信息
-      const userResponse = await api.get('/user/profile');
-      const updatedUser = userResponse.data;
+      // 🔧 关键修复：不重新获取用户信息，避免触发主题重新同步
+      // 直接更新本地状态和父组件状态
+      const newData = {
+        nickname: formData.nickname,
+        theme: formData.theme,
+        showNicknamePrompt: formData.showNicknamePrompt
+      };
       
       // 更新父组件的用户信息
-      if (onUserUpdate) {
+      if (onUserUpdate && user) {
+        const updatedUser = {
+          ...user,
+          nickname: formData.nickname || null,
+          preferences: {
+            ...user.preferences,
+            theme: formData.theme,
+            showNicknamePrompt: formData.showNicknamePrompt
+          }
+        };
         onUserUpdate(updatedUser);
       }
       
-      // 更新本地状态
-      const newData = {
-        nickname: updatedUser.nickname || '',
-        theme: updatedUser.preferences?.theme || 'auto',
-        showNicknamePrompt: updatedUser.preferences?.showNicknamePrompt !== false
-      };
-      setFormData(newData);
       setOriginalData(newData);
       
-      // 🆕 同步主题设置
-      if (newData.theme !== theme) {
-        setTheme(newData.theme);
-      }
+      // 🔧 主题已经在 handleInputChange 中设置，无需重复设置
+      console.log('Settings saved, theme already applied');
       
       toast.success('设置保存成功！');
       
@@ -125,6 +133,12 @@ const UserProfileModal = ({ isOpen, onClose, user, onUserUpdate }) => {
     } catch (error) {
       console.error('保存设置失败:', error);
       toast.error(error.response?.data?.message || '保存失败，请重试');
+      
+      // 🔧 保存失败时，恢复原始状态
+      setFormData(originalData);
+      if (originalData.theme !== theme) {
+        setTheme(originalData.theme);
+      }
     } finally {
       setLoading(false);
     }
@@ -135,6 +149,10 @@ const UserProfileModal = ({ isOpen, onClose, user, onUserUpdate }) => {
     if (hasChanges()) {
       if (window.confirm('你有未保存的更改，确定要关闭吗？')) {
         setFormData(originalData);
+        // 恢复主题到原始状态
+        if (originalData.theme !== theme) {
+          setTheme(originalData.theme);
+        }
         onClose();
       }
     } else {
@@ -172,9 +190,9 @@ const UserProfileModal = ({ isOpen, onClose, user, onUserUpdate }) => {
                     <User className="w-5 h-5 text-white" />
                   </div>
                   <div>
-                    <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                       个人设置
-                    </h2>
+                    </h3>
                     <p className="text-sm text-gray-500 dark:text-gray-400">
                       管理你的个人信息和偏好
                     </p>
@@ -188,21 +206,22 @@ const UserProfileModal = ({ isOpen, onClose, user, onUserUpdate }) => {
                 </button>
               </div>
 
-              {/* 表单内容 */}
+              {/* 内容 */}
               <div className="p-6 space-y-6">
-                {/* 基本信息 */}
+                {/* 个人信息 */}
                 <div className="space-y-4">
-                  <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                  <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100 flex items-center gap-2">
                     <User className="w-4 h-4" />
-                    基本信息
-                  </h3>
+                    个人信息
+                  </h4>
                   
                   {/* 邮箱显示 */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      邮箱
+                      邮箱地址
                     </label>
-                    <div className="px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-600 dark:text-gray-400">
+                    <div className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg 
+                                   bg-gray-50 dark:bg-gray-700/50 text-gray-500 dark:text-gray-400 text-sm">
                       {user?.email}
                     </div>
                   </div>
@@ -216,7 +235,7 @@ const UserProfileModal = ({ isOpen, onClose, user, onUserUpdate }) => {
                       type="text"
                       value={formData.nickname}
                       onChange={(e) => handleInputChange('nickname', e.target.value)}
-                      placeholder="设置一个个性昵称（可选）"
+                      placeholder="留空则显示邮箱前缀"
                       maxLength={20}
                       className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg 
                                bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100
@@ -231,10 +250,10 @@ const UserProfileModal = ({ isOpen, onClose, user, onUserUpdate }) => {
 
                 {/* 偏好设置 */}
                 <div className="space-y-4">
-                  <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                  <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100 flex items-center gap-2">
                     <Settings className="w-4 h-4" />
                     偏好设置
-                  </h3>
+                  </h4>
                   
                   {/* 主题设置 */}
                   <div>
@@ -262,62 +281,58 @@ const UserProfileModal = ({ isOpen, onClose, user, onUserUpdate }) => {
                         checked={formData.showNicknamePrompt}
                         onChange={(e) => handleInputChange('showNicknamePrompt', e.target.checked)}
                         className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded 
-                                 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 
-                                 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                                 focus:ring-blue-500 focus:ring-2"
                       />
-                      <div>
-                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      <div className="flex-1">
+                        <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
                           显示昵称设置提醒
-                        </span>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                          未设置昵称时提醒设置
-                        </p>
+                        </div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">
+                          新用户登录时提醒设置昵称
+                        </div>
                       </div>
                     </label>
                   </div>
                 </div>
               </div>
 
-              {/* 底部按钮 */}
-              <div className="flex items-center justify-between px-6 py-4 bg-gray-50 dark:bg-gray-700/50 border-t border-gray-200 dark:border-gray-700 rounded-b-2xl">
+              {/* 底部操作 */}
+              <div className="flex gap-3 p-6 border-t border-gray-200 dark:border-gray-700">
                 <button
                   onClick={handleReset}
                   disabled={!hasChanges() || loading}
-                  className="flex items-center gap-2 px-3 py-2 text-sm text-gray-600 dark:text-gray-400 
-                           hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-600 
-                           rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className={`p-2 rounded-lg transition-colors ${
+                    hasChanges() && !loading
+                      ? 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400'
+                      : 'text-gray-400 dark:text-gray-500 cursor-not-allowed'
+                  }`}
                 >
                   <RotateCcw className="w-4 h-4" />
-                  重置
                 </button>
                 
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={handleClose}
-                    disabled={loading}
-                    className="px-4 py-2 text-sm text-gray-600 dark:text-gray-400 
-                             hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-600 
-                             rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    取消
-                  </button>
-                  <button
-                    onClick={handleSave}
-                    disabled={!hasChanges() || loading}
-                    className="flex items-center gap-2 px-4 py-2 text-sm bg-gradient-to-r from-blue-500 to-purple-600 
-                             text-white rounded-lg hover:from-blue-600 hover:to-purple-700 
-                             focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800
-                             disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-                  >
-                    {loading ? (
-                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    ) : (
-                      <Save className="w-4 h-4" />
-                    )}
-                    {loading ? '保存中...' : '保存'}
-                  </button>
-                </div>
+                <button
+                  onClick={handleSave}
+                  disabled={!hasChanges() || loading}
+                  className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-medium
+                             transition-all duration-200 ${
+                    hasChanges() && !loading
+                      ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                      : 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed'
+                  }`}
+                >
+                  <Save className="w-4 h-4" />
+                  {loading ? '保存中...' : '保存设置'}
+                </button>
               </div>
+
+              {/* 变更提示 */}
+              {hasChanges() && (
+                <div className="mx-6 mb-6 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-3">
+                  <p className="text-xs text-blue-800 dark:text-blue-200">
+                    💡 你有未保存的更改
+                  </p>
+                </div>
+              )}
             </motion.div>
           </div>
         </div>
