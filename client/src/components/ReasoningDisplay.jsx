@@ -12,7 +12,8 @@ const ReasoningDisplay = ({
 }) => {
   const [isExpanded, setIsExpanded] = useState(isFullscreen); // 全屏模式默认展开
 
-  if (!reasoningContent) {
+  // 🔧 修复：确保即使没有reasoning_content也要显示finalAnswer
+  if (!reasoningContent || reasoningContent.trim() === '') {
     // 没有思考过程，只显示普通回答
     return (
       <div className="aigc-chat-content">
@@ -20,7 +21,7 @@ const ReasoningDisplay = ({
           components={getMarkdownComponents(false)}
           remarkPlugins={[remarkGfm]}
         >
-          {finalAnswer}
+          {finalAnswer || ''}
         </ReactMarkdown>
       </div>
     );

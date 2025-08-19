@@ -2028,50 +2028,50 @@ const handleExitFullscreen = useCallback(async () => {
                       </div>
                     ) : (
                       <div className="space-y-4">
-                        {aigcLog.map((msg, idx) => (
-                          <div
-                            key={idx}
-                            className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-                          >
-                            <div className="max-w-[80%]">
-                              <div className={`text-xs text-gray-500 dark:text-gray-400 mb-1 flex items-center gap-1 ${
-                                msg.role === 'user' ? 'justify-end' : 'justify-start'
-                              }`}>
-                                <span>
-                                  {msg.role === 'user' ? '👤' : '🤖'}
-                                </span>
-                                <span>
-                                  {msg.role === 'user' ? '你' : getModelDisplayName(msg.model)}
-                                </span>
-                              </div>
-                              
-                             <div className={`rounded-xl px-3 py-2 text-sm ${
-                                msg.role === 'user' 
-                                  ? 'bg-blue-500 text-white rounded-br-sm' 
-                                  : 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-bl-sm border border-gray-200 dark:border-gray-600'
-                              }`}>
-                                {/* 🎯 如果是AI消息且有reasoning_content，使用ReasoningDisplay */}
-                                {msg.role === 'assistant' && msg.reasoning_content ? (
-                                  <ReasoningDisplay
-                                    reasoningContent={msg.reasoning_content}
-                                    finalAnswer={msg.content}
-                                    isFullscreen={true}
-                                    isMobile={isMobile}
-                                    getMarkdownComponents={getMarkdownComponents}
-                                  />
-                                ) : (
-                                  // 🎯 普通消息正常显示
-                                  <ReactMarkdown
-                                    components={getMarkdownComponents(msg.role === 'user')}
-                                    remarkPlugins={[remarkGfm]}
-                                  >
-                                    {msg.content}
-                                  </ReactMarkdown>
-                                )}
-                              </div>
+                      {aigcLog.map((msg, idx) => (
+                        <div
+                          key={idx}
+                          className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                        >
+                          <div className="max-w-[80%]">
+                            <div className={`text-xs text-gray-500 dark:text-gray-400 mb-1 flex items-center gap-1 ${
+                              msg.role === 'user' ? 'justify-end' : 'justify-start'
+                            }`}>
+                              <span>
+                                {msg.role === 'user' ? '👤' : '🤖'}
+                              </span>
+                              <span>
+                                {msg.role === 'user' ? '你' : getModelDisplayName(msg.model)}
+                              </span>
+                            </div>
+                            
+                            <div className={`rounded-xl px-3 py-2 text-sm ${
+                              msg.role === 'user' 
+                                ? 'bg-blue-500 text-white rounded-br-sm' 
+                                : 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-bl-sm border border-gray-200 dark:border-gray-600'
+                            }`}>
+                              {/* 🎯 对于AI消息，使用ReasoningDisplay组件 */}
+                              {msg.role === 'assistant' ? (
+                                <ReasoningDisplay
+                                  reasoningContent={msg.reasoning_content}
+                                  finalAnswer={msg.content}
+                                  isFullscreen={false}  // 🔧 修复：非全屏模式
+                                  isMobile={isMobile}
+                                  getMarkdownComponents={getMarkdownComponents}
+                                />
+                              ) : (
+                                // 🎯 用户消息正常显示
+                                <ReactMarkdown
+                                  components={getMarkdownComponents(msg.role === 'user')}
+                                  remarkPlugins={[remarkGfm]}
+                                >
+                                  {msg.content}
+                                </ReactMarkdown>
+                              )}
                             </div>
                           </div>
-                        ))}
+                        </div>
+                      ))}
 
                         {loading && (
                           <div className="flex justify-start">
