@@ -21,6 +21,7 @@ import { useDraftSave } from '../hooks/useDraftSave';
 import DraftRestoreDialog from '../components/DraftRestoreDialog';
 import DraftSaveIndicator from '../components/DraftSaveIndicator';
 import BeforeUnloadDialog from '../components/BeforeUnloadDialog';
+import ReasoningDisplay from '../components/ReasoningDisplay';
 
 
 SyntaxHighlighter.registerLanguage('javascript', javascript);
@@ -1570,13 +1571,15 @@ const handleExitFullscreen = useCallback(async () => {
                           ? 'py-2 border-l-2 border-gray-200/30 dark:border-gray-600/30 pl-3'
                           : 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-2xl rounded-bl-md px-4 py-3 border border-gray-200 dark:border-gray-600 shadow-sm'
                         }>
-                          <div className={`${isMobile ? 'text-sm' : 'text-base'} leading-relaxed break-words`}>
-                            <ReactMarkdown
-                              components={getMarkdownComponents(msg.role === 'user')}
-                              remarkPlugins={[remarkGfm]}
-                            >
-                              {msg.content}
-                            </ReactMarkdown>
+                          <div className={`${isMobile ? 'text-sm' : 'text-base'} leading-normal break-words`}>
+                            {/* 🎯 新增：使用ReasoningDisplay组件 */}
+                            <ReasoningDisplay
+                              reasoningContent={msg.reasoning_content}
+                              finalAnswer={msg.content}
+                              isFullscreen={isFullscreen}
+                              isMobile={isMobile}
+                              getMarkdownComponents={getMarkdownComponents}
+                            />
                           </div>
                         </div>
                       </div>
@@ -2042,17 +2045,29 @@ const handleExitFullscreen = useCallback(async () => {
                                 </span>
                               </div>
                               
-                              <div className={`rounded-xl px-3 py-2 text-sm ${
+                             <div className={`rounded-xl px-3 py-2 text-sm ${
                                 msg.role === 'user' 
                                   ? 'bg-blue-500 text-white rounded-br-sm' 
                                   : 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-bl-sm border border-gray-200 dark:border-gray-600'
                               }`}>
-                                <ReactMarkdown
-                                  components={getMarkdownComponents(msg.role === 'user')}
-                                  remarkPlugins={[remarkGfm]}
-                                >
-                                  {msg.content}
-                                </ReactMarkdown>
+                                {/* 🎯 如果是AI消息且有reasoning_content，使用ReasoningDisplay */}
+                                {msg.role === 'assistant' && msg.reasoning_content ? (
+                                  <ReasoningDisplay
+                                    reasoningContent={msg.reasoning_content}
+                                    finalAnswer={msg.content}
+                                    isFullscreen={true}
+                                    isMobile={isMobile}
+                                    getMarkdownComponents={getMarkdownComponents}
+                                  />
+                                ) : (
+                                  // 🎯 普通消息正常显示
+                                  <ReactMarkdown
+                                    components={getMarkdownComponents(msg.role === 'user')}
+                                    remarkPlugins={[remarkGfm]}
+                                  >
+                                    {msg.content}
+                                  </ReactMarkdown>
+                                )}
                               </div>
                             </div>
                           </div>
