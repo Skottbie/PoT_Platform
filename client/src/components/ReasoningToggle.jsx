@@ -10,7 +10,9 @@ const ReasoningToggle = ({
 }) => {
   const haptic = useHapticFeedback();
 
-  const handleToggle = useCallback(() => {
+  const handleToggle = useCallback((e) => {
+    e.preventDefault(); // 阻止默认行为
+    e.stopPropagation(); // 阻止事件冒泡
     setShowReasoning(!showReasoning);
     haptic.light();
   }, [showReasoning, setShowReasoning, haptic]);
@@ -48,6 +50,7 @@ const ReasoningToggle = ({
 
   return (
     <button
+      type="button"  // 明确指定按钮类型，防止表单提交
       onClick={handleToggle}
       className={getToggleStyles()}
       title={showReasoning ? "隐藏思考过程" : "显示思考过程"}

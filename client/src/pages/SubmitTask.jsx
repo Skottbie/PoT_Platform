@@ -748,7 +748,7 @@ const getModelDisplayName = useCallback((modelValue) => {
   }, [task]);
 
   // 🚀 优化 AIGC 提交
-  const handleAigcSubmit = useCallback(async () => {
+  const handleAIGCSubmit = useCallback(async () => {
     if (!input.trim()) return;
 
     haptic.light();
@@ -1638,7 +1638,7 @@ const handleExitFullscreen = useCallback(async () => {
                           <div className={`${isMobile ? 'text-sm' : 'text-base'} leading-normal break-words`}>
                             {/* 🎯 新增：使用ReasoningDisplay组件 */}
                             <ReasoningDisplay
-                              reasoningContent={msg.reasoning_content}
+                              reasoningContent={showReasoning ? msg.reasoning_content : null}
                               finalAnswer={msg.content}
                               isFullscreen={isFullscreen}
                               isMobile={isMobile}
@@ -2058,23 +2058,41 @@ const handleExitFullscreen = useCallback(async () => {
                   </div>
 
 
-                  {/* 模型选择 */}
+
+                  {/* 模型选择 - 彻底防抖动版本 */}
                   <div className="mb-4">
-                    <div className="flex items-center justify-between mb-2">
+                    {/* 🔧 关键：使用绝对定位避免影响正常布局流 */}
+                    <div className="relative mb-2">
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                         选择 AI 模型
                       </label>
                       
-                      {/* 🆕 思考过程开关 - 只在支持的模型下显示 */}
-                      {supportsReasoning(model) && (
-                        <ReasoningToggle
-                          showReasoning={showReasoning}
-                          setShowReasoning={setShowReasoning}
-                          isMobile={isMobile}
-                          position="default"
-                        />
-                      )}
+                      {/* 🆕 绝对定位的按钮容器 */}
+                      <div className="absolute top-0 right-0 h-6 flex items-center">
+                        <AnimatePresence mode="wait">
+                          {supportsReasoning(model) && (
+                            <motion.div
+                              key="reasoning-toggle"
+                              initial={{ opacity: 0, scale: 0.9, x: 10 }}
+                              animate={{ opacity: 1, scale: 1, x: 0 }}
+                              exit={{ opacity: 0, scale: 0.9, x: 10 }}
+                              transition={{ 
+                                duration: 0.2, 
+                                ease: "easeOut"
+                              }}
+                            >
+                              <ReasoningToggle
+                                showReasoning={showReasoning}
+                                setShowReasoning={setShowReasoning}
+                                isMobile={isMobile}
+                                position="default"
+                              />
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
                     </div>
+                    
                     <select
                       value={model}
                       onChange={(e) => {
