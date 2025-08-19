@@ -1,16 +1,18 @@
-// client/src/components/ProtectedLayout.jsx - 支持用户信息更新
+// client/src/components/ProtectedLayout.jsx - 支持用户信息更新和主题同步
 
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/axiosInstance';
 import ResponsiveNavbar from './ResponsiveNavbar';
 import Button from './Button';
+import { useTheme } from '../contexts/ThemeContext'; // 🆕 使用主题系统
 
 const ProtectedLayout = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
+  const { syncUserTheme } = useTheme(); // 🆕 使用主题同步功能
 
   // 清理认证数据并跳转
   const clearAuthAndRedirect = useCallback(() => {
@@ -25,7 +27,13 @@ const ProtectedLayout = ({ children }) => {
     try {
       setError(null);
       const res = await api.get('/user/profile');
-      setUser(res.data);
+      const userData = res.data;
+      setUser(userData);
+      
+      // 🆕 同步用户的主题偏好
+      if (userData.preferences?.theme) {
+        syncUserTheme(userData.preferences.theme);
+      }
     } catch (err) {
       console.error('获取用户信息失败:', err);
       
@@ -40,7 +48,7 @@ const ProtectedLayout = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  }, [clearAuthAndRedirect]);
+  }, [clearAuthAndRedirect, syncUserTheme]); // 🆕 添加 syncUserTheme 依赖
 
   // 🆕 用户信息更新回调
   const handleUserUpdate = useCallback((updatedUser) => {

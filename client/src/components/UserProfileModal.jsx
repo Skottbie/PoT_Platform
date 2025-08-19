@@ -1,12 +1,14 @@
-// client/src/components/UserProfileModal.jsx - 用户信息设置弹窗
+// client/src/components/UserProfileModal.jsx - 用户信息设置弹窗（集成主题系统）
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../api/axiosInstance';
 import toast from 'react-hot-toast';
 import { X, User, Settings, Save, RotateCcw } from 'lucide-react';
+import { useTheme } from '../contexts/ThemeContext'; // 🆕 使用主题系统
 
 const UserProfileModal = ({ isOpen, onClose, user, onUserUpdate }) => {
+  const { theme, setTheme } = useTheme(); // 🆕 使用主题系统
   const [formData, setFormData] = useState({
     nickname: '',
     theme: 'auto',
@@ -20,13 +22,13 @@ const UserProfileModal = ({ isOpen, onClose, user, onUserUpdate }) => {
     if (user && isOpen) {
       const initialData = {
         nickname: user.nickname || '',
-        theme: user.preferences?.theme || 'auto',
+        theme: user.preferences?.theme || theme, // 🆕 使用当前主题作为默认值
         showNicknamePrompt: user.preferences?.showNicknamePrompt !== false
       };
       setFormData(initialData);
       setOriginalData(initialData);
     }
-  }, [user, isOpen]);
+  }, [user, isOpen, theme]); // 🆕 添加 theme 依赖
 
   // 检查是否有变更
   const hasChanges = () => {
@@ -39,6 +41,11 @@ const UserProfileModal = ({ isOpen, onClose, user, onUserUpdate }) => {
       ...prev,
       [field]: value
     }));
+    
+    // 🆕 主题变更时立即应用
+    if (field === 'theme') {
+      setTheme(value);
+    }
   };
 
   // 重置表单
@@ -102,6 +109,11 @@ const UserProfileModal = ({ isOpen, onClose, user, onUserUpdate }) => {
       };
       setFormData(newData);
       setOriginalData(newData);
+      
+      // 🆕 同步主题设置
+      if (newData.theme !== theme) {
+        setTheme(newData.theme);
+      }
       
       toast.success('设置保存成功！');
       

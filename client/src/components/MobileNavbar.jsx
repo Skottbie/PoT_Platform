@@ -1,18 +1,15 @@
-// client/src/components/MobileNavbar.jsx - 添加用户设置功能
+// client/src/components/MobileNavbar.jsx - 修复移动端导航栏
 
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ProgressiveLogo from './ProgressiveLogo';
-import UserProfileModal from './UserProfileModal';
-import { getGreeting } from '../utils/greetings';
 
-const MobileNavbar = ({ user, onUserUpdate }) => {
+const MobileNavbar = ({ user }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [showProfileModal, setShowProfileModal] = useState(false);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -23,7 +20,7 @@ const MobileNavbar = ({ user, onUserUpdate }) => {
 
   const handleOpenProfile = () => {
     setIsMenuOpen(false);
-    setShowProfileModal(true);
+    navigate('/user-profile');
   };
 
   useEffect(() => {
@@ -86,10 +83,15 @@ const MobileNavbar = ({ user, onUserUpdate }) => {
 
           {/* 用户信息和菜单按钮 */}
           <div className="flex items-center gap-3">
-            {/* 用户角色标识 */}
-            <span className="px-2 py-1 text-xs font-medium bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 rounded-full">
-              {isTeacher ? '教师' : '学生'}
-            </span>
+            {/* 显示昵称或邮箱前缀 */}
+            <div className="text-right">
+              <p className="text-sm font-medium text-gray-800 dark:text-gray-100 truncate max-w-[120px]">
+                {user.nickname || user.email.split('@')[0]}
+              </p>
+              <span className="text-xs text-gray-500 dark:text-gray-400">
+                {isTeacher ? '教师' : '学生'}
+              </span>
+            </div>
 
             {/* 菜单按钮 */}
             <motion.button
@@ -133,7 +135,7 @@ const MobileNavbar = ({ user, onUserUpdate }) => {
               exit={{ opacity: 0, y: -20, scale: 0.95 }}
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
             >
-              {/* 🆕 用户信息区域 - 支持智能问候语 */}
+              {/* 用户信息区域 - 只显示昵称+邮箱 */}
               <div className="p-6 border-b border-gray-200/30 dark:border-gray-700/30 bg-gradient-to-r from-gray-50/50 to-gray-100/50 dark:from-gray-800/50 dark:to-gray-900/50">
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-sm">
@@ -142,15 +144,14 @@ const MobileNavbar = ({ user, onUserUpdate }) => {
                     </span>
                   </div>
                   <div className="flex-1 min-w-0">
-                    {/* 🆕 显示智能问候语 */}
                     <p className="font-semibold text-gray-900 dark:text-gray-100 mb-1">
-                      {getGreeting(user.role, user.nickname, user.email)}
+                      {user.nickname || user.email.split('@')[0]}
                     </p>
                     <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
                       {user.email}
                     </p>
                   </div>
-                  {/* 🆕 设置按钮 */}
+                  {/* 设置按钮 */}
                   <motion.button
                     onClick={handleOpenProfile}
                     className="w-8 h-8 rounded-lg bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
@@ -182,7 +183,7 @@ const MobileNavbar = ({ user, onUserUpdate }) => {
                   </motion.button>
                 ))}
 
-                {/* 🆕 个人设置菜单项 */}
+                {/* 个人设置菜单项 */}
                 <motion.button
                   onClick={handleOpenProfile}
                   className="w-full flex items-center gap-4 px-6 py-4 text-left hover:bg-gray-50/80 dark:hover:bg-gray-800/50 transition-all duration-200 active:bg-gray-100/80 dark:active:bg-gray-700/50"
@@ -220,14 +221,6 @@ const MobileNavbar = ({ user, onUserUpdate }) => {
           </>
         )}
       </AnimatePresence>
-
-      {/* 🆕 用户设置弹窗 */}
-      <UserProfileModal
-        isOpen={showProfileModal}
-        onClose={() => setShowProfileModal(false)}
-        user={user}
-        onUserUpdate={onUserUpdate}
-      />
 
       {/* 页面内容的顶部占位 */}
       <div className="h-[65px]" />
