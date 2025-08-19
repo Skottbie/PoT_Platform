@@ -25,14 +25,17 @@ const callQwen = async (messages, modelName = 'qwen-turbo') => {
   return res.data.output.text;
 };
 
-// DeepSeek-R1-Distill-Llama-70B 请求函数
+// ✅ 修正后的 DeepSeek-R1-Distill-Llama-70B 请求函数
 const callDeepSeekR1 = async (messages) => {
   const res = await axios.post(
     'https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation',
     {
-      model: 'deepseek-r1-distill-llama-70b',
+      model: 'deepseek-r1-distill-llama-70b', // ✅ 模型名称正确
       input: { messages },
-      parameters: { temperature: 0.7 },
+      parameters: { 
+        temperature: 0.7,
+        result_format: 'message' // ✅ 必须设置为 'message'
+      },
     },
     {
       headers: {
@@ -42,12 +45,11 @@ const callDeepSeekR1 = async (messages) => {
     }
   );
   
+  // ✅ 正确的响应路径
   const choice = res.data.output.choices[0];
-  const message = choice.message;
-  
   return {
-    content: message.content,
-    reasoning_content: message.reasoning_content || null
+    content: choice.message.content,
+    reasoning_content: choice.message.reasoning_content || null
   };
 };
 

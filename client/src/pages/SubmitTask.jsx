@@ -737,7 +737,9 @@ const getModelDisplayName = useCallback((modelValue) => {
       const res = await api.post('/aigc/chat', {
         messages: [...aigcLog, userMessage],
         model,
-      });
+    }, {
+      timeout: 60000
+    });
 
       const aiMessage = { 
         role: 'assistant', 

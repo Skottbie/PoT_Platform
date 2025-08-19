@@ -37,7 +37,10 @@ const ReasoningDisplay = ({
       }`}>
         {/* 折叠/展开头部 */}
         <button
-          onClick={() => setIsExpanded(!isExpanded)}
+          onClick={(e) => {
+            e.stopPropagation(); 
+            setIsExpanded(!isExpanded)
+          }}
           className={`w-full flex items-center justify-between p-3 text-left transition-colors duration-200 ${
             isMobile
               ? 'hover:bg-blue-100/50 dark:hover:bg-blue-800/30'
