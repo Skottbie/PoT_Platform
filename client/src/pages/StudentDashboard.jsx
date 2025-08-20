@@ -439,19 +439,66 @@ const StudentDashboard = () => {
 
           {/* 可折叠的详细信息 */}
           <div>
-            <button
-              onClick={() => toggleTaskDetails(task._id)}
-              className="flex items-center justify-between w-full px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors touch-manipulation"
+          <button
+            onClick={() => toggleTaskDetails(task._id)}
+            className="group relative flex items-center justify-between w-full px-4 py-3 
+                      bg-gray-50/80 dark:bg-gray-800/50 
+                      hover:bg-gray-100/90 dark:hover:bg-gray-700/60
+                      active:bg-gray-200/80 dark:active:bg-gray-600/50
+                      border border-gray-200/60 dark:border-gray-700/40
+                      hover:border-gray-300/80 dark:hover:border-gray-600/60
+                      rounded-mobile-lg 
+                      transition-all duration-300 ease-out
+                      hover:shadow-sm hover:-translate-y-0.5
+                      active:scale-[0.98] active:translate-y-0
+                      touch-manipulation"
+          >
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300 
+                              group-hover:text-gray-900 dark:group-hover:text-gray-100 
+                              transition-colors duration-200">
+                详细信息
+              </span>
+            </div>
+            
+            {/* 动态箭头 */}
+            <motion.div
+              animate={{ 
+                rotate: detailsExpanded ? 180 : 0,
+                scale: detailsExpanded ? 1.1 : 1 
+              }}
+              transition={{ 
+                duration: 0.3, 
+                ease: [0.25, 0.46, 0.45, 0.94] // 优雅的缓动曲线
+              }}
+              className="flex items-center justify-center w-6 h-6 
+                        text-gray-500 dark:text-gray-400
+                        group-hover:text-gray-700 dark:group-hover:text-gray-200
+                        transition-colors duration-200"
             >
-              <span>详细信息</span>
-              <motion.span
-                animate={{ rotate: detailsExpanded ? 180 : 0 }}
-                transition={{ duration: 0.2 }}
-                className="text-lg"
+              <svg 
+                width="12" 
+                height="12" 
+                viewBox="0 0 12 12" 
+                fill="none"
+                className="transition-all duration-200"
               >
-                ▼
-              </motion.span>
-            </button>
+                <path 
+                  d="M3 4.5L6 7.5L9 4.5" 
+                  stroke="currentColor" 
+                  strokeWidth="1.5" 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </motion.div>
+            
+            {/* 微妙的渐变光晕效果（可选） */}
+            <div className="absolute inset-0 rounded-mobile-lg 
+                            bg-gradient-to-r from-transparent via-white/10 to-transparent
+                            opacity-0 group-hover:opacity-100 
+                            transition-opacity duration-300 pointer-events-none" />
+          </button>
             
             <AnimatePresence>
               {detailsExpanded && (
@@ -725,61 +772,66 @@ const StudentDashboard = () => {
       disabled={loading}
     >
       <div className="max-w-4xl mx-auto px-4 py-6">
-        {/* 页面头部 */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
-          <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-xl border border-gray-200/60 dark:border-gray-700/60 rounded-mobile-2xl p-6 shadow-mobile">
-            <div className="flex justify-between items-start">
-              <div className="flex-1">
-                <h1 className={`font-bold mb-2 ${
-                  isMobile ? 'text-xl' : 'text-2xl'
-                }`}>
-                  <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                    {user ? getGreeting('student', user.nickname, user.email) : '欢迎回来'}
+      {/* 欢迎区域 - 使用智能欢迎词 */}
+      <motion.div
+        className="mb-6"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+      >
+        <div className="bg-gradient-to-r from-white via-blue-50/30 to-purple-50/30 dark:from-gray-800 dark:via-blue-900/10 dark:to-purple-900/10 rounded-mobile-2xl border border-gray-200/60 dark:border-gray-700/60 backdrop-blur-xl shadow-mobile p-6">
+          
+          {/* 🆕 修复：移动端三行布局 */}
+          <div className={`${isMobile ? 'space-y-4' : 'flex justify-between items-start gap-4'}`}>
+            
+            {/* 第一行：问候词（移动端独占一行，桌面端仍在flex中） */}
+            <div className="flex-1 min-w-0">
+              <h1 className={`font-bold mb-2 text-gray-800 dark:text-gray-100 ${
+                isMobile ? 'text-xl' : 'text-2xl'
+              }`}>
+                <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                  {user ? getGreeting('student', user.nickname, user.email) : '欢迎回来'}
+                </span>
+              </h1>
+              
+              {process.env.NODE_ENV === 'development' && (
+                <p className="text-xs text-gray-400 mb-2">
+                  🕐 {new Date().toLocaleTimeString()} - 当前时段
+                </p>
+              )}
+              
+              {/* 第二行：任务情况（移动端独占一行，桌面端仍在flex中） */}
+              <div className="flex items-center gap-4 mt-3">
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                  <span className="text-sm text-gray-600 dark:text-gray-400">
+                    {tasks.active.length} 个当前任务
                   </span>
-                </h1>
-                
-                {process.env.NODE_ENV === 'development' && (
-                  <p className="text-xs text-gray-400 mb-2">
-                    🕐 {new Date().toLocaleTimeString()} - 当前时段
-                  </p>
-                )}
-                
-                <div className="flex items-center gap-4 mt-3">
-                  <div className="flex items-center gap-1.5">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                    <span className="text-sm text-gray-600 dark:text-gray-400">
-                      {tasks.active.length} 个当前任务
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                    <span className="text-sm text-gray-600 dark:text-gray-400">
-                      {tasks.active.filter(t => t.submitted).length} 个已完成
-                    </span>
-                  </div>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                  <span className="text-sm text-gray-600 dark:text-gray-400">
+                    {tasks.active.filter(t => t.submitted).length} 个已完成
+                  </span>
                 </div>
               </div>
+            </div>
 
-              <div className="flex-shrink-0">
-                <PrimaryButton
-                  size={isMobile ? "md" : "md"}
-                  icon="➕"
-                  haptic
-                  onClick={() => navigate('/join-class')}
-                  gradient
-                  className="min-w-[120px]"
-                >
-                  加入班级
-                </PrimaryButton>
-              </div>
+            {/* 第三行：按钮（移动端独占一行，桌面端仍在flex中） */}
+            <div className={`${isMobile ? 'w-full' : 'flex-shrink-0'}`}>
+              <PrimaryButton
+                size={isMobile ? "md" : "md"}
+                icon="➕"
+                haptic
+                onClick={() => navigate('/join-class')}
+                gradient
+                className={`${isMobile ? 'w-full' : 'min-w-[120px]'}`}
+              >
+                加入班级
+              </PrimaryButton>
             </div>
           </div>
-        </motion.div>
-
+        </div>
+      </motion.div>
         {/* 任务分类标签 */}
         <div className="mb-6">
           <div className={`flex bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl border border-gray-200/60 dark:border-gray-700/60 p-1.5 rounded-mobile-2xl shadow-mobile ${
