@@ -267,6 +267,7 @@ const UserProfile = () => {
                 <select
                   value={formData.theme}
                   onChange={(e) => handleInputChange('theme', e.target.value)}
+                  disabled={true}
                   className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg 
                            bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100
                            focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -275,6 +276,9 @@ const UserProfile = () => {
                   <option value="light">☀️ 浅色主题</option>
                   <option value="dark">🌙 深色主题</option>
                 </select>
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  主题切换功能暂时关闭
+                </p>
               </div>
               
               {/* 昵称提醒设置 */}
