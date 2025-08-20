@@ -1,14 +1,16 @@
-// client/src/components/UserProfileModal.jsx - 修复主题同步冲突的完整版本
+// client/src/components/UserProfileModal.jsx - 添加登出功能的完整版本
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate } from 'react-router-dom'; // 添加导航hook
 import api from '../api/axiosInstance';
 import toast from 'react-hot-toast';
-import { X, User, Settings, Save, RotateCcw } from 'lucide-react';
+import { X, User, Settings, Save, RotateCcw, LogOut } from 'lucide-react'; // 添加登出图标
 import { useTheme } from '../contexts/ThemeContext';
 
 const UserProfileModal = ({ isOpen, onClose, user, onUserUpdate }) => {
   const { theme, setTheme } = useTheme();
+  const navigate = useNavigate(); // 添加导航功能
   const [formData, setFormData] = useState({
     nickname: '',
     theme: 'auto',
@@ -57,7 +59,23 @@ const UserProfileModal = ({ isOpen, onClose, user, onUserUpdate }) => {
     }
   };
 
-  // 🔧 修复后的保存设置
+  // 登出功能
+  const handleLogout = () => {
+    // 清除本地存储的token
+    localStorage.removeItem('token');
+    localStorage.removeItem('role');
+    
+    // 关闭弹窗
+    onClose();
+    
+    // 显示成功提示
+    toast.success('已成功退出登录');
+    
+    // 导航到首页
+    navigate('/');
+  };
+
+  // 保存设置
   const handleSave = async () => {
     if (!hasChanges()) {
       toast.success('没有需要保存的更改');
@@ -96,7 +114,7 @@ const UserProfileModal = ({ isOpen, onClose, user, onUserUpdate }) => {
       // 等待所有请求完成
       await Promise.all(promises);
       
-      // 🔧 关键修复：不重新获取用户信息，避免触发主题重新同步
+      // 关键修复：不重新获取用户信息，避免触发主题重新同步
       // 直接更新本地状态和父组件状态
       const newData = {
         nickname: formData.nickname,
@@ -120,7 +138,7 @@ const UserProfileModal = ({ isOpen, onClose, user, onUserUpdate }) => {
       
       setOriginalData(newData);
       
-      // 🔧 主题已经在 handleInputChange 中设置，无需重复设置
+      // 主题已经在 handleInputChange 中设置，无需重复设置
       console.log('Settings saved, theme already applied');
       
       toast.success('设置保存成功！');
@@ -134,7 +152,7 @@ const UserProfileModal = ({ isOpen, onClose, user, onUserUpdate }) => {
       console.error('保存设置失败:', error);
       toast.error(error.response?.data?.message || '保存失败，请重试');
       
-      // 🔧 保存失败时，恢复原始状态
+      // 保存失败时，恢复原始状态
       setFormData(originalData);
       if (originalData.theme !== theme) {
         setTheme(originalData.theme);
@@ -292,7 +310,7 @@ const UserProfileModal = ({ isOpen, onClose, user, onUserUpdate }) => {
                           显示昵称设置提醒
                         </div>
                         <div className="text-xs text-gray-500 dark:text-gray-400">
-                          新用户登录时提醒设置昵称
+                          提醒我设置昵称
                         </div>
                       </div>
                     </label>
@@ -300,33 +318,53 @@ const UserProfileModal = ({ isOpen, onClose, user, onUserUpdate }) => {
                 </div>
               </div>
 
-              {/* 底部操作 */}
-              <div className="flex gap-3 p-6 border-t border-gray-200 dark:border-gray-700">
-                <button
-                  onClick={handleReset}
-                  disabled={!hasChanges() || loading}
-                  className={`p-2 rounded-lg transition-colors ${
-                    hasChanges() && !loading
-                      ? 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400'
-                      : 'text-gray-400 dark:text-gray-500 cursor-not-allowed'
-                  }`}
-                >
-                  <RotateCcw className="w-4 h-4" />
-                </button>
-                
-                <button
-                  onClick={handleSave}
-                  disabled={!hasChanges() || loading}
-                  className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-medium
-                             transition-all duration-200 ${
-                    hasChanges() && !loading
-                      ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                      : 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed'
-                  }`}
-                >
-                  <Save className="w-4 h-4" />
-                  {loading ? '保存中...' : '保存设置'}
-                </button>
+              {/* 底部操作区域 */}
+              <div className="p-6 border-t border-gray-200 dark:border-gray-700 space-y-3">
+                {/* 主要操作按钮 */}
+                <div className="flex gap-3">
+                  <button
+                    onClick={handleReset}
+                    disabled={!hasChanges() || loading}
+                    className={`p-2 rounded-lg transition-colors ${
+                      hasChanges() && !loading
+                        ? 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400'
+                        : 'text-gray-400 dark:text-gray-500 cursor-not-allowed'
+                    }`}
+                    title="重置更改"
+                  >
+                    <RotateCcw className="w-4 h-4" />
+                  </button>
+                  
+                  <button
+                    onClick={handleSave}
+                    disabled={!hasChanges() || loading}
+                    className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-medium
+                               transition-all duration-200 ${
+                      hasChanges() && !loading
+                        ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                        : 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed'
+                    }`}
+                  >
+                    <Save className="w-4 h-4" />
+                    {loading ? '保存中...' : '保存设置'}
+                  </button>
+                </div>
+
+                {/* 登出按钮 - 独立区域 */}
+                <div className="border-t border-gray-200/50 dark:border-gray-700/50 pt-3">
+                  <button
+                    onClick={handleLogout}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-medium
+                             text-red-600 dark:text-red-400 
+                             hover:bg-red-50 dark:hover:bg-red-900/20 
+                             active:bg-red-100 dark:active:bg-red-900/30
+                             transition-all duration-200
+                             border border-transparent hover:border-red-200 dark:hover:border-red-700/50"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    退出登录
+                  </button>
+                </div>
               </div>
 
               {/* 变更提示 */}

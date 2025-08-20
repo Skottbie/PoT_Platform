@@ -296,7 +296,7 @@ const UserProfile = () => {
                       显示昵称设置提醒
                     </div>
                     <div className="text-xs text-gray-500 dark:text-gray-400">
-                      新用户登录时提醒设置昵称
+                      提醒我设置昵称
                     </div>
                   </div>
                 </label>

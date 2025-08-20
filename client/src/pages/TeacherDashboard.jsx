@@ -11,6 +11,7 @@ import toast from 'react-hot-toast';
 import PullToRefreshContainer from '../components/PullToRefreshContainer';
 import useAutoRefresh from '../hooks/useAutoRefresh';
 import { getGreeting } from '../utils/greetings';
+import NicknamePrompt from '../components/NicknamePrompt';
 
 
 const TeacherDashboard = () => {
@@ -57,6 +58,12 @@ const TeacherDashboard = () => {
 
   // 📌 检测移动端状态
   const [isMobile, setIsMobile] = useState(false);
+
+  const handleUserUpdate = useCallback((updatedUser) => {
+    setUser(updatedUser);
+  }, []);
+
+
   useEffect(() => {
     const checkIsMobile = () => {
       setIsMobile(window.innerWidth < 768);
@@ -1559,7 +1566,10 @@ const TeacherDashboard = () => {
           confirmVariant={confirmDialog.confirmVariant}
           loading={batchLoading}
         />
-      
+      <NicknamePrompt
+        user={user}
+        onUserUpdate={handleUserUpdate}
+      />
     </PullToRefreshContainer>
   );
 };

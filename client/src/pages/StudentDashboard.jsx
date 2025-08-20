@@ -11,6 +11,8 @@ import PullToRefreshContainer from '../components/PullToRefreshContainer';
 import useAutoRefresh from '../hooks/useAutoRefresh';
 import toast from 'react-hot-toast';
 import { getGreeting } from '../utils/greetings';
+import NicknamePrompt from '../components/NicknamePrompt';
+
 
 
 const StudentDashboard = () => {
@@ -25,6 +27,11 @@ const StudentDashboard = () => {
 
   // 📌 新增：检测移动端状态
   const [isMobile, setIsMobile] = useState(false);
+
+  const handleUserUpdate = useCallback((updatedUser) => {
+    setUser(updatedUser);
+  }, []);
+
   useEffect(() => {
     const checkIsMobile = () => {
       // 在此处使用 tailwindcss 的断点
@@ -893,6 +900,10 @@ const StudentDashboard = () => {
           </AnimatePresence>
         </div>
       </div>
+      <NicknamePrompt
+        user={user}
+        onUserUpdate={handleUserUpdate}
+      />
     </PullToRefreshContainer>
   );
 };
