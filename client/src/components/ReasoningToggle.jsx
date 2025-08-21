@@ -52,7 +52,7 @@ const ReasoningToggle = ({
     <button
       type="button"  // 明确指定按钮类型，防止表单提交
       onClick={handleToggle}
-      className={getToggleStyles()}
+      className={`${getToggleStyles()} aigc-native-button`}
       title={showReasoning ? "隐藏思考过程" : "显示思考过程"}
     >
       {/* 开关滑块 */}
