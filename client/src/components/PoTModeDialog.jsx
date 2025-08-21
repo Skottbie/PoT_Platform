@@ -1,11 +1,11 @@
-// client/src/components/PoTModeDialog.jsx - 修复版本
+// client/src/components/PoTModeDialog.jsx - PoT Mode 切换确认对话框
 import { motion, AnimatePresence } from 'framer-motion';
 import { PrimaryButton, SecondaryButton } from './EnhancedButton';
 import { useHapticFeedback } from '../hooks/useDeviceDetetion';
 
 /**
  * PoT Mode 切换确认对话框
- * 修复：在全屏模式下对话框被覆盖的问题
+ * 在有对话记录时确认是否清空记录并切换模式
  */
 const PoTModeDialog = ({
   isOpen = false,
@@ -55,8 +55,7 @@ const PoTModeDialog = ({
   return (
     <AnimatePresence>
       <motion.div
-        // 🔧 关键修复：提升 z-index 到 z-[99999]，确保在全屏模式下也能正常显示
-        className="fixed inset-0 z-[99999] flex items-center justify-center p-4"
+        className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
