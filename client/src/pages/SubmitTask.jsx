@@ -947,6 +947,25 @@ const getModelDisplayName = useCallback((modelValue) => {
     }
   }, [content, images, file, aigcLog, model, shouldUploadAIGC, debouncedSave, task, potEnabled]);
 
+
+
+  // 1. 添加全屏聊天容器的类名生成函数
+  const getFullscreenChatContainerClasses = useCallback(() => {
+    const baseClasses = `flex-1 overflow-y-auto aigc-chat-content ${
+      isMobile 
+        ? 'bg-gradient-to-br from-[#fefdfb] via-[#fefcf9] to-[#fdf8f0] dark:bg-gradient-to-br dark:from-[#1a1a1a] dark:via-[#1c1c1c] dark:to-[#1e1e1e]'
+        : 'bg-white dark:bg-gray-900'
+    }`;
+    
+    // 如果 PoT 模式激活，添加 pot-mode-active 类
+    if (potEnabled) {
+      return `${baseClasses} pot-mode-active`;
+    }
+    
+    return baseClasses;
+  }, [isMobile, potEnabled]);
+
+
   // 4. 恢复草稿的处理函数
     const handleRestoreDraft = useCallback(() => {
       if (!draftData) return;
@@ -1692,11 +1711,7 @@ const getModelDisplayName = useCallback((modelValue) => {
           {/* 对话内容区域 - 统一的灰黑色调 */}
           <div
             ref={chatBoxRef}
-            className={`flex-1 overflow-y-auto aigc-chat-content ${
-              isMobile 
-                ? 'bg-gradient-to-br from-[#fefdfb] via-[#fefcf9] to-[#fdf8f0] dark:bg-gradient-to-br dark:from-[#1a1a1a] dark:via-[#1c1c1c] dark:to-[#1e1e1e]'
-                : 'bg-white dark:bg-gray-900'
-            }`}
+            className={getFullscreenChatContainerClasses()}
             style={{
               paddingBottom: `calc(80px + env(safe-area-inset-bottom, 0px) + ${keyboardState.isOpen ? keyboardState.height : 0}px)`,
             }}

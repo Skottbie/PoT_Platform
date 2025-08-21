@@ -1,4 +1,4 @@
-/* client/src/styles/potMode.css - PoT Mode 专用样式 */
+/* client/src/styles/potMode.css - PoT Mode 专用样式（修复版） */
 
 /* ========================================
    PoT Mode 核心样式定义
@@ -16,30 +16,37 @@
   --pot-glow-color: rgba(245, 158, 11, 0.3);
   
   /* 背景纹理 */
-  --pot-bg-texture: rgba(245, 158, 11, 0.08);
-  --pot-bg-gradient-start: rgba(254, 243, 199, 0.3);
-  --pot-bg-gradient-mid: rgba(253, 230, 138, 0.2);
-  --pot-bg-gradient-end: rgba(254, 240, 138, 0.3);
+  --pot-bg-texture: rgba(245, 158, 11, 0.12);
+  --pot-bg-gradient-start: rgba(254, 243, 199, 0.4);
+  --pot-bg-gradient-mid: rgba(253, 230, 138, 0.3);
+  --pot-bg-gradient-end: rgba(254, 240, 138, 0.4);
   
   /* 动画参数 */
   --pot-glow-duration: 2s;
-  --pot-texture-opacity: 0.05;
+  --pot-texture-opacity: 0.08;
 }
 
 /* 🌙 深色模式适配 */
 @media (prefers-color-scheme: dark) {
   :root {
     --pot-bg-gradient-start: rgba(245, 158, 11, 0.15);
-    --pot-bg-gradient-mid: rgba(217, 119, 6, 0.1);
+    --pot-bg-gradient-mid: rgba(217, 119, 6, 0.12);
     --pot-bg-gradient-end: rgba(245, 158, 11, 0.15);
-    --pot-texture-opacity: 0.08;
+    --pot-texture-opacity: 0.12;
     --pot-glow-color: rgba(245, 158, 11, 0.4);
+    --pot-bg-texture: rgba(245, 158, 11, 0.15);
   }
 }
 
-/* 🌙 深色模式下的特殊处理 */
+/* 🌙 Tailwind 深色模式下的特殊处理 */
 .dark .pot-mode-active {
-  border-color: rgba(245, 158, 11, 0.6);
+  border-color: rgba(245, 158, 11, 0.6) !important;
+  background: linear-gradient(
+    135deg,
+    rgba(245, 158, 11, 0.15) 0%,
+    rgba(217, 119, 6, 0.12) 50%,
+    rgba(245, 158, 11, 0.15) 100%
+  ) !important;
 }
 
 .dark .pot-mode-input {
@@ -66,22 +73,22 @@
 
 /* 🔥 PoT Mode 激活的聊天容器 */
 .pot-mode-active {
-  /* 金色渐变边框 */
-  border: 2px solid var(--pot-border-color);
+  /* 金色渐变边框 - 强制覆盖 Tailwind */
+  border: 2px solid var(--pot-border-color) !important;
   
   /* 呼吸光晕效果 */
   box-shadow: 
     0 0 0 1px var(--pot-glow-color),
     0 0 20px var(--pot-glow-color),
-    0 0 40px rgba(245, 158, 11, 0.1);
+    0 0 40px rgba(245, 158, 11, 0.1) !important;
   
-  /* 背景渐变 */
+  /* 背景渐变 - 强制覆盖 Tailwind */
   background: linear-gradient(
     135deg,
     var(--pot-bg-gradient-start) 0%,
     var(--pot-bg-gradient-mid) 50%,
     var(--pot-bg-gradient-end) 100%
-  );
+  ) !important;
   
   /* 呼吸动画 */
   animation: potGlowBreathing var(--pot-glow-duration) ease-in-out infinite;
@@ -89,11 +96,12 @@
   /* 过渡效果 */
   transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
   
-  /* 思维纹理背景 */
+  /* 🧠 思维纹理背景 */
   position: relative;
+  z-index: 1;
 }
 
-/* 🧠 思维纹理覆盖层 */
+/* 🧠 思维纹理覆盖层 - 完整实现 */
 .pot-mode-active::before {
   content: '';
   position: absolute;
@@ -102,38 +110,42 @@
   right: 0;
   bottom: 0;
   pointer-events: none;
-  z-index: 0;
+  z-index: -1;
+  border-radius: inherit;
   
   /* 🧠 复杂的神经网络连接线纹理 */
   background-image: 
-    /* 神经元节点 */
-    radial-gradient(circle at 15% 15%, var(--pot-bg-texture) 1.5px, transparent 1.5px),
-    radial-gradient(circle at 85% 15%, var(--pot-bg-texture) 1px, transparent 1px),
-    radial-gradient(circle at 35% 35%, var(--pot-bg-texture) 1.2px, transparent 1.2px),
-    radial-gradient(circle at 65% 65%, var(--pot-bg-texture) 1px, transparent 1px),
-    radial-gradient(circle at 85% 85%, var(--pot-bg-texture) 1.5px, transparent 1.5px),
-    radial-gradient(circle at 15% 85%, var(--pot-bg-texture) 1px, transparent 1px),
-    /* 连接线 - 对角线 */
+    /* 神经元节点 - 大节点 */
+    radial-gradient(circle at 15% 15%, var(--pot-bg-texture) 2px, transparent 2px),
+    radial-gradient(circle at 85% 15%, var(--pot-bg-texture) 1.5px, transparent 1.5px),
+    radial-gradient(circle at 35% 35%, var(--pot-bg-texture) 1.8px, transparent 1.8px),
+    radial-gradient(circle at 65% 65%, var(--pot-bg-texture) 1.2px, transparent 1.2px),
+    radial-gradient(circle at 85% 85%, var(--pot-bg-texture) 2px, transparent 2px),
+    radial-gradient(circle at 15% 85%, var(--pot-bg-texture) 1.5px, transparent 1.5px),
+    
+    /* 连接线 - 对角线网络 */
     linear-gradient(135deg, transparent 48%, var(--pot-bg-texture) 49%, var(--pot-bg-texture) 51%, transparent 52%),
     linear-gradient(45deg, transparent 48%, var(--pot-bg-texture) 49%, var(--pot-bg-texture) 51%, transparent 52%),
+    linear-gradient(120deg, transparent 49%, var(--pot-bg-texture) 49.5%, var(--pot-bg-texture) 50.5%, transparent 51%),
+    linear-gradient(60deg, transparent 49%, var(--pot-bg-texture) 49.5%, var(--pot-bg-texture) 50.5%, transparent 51%),
+    
     /* 连接线 - 水平和垂直 */
-    linear-gradient(0deg, transparent 49%, var(--pot-bg-texture) 50%, transparent 51%),
-    linear-gradient(90deg, transparent 49%, var(--pot-bg-texture) 50%, transparent 51%);
+    linear-gradient(0deg, transparent 49.5%, var(--pot-bg-texture) 50%, transparent 50.5%),
+    linear-gradient(90deg, transparent 49.5%, var(--pot-bg-texture) 50%, transparent 50.5%);
   
   background-size: 
     /* 神经元节点大小 */
-    80px 80px, 60px 60px, 70px 70px, 90px 90px, 75px 75px, 85px 85px,
+    90px 90px, 70px 70px, 80px 80px, 100px 100px, 85px 85px, 95px 95px,
     /* 连接线大小 */
-    40px 40px, 45px 45px, 35px 35px, 50px 50px;
+    50px 50px, 55px 55px, 45px 45px, 60px 60px, 40px 40px, 65px 65px;
   
   background-position: 
     /* 神经元节点位置 */
-    0 0, 30px 15px, 45px 25px, 15px 50px, 35px 65px, 60px 80px,
+    0 0, 35px 20px, 50px 30px, 20px 60px, 40px 75px, 70px 90px,
     /* 连接线位置 */
-    0 0, 20px 20px, 10px 30px, 25px 5px;
+    0 0, 25px 25px, 15px 40px, 35px 10px, 10px 35px, 30px 5px;
   
   opacity: var(--pot-texture-opacity);
-  border-radius: inherit;
   
   /* 🌟 增加微妙的动画效果 */
   animation: potTextureShift 20s ease-in-out infinite;
@@ -195,9 +207,11 @@
   }
   
   .pot-mode-active::before {
-    /* 移动端简化纹理 */
-    background-size: 40px 40px, 50px 50px;
-    opacity: calc(var(--pot-texture-opacity) * 0.7);
+    /* 移动端简化纹理，提高性能 */
+    background-size: 
+      60px 60px, 50px 50px, 55px 55px, 70px 70px, 60px 60px, 65px 65px,
+      40px 40px, 45px 45px, 35px 35px, 50px 50px, 30px 30px, 55px 55px;
+    opacity: calc(var(--pot-texture-opacity) * 0.8);
   }
 }
 
@@ -409,8 +423,8 @@
   .pot-mode-active::before {
     background-size: 
       /* 高分辨率下适当调整纹理大小 */
-      60px 60px, 45px 45px, 52px 52px, 67px 67px, 56px 56px, 63px 63px,
-      30px 30px, 33px 33px, 26px 26px, 37px 37px;
+      70px 70px, 55px 55px, 62px 62px, 77px 77px, 66px 66px, 73px 73px,
+      40px 40px, 43px 43px, 36px 36px, 47px 47px, 32px 32px, 52px 52px;
   }
 }
 
@@ -437,7 +451,7 @@
   }
   
   .pot-mode-active::before {
-    opacity: calc(var(--pot-texture-opacity) * 0.5);
+    opacity: calc(var(--pot-texture-opacity) * 0.7);
   }
 }
 
@@ -474,5 +488,3 @@
     text-shadow: 0 0 8px rgba(245, 158, 11, 0.3);
   }
 }
-
-
