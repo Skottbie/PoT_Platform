@@ -23,11 +23,36 @@ import DraftSaveIndicator from '../components/DraftSaveIndicator';
 import BeforeUnloadDialog from '../components/BeforeUnloadDialog';
 import ReasoningDisplay from '../components/ReasoningDisplay';
 import ReasoningToggle from '../components/ReasoningToggle';
+// ===== 1. 新增导入语句 =====
+import { usePoTMode } from '../hooks/usePoTMode';
+import PoTPowerButton from '../components/PoTPowerButton';
+import PoTModeDialog from '../components/PoTModeDialog';
+import PoTFirstTimeGuide from '../components/PoTFirstTimeGuide';
+import '../styles/potMode.css';
 
 SyntaxHighlighter.registerLanguage('javascript', javascript);
 SyntaxHighlighter.registerLanguage('python', python);
 
 const SubmitTask = () => {
+  // ===== 2. 在SubmitTask函数开始处添加PoT状态 =====
+  const {
+    potEnabled,
+    isFirstTime,
+    isActivating,
+    togglePoTMode,
+    getCurrentModel,
+    shouldHideModelSelector,
+    shouldHideReasoningToggle,
+    getInputPlaceholder,
+    getPoTStatusText,
+    POT_MODEL,
+    enablePoTMode
+  } = usePoTMode();
+  // 🆕 PoT Mode 对话框状态
+  const [showPoTDialog, setShowPoTDialog] = useState(false);
+  const [potDialogAction, setPotDialogAction] = useState('enable');
+  const [showFirstTimeGuide, setShowFirstTimeGuide] = useState(false);
+
   const { taskId } = useParams();
   const navigate = useNavigate();
   const { isMobile } = useDeviceDetection();
@@ -752,15 +777,17 @@ const getModelDisplayName = useCallback((modelValue) => {
     if (!input.trim()) return;
 
     haptic.light();
+    
+    const currentModel = getCurrentModel(model);
 
-    const userMessage = { role: 'user', content: input, model: model };
+    const userMessage = { role: 'user', content: input, model: currentModel };
     setAigcLog((prev) => [...prev, userMessage]);
     setInput('');
     setLoading(true);
     
     // 🆕 DeepSeek延迟提示逻辑
     let deepSeekTipTimer = null;
-    if (model === 'deepseek-r1-distill') {
+    if (currentModel === 'deepseek-r1-distill') {
       deepSeekTipTimer = setTimeout(() => {
         setShowDeepSeekTip(true);
       }, 4000); // 4秒后显示延迟提示
@@ -769,7 +796,7 @@ const getModelDisplayName = useCallback((modelValue) => {
     try {
       const res = await api.post('/aigc/chat', {
         messages: [...aigcLog, userMessage],
-        model,
+        model: currentModel,
       }, {
         timeout: 60000
       });
@@ -777,7 +804,7 @@ const getModelDisplayName = useCallback((modelValue) => {
       const aiMessage = { 
         role: 'assistant', 
         content: res.data.reply, 
-        model: model,
+        model: currentModel,
         reasoning_content: res.data.reasoning_content || null
       };
       setAigcLog((prev) => [...prev, aiMessage]);
@@ -787,7 +814,7 @@ const getModelDisplayName = useCallback((modelValue) => {
       const errorMessage = { 
         role: 'assistant', 
         content: '❌ AI 回复失败，请稍后重试',
-        model: model 
+        model: currentModel 
       };
       setAigcLog((prev) => [...prev, errorMessage]);
       haptic.error();
@@ -800,7 +827,7 @@ const getModelDisplayName = useCallback((modelValue) => {
         clearTimeout(deepSeekTipTimer);
       }
     }
-  }, [input, aigcLog, model, haptic]);
+  }, [input, aigcLog, model, haptic, getCurrentModel]);
 
   // 🎯 优化图片处理
   const handleImageChange = useCallback((e) => {
@@ -911,65 +938,41 @@ const getModelDisplayName = useCallback((modelValue) => {
         } : { hasFile: false },
         aigcLog,
         model,
-        shouldUploadAIGC
+        shouldUploadAIGC,
+        potModeEnabled: potEnabled // 🆕
       };
 
       debouncedSave(currentData);
     }
-  }, [content, images, file, aigcLog, model, shouldUploadAIGC, debouncedSave, task]);
+  }, [content, images, file, aigcLog, model, shouldUploadAIGC, debouncedSave, task, potEnabled]);
 
   // 4. 恢复草稿的处理函数
-  const handleRestoreDraft = useCallback(() => {
-    if (!draftData) return;
-
-    const restored = restoreDraft();
-    if (restored) {
-      // 恢复文本内容
-      if (restored.content) {
-        setContent(restored.content);
-      }
-
-      // 恢复图片
-      if (restored.images && restored.images.length > 0) {
-        const restoredImages = restored.images.map(img => {
-          if (img.file instanceof File) {
-            return img.file;
+    const handleRestoreDraft = useCallback(() => {
+      if (!draftData) return;
+  
+      const restored = restoreDraft();
+      if (restored) {
+          setContent(restored.content || '');
+          setImages(restored.images || []);
+          setAigcLog(restored.aigcLog || []);
+          setModel(restored.model || 'qwen-flash');
+          setShouldUploadAIGC(restored.shouldUploadAIGC || false);
+          // 🆕 恢复PoT状态
+          if (restored.potModeEnabled) {
+              enablePoTMode(restored.model || 'qwen-flash');
           }
-          // 如果不是File对象，尝试重建
-          return new File([new Blob()], img.name || 'restored_image', {
-            type: img.type || 'image/jpeg',
-            lastModified: img.lastModified || Date.now()
-          });
-        });
-        setImages(restoredImages);
-        
-        // 重建预览URL
-        const previewIds = restoredImages.map((_, index) => `restored_${index}`);
-        setImagePreviewIds(previewIds);
+  
+          // 如果有文件信息，显示提示
+          if (restored.fileInfo?.hasFile) {
+              setMessage(`📋 草稿已恢复！请重新上传文件：${restored.fileInfo.fileName}`);
+              setTimeout(() => setMessage(''), 5000);
+          } else {
+              setMessage('📋 草稿已恢复！');
+              setTimeout(() => setMessage(''), 3000);
+          }
       }
-
-      // 恢复AIGC相关
-      if (restored.aigcLog) {
-        setAigcLog(restored.aigcLog);
-      }
-      if (restored.model) {
-        setModel(restored.model);
-      }
-      if (typeof restored.shouldUploadAIGC === 'boolean') {
-        setShouldUploadAIGC(restored.shouldUploadAIGC);
-      }
-
-      // 如果有文件信息，显示提示
-      if (restored.fileInfo?.hasFile) {
-        setMessage(`📋 草稿已恢复！请重新上传文件：${restored.fileInfo.fileName}`);
-        setTimeout(() => setMessage(''), 5000);
-      } else {
-        setMessage('📋 草稿已恢复！');
-        setTimeout(() => setMessage(''), 3000);
-      }
-    }
-  }, [draftData, restoreDraft]);
-
+  }, [draftData, restoreDraft, enablePoTMode]);
+  
   // 5. 手动保存处理函数
   const handleManualSave = useCallback(() => {
     const currentData = {
@@ -984,53 +987,55 @@ const getModelDisplayName = useCallback((modelValue) => {
       } : { hasFile: false },
       aigcLog,
       model,
-      shouldUploadAIGC
+      shouldUploadAIGC,
+      potModeEnabled: potEnabled // 🆕
     };
 
     manualSave(currentData);
-  }, [content, images, file, aigcLog, model, shouldUploadAIGC, manualSave]);
+  }, [content, images, file, aigcLog, model, shouldUploadAIGC, manualSave, potEnabled]);
 
 
   // 在其他 useCallback 函数附近添加
-const handleExitFullscreen = useCallback(async () => {
-  try {
-    // 构建当前数据
-    const currentData = {
-      content,
-      images,
-      file,
-      fileInfo: file ? {
-        hasFile: true,
-        fileName: file.name,
-        fileSize: formatFileSize(file.size),
-        fileType: file.type
-      } : { hasFile: false },
-      aigcLog,
-      model,
-      shouldUploadAIGC
-    };
-
-    // 只有当有实际内容时才保存
-    const hasContent = !!(
-      content?.trim() ||
-      images?.length > 0 ||
-      file ||
-      aigcLog?.length > 1
-    );
-
-    if (hasContent) {
-      await manualSave(currentData);
+  const handleExitFullscreen = useCallback(async () => {
+    try {
+      // 构建当前数据
+      const currentData = {
+        content,
+        images,
+        file,
+        fileInfo: file ? {
+          hasFile: true,
+          fileName: file.name,
+          fileSize: formatFileSize(file.size),
+          fileType: file.type
+        } : { hasFile: false },
+        aigcLog,
+        model,
+        shouldUploadAIGC,
+        potModeEnabled: potEnabled // 🆕 添加这行
+      };
+  
+      // 只有当有实际内容时才保存
+      const hasContent = !!(
+        content?.trim() ||
+        images?.length > 0 ||
+        file ||
+        aigcLog?.length > 1
+      );
+  
+      if (hasContent) {
+        await manualSave(currentData);
+      }
+  
+      // 关闭全屏
+      setIsFullscreen(false);
+      haptic.light();
+      
+    } catch (error) {
+      console.error('退出全屏保存失败:', error);
+      setIsFullscreen(false); // 即使保存失败也要关闭全屏
     }
-
-    // 关闭全屏
-    setIsFullscreen(false);
-    haptic.light();
-    
-  } catch (error) {
-    console.error('退出全屏保存失败:', error);
-    setIsFullscreen(false); // 即使保存失败也要关闭全屏
-  }
-}, [content, images, file, aigcLog, model, shouldUploadAIGC, manualSave, haptic]);
+  }, [content, images, file, aigcLog, model, shouldUploadAIGC, potEnabled, manualSave, haptic]);
 
   // 6. 页面离开前的检查
   const handleBeforeUnload = useCallback((e) => {
@@ -1112,7 +1117,8 @@ const handleExitFullscreen = useCallback(async () => {
       } : { hasFile: false },
       aigcLog,
       model,
-      shouldUploadAIGC
+      shouldUploadAIGC,
+      potModeEnabled: potEnabled // 🆕
     };
 
     await manualSave(currentData);
@@ -1125,7 +1131,7 @@ const handleExitFullscreen = useCallback(async () => {
         navigate(pendingNavigation);
       }
     }
-  }, [content, images, file, aigcLog, model, shouldUploadAIGC, manualSave, pendingNavigation, navigate]);
+  }, [content, images, file, aigcLog, model, shouldUploadAIGC, manualSave, pendingNavigation, navigate, potEnabled]);
 
   const handleLeaveWithoutSave = useCallback(() => {
     setShowBeforeUnloadDialog(false);
@@ -1294,6 +1300,75 @@ const handleExitFullscreen = useCallback(async () => {
     return result;
   }, [originalHandleSubmit, deleteDraft]);
 
+  // ===== 4. 添加PoT Mode切换处理函数 =====
+  const handlePoTToggle = useCallback(async () => {
+    if (isActivating) return;
+    const hasConversation = aigcLog.length > 1;
+    const result = await togglePoTMode(model, hasConversation);
+    if (!result.success) return;
+    if (result.needsClearConversation) {
+      // 显示确认对话框
+      setPotDialogAction(result.action);
+      setShowPoTDialog(true);
+    } else {
+      // 直接切换
+      setModel(result.newModel);
+      if (result.showFirstTimeGuide) {
+        setShowFirstTimeGuide(true);
+      }
+    }
+  }, [isActivating, aigcLog.length, togglePoTMode, model]);
+
+  // ===== 5. 添加PoT对话框确认处理 =====
+  const handlePoTDialogConfirm = useCallback(() => {
+    setShowPoTDialog(false);
+    // 清空对话记录
+    setAigcLog([]);
+    setInput('');
+    // 切换模型
+    if (potEnabled) {
+      setModel(POT_MODEL);
+      if (isFirstTime) {
+        setShowFirstTimeGuide(true);
+      }
+    } else {
+      setModel('qwen-flash'); // 恢复默认模型
+    }
+    haptic.success();
+  }, [potEnabled, POT_MODEL, isFirstTime, haptic]);
+
+  const handlePoTDialogCancel = useCallback(() => {
+    setShowPoTDialog(false);
+    haptic.light();
+  }, [haptic]);
+
+  // ===== 6. 修改模型选择器逻辑 =====
+  // 在模型选择器的 select 元素中，添加条件渲染：
+  // 非全屏模式下，模型选择器下方添加PoT开关：
+  const renderPoTModeToggle = (mode = 'normal', device = 'mobile') => {
+    if (!task?.allowAIGC) return null;
+    return (
+      <PoTPowerButton
+        potEnabled={potEnabled}
+        isActivating={isActivating}
+        onClick={handlePoTToggle}
+        statusText={getPoTStatusText()}
+        mode={mode}
+        device={device}
+      />
+    );
+  };
+    // ===== 8. 添加PoT模式的CSS类名 =====
+  // 在聊天容器的className中添加条件类名：
+  const getChatContainerClasses = () => {
+    const baseClasses = "bg-gray-50/80 dark:bg-gray-800/50 h-64 rounded-lg border border-gray-200/50 dark:border-gray-600/50 p-4 mb-4 overflow-y-auto";
+    if (potEnabled) {
+      return `${baseClasses} pot-mode-active`;
+    }
+    return baseClasses;
+  };
+
+
   if (initialLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center p-4">
@@ -1437,9 +1512,15 @@ const handleExitFullscreen = useCallback(async () => {
                     <span className="text-sm font-semibold">A</span>
                   </div>
                 </button>
+                {renderPoTModeToggle('fullscreen', 'mobile')}
                 
                 {/* 标题和模型选择 - 移动端完全隐身的响应式设计 */}
                 {isMobile ? (
+                  potEnabled ? (
+                    <div className="flex items-center justify-center flex-1 min-w-0">
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{getPoTStatusText()}</span>
+                    </div>
+                    ) : (
                   <div className="flex items-center gap-2 flex-1 min-w-0">
                   <select
                     ref={selectRef}
@@ -1476,7 +1557,7 @@ const handleExitFullscreen = useCallback(async () => {
                   </select>
 
                   {/* 🆕 思考过程开关 - 移动端全屏模式：在下拉箭头右侧 */}
-                  {supportsReasoning(model) && (
+                  {!shouldHideReasoningToggle() && supportsReasoning(model) && (
                     <ReasoningToggle
                       showReasoning={showReasoning}
                       setShowReasoning={setShowReasoning}
@@ -1485,7 +1566,7 @@ const handleExitFullscreen = useCallback(async () => {
                     />
                   )}
                 </div>
-                ) : (
+                )) : (
                   // 桌面端保持原有逻辑但更新显示文本
                   <div className="flex-1 min-w-0">
                     <h3 className="font-bold text-gray-900 dark:text-gray-100 text-lg truncate">
@@ -1493,7 +1574,7 @@ const handleExitFullscreen = useCallback(async () => {
                     </h3>
                     <div className="md:flex md:items-center md:gap-2">
                       <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
-                        {getCurrentModelLabel(model)}
+                      {potEnabled ? getPoTStatusText() : getCurrentModelLabel(model)}
                       </p>
                       <span className="hidden md:inline text-gray-400">·</span>
                       <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -1512,8 +1593,9 @@ const handleExitFullscreen = useCallback(async () => {
               <div className="flex items-center gap-3 flex-shrink-0">
                 {!isMobile && (
                   <div className="flex items-center gap-3">
+                    {renderPoTModeToggle('fullscreen', 'desktop')}
                     {/* 🆕 思考过程开关 - 桌面端全屏模式：在AI选择器左侧 */}
-                    {supportsReasoning(model) && (
+                    {!shouldHideReasoningToggle() && supportsReasoning(model) && (
                       <ReasoningToggle
                         showReasoning={showReasoning}
                         setShowReasoning={setShowReasoning}
@@ -1522,7 +1604,7 @@ const handleExitFullscreen = useCallback(async () => {
                       />
                     )}
                     
-                    <select
+                    {!shouldHideModelSelector() && <select
                       value={model}
                       onChange={(e) => {
                         setModel(e.target.value);
@@ -1535,7 +1617,7 @@ const handleExitFullscreen = useCallback(async () => {
                           {option.label}
                         </option>
                       ))}
-                    </select>
+                    </select>}
                   </div>
                 )}
                 
@@ -1716,7 +1798,7 @@ const handleExitFullscreen = useCallback(async () => {
                         handleAIGCSubmit();
                       }
                     }}
-                    placeholder="输入你的思考..."
+                    placeholder={getInputPlaceholder()}
                     disabled={loading}
                     rows={1}
                     className={`w-full resize-none rounded-3xl placeholder-gray-400 dark:placeholder-gray-500 pr-14 px-4 py-3 transition-all duration-200 aigc-native-input ${
@@ -1964,7 +2046,7 @@ const handleExitFullscreen = useCallback(async () => {
           {/* 表单内容 */}
           {taskStatus?.canSubmit ? (
             <motion.form 
-              onSubmit={handleSubmit} 
+              onSubmit={enhancedHandleSubmit} 
               className="space-y-6"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -2070,7 +2152,7 @@ const handleExitFullscreen = useCallback(async () => {
                       {/* 🆕 绝对定位的按钮容器 */}
                       <div className="absolute top-0 right-0 h-6 flex items-center">
                         <AnimatePresence mode="wait">
-                          {supportsReasoning(model) && (
+                          {!shouldHideReasoningToggle() && supportsReasoning(model) && (
                             <motion.div
                               key="reasoning-toggle"
                               initial={{ opacity: 0, scale: 0.9, x: 10 }}
@@ -2093,6 +2175,7 @@ const handleExitFullscreen = useCallback(async () => {
                       </div>
                     </div>
                     
+                    {!shouldHideModelSelector() &&
                     <select
                       value={model}
                       onChange={(e) => {
@@ -2107,12 +2190,14 @@ const handleExitFullscreen = useCallback(async () => {
                       <option value="ernie-speed">ERNIE-Speed</option>
                       <option value="openai">ChatGPT*(维护中)</option>
                     </select>
+                    }
+                     {renderPoTModeToggle('normal', isMobile ? 'mobile' : 'desktop')}
                   </div>
 
                   {/* 对话区域 */}
                   <div
                     ref={chatBoxRef}
-                    className="bg-gray-50/80 dark:bg-gray-800/50 h-64 rounded-lg border border-gray-200/50 dark:border-gray-600/50 p-4 mb-4 overflow-y-auto"
+                    className={getChatContainerClasses()}
                   >
                     {aigcLog.length === 0 ? (
                       <div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">
@@ -2218,7 +2303,7 @@ const handleExitFullscreen = useCallback(async () => {
                             handleAIGCSubmit();
                           }
                         }}
-                        placeholder="输入你的问题..."
+                        placeholder={getInputPlaceholder()}
                         disabled={loading}
                         rows={1}
                         className="w-full resize-none border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 pr-12 px-4 py-3 text-sm focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500"
@@ -2359,6 +2444,21 @@ const handleExitFullscreen = useCallback(async () => {
           )}
         </FormCard>
       </div>
+      {/* PoT Mode 对话框 */}
+        <PoTModeDialog
+            isOpen={showPoTDialog}
+            onConfirm={handlePoTDialogConfirm}
+            onCancel={handlePoTDialogCancel}
+            action={potDialogAction}
+        />
+        {/* PoT Mode 首次使用引导 */}
+        <PoTFirstTimeGuide
+            isOpen={showFirstTimeGuide}
+            onClose={() => setShowFirstTimeGuide(false)}
+            onStartTyping={() => setShowFirstTimeGuide(false)}
+            isMobile={isMobile}
+            inputRef={textareaRef}
+        />
     </div>
     
   );
