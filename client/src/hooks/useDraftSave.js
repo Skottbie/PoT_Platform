@@ -171,7 +171,8 @@ export const useDraftSave = (taskId, isFullscreen = false) => {
       // 🔧 修复：统一AIGC日志的判断标准
       aigcLog: data.aigcLog || [],
       model: data.model || 'qwen',
-      shouldUploadAIGC: data.shouldUploadAIGC || false
+      shouldUploadAIGC: data.shouldUploadAIGC || false,
+      potModeEnabled: data.potModeEnabled || false
     };
   }, []);
 
@@ -231,7 +232,8 @@ export const useDraftSave = (taskId, isFullscreen = false) => {
             fileInfo: draft.fileInfo || { hasFile: false },
             aigcLog: draft.aigcLog || [],
             model: draft.model || 'qwen',
-            shouldUploadAIGC: draft.shouldUploadAIGC || false
+            shouldUploadAIGC: draft.shouldUploadAIGC || false,
+            potModeEnabled: draft.potModeEnabled || false
           };
           // 🔧 修复：使用标准化函数确保一致性
           const normalizedDraft = normalizeDataForComparison(draftDataForComparison);
@@ -292,7 +294,8 @@ export const useDraftSave = (taskId, isFullscreen = false) => {
         fileInfo: normalizedData.fileInfo,
         aigcLog: normalizedData.aigcLog,
         model: normalizedData.model,
-        shouldUploadAIGC: normalizedData.shouldUploadAIGC
+        shouldUploadAIGC: normalizedData.shouldUploadAIGC,
+        potModeEnabled: normalizedData.potModeEnabled
       };
 
       const success = await draftStorage.saveDraft(taskId, draftPayload);

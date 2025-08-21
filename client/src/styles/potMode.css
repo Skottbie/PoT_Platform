@@ -1,0 +1,304 @@
+/* client/src/styles/potMode.css - PoT Mode 专用样式 */
+
+/* ========================================
+   PoT Mode 核心样式定义
+   ======================================== */
+
+/* 🎯 PoT Mode CSS 变量定义 */
+:root {
+  /* 金色主题色 */
+  --pot-primary: #F59E0B;
+  --pot-primary-dark: #D97706;
+  --pot-primary-light: #FCD34D;
+  
+  /* 边框效果 */
+  --pot-border-color: rgba(245, 158, 11, 0.5);
+  --pot-glow-color: rgba(245, 158, 11, 0.3);
+  
+  /* 背景纹理 */
+  --pot-bg-texture: rgba(245, 158, 11, 0.08);
+  --pot-bg-gradient-start: rgba(254, 243, 199, 0.3);
+  --pot-bg-gradient-mid: rgba(253, 230, 138, 0.2);
+  --pot-bg-gradient-end: rgba(254, 240, 138, 0.3);
+  
+  /* 动画参数 */
+  --pot-glow-duration: 2s;
+  --pot-texture-opacity: 0.05;
+}
+
+/* 🌙 深色模式适配 */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --pot-bg-gradient-start: rgba(245, 158, 11, 0.15);
+    --pot-bg-gradient-mid: rgba(217, 119, 6, 0.1);
+    --pot-bg-gradient-end: rgba(245, 158, 11, 0.15);
+    --pot-texture-opacity: 0.08;
+  }
+}
+
+/* ========================================
+   PoT Mode 聊天容器样式
+   ======================================== */
+
+/* 🔥 PoT Mode 激活的聊天容器 */
+.pot-mode-active {
+  /* 金色渐变边框 */
+  border: 2px solid var(--pot-border-color);
+  
+  /* 呼吸光晕效果 */
+  box-shadow: 
+    0 0 0 1px var(--pot-glow-color),
+    0 0 20px var(--pot-glow-color),
+    0 0 40px rgba(245, 158, 11, 0.1);
+  
+  /* 背景渐变 */
+  background: linear-gradient(
+    135deg,
+    var(--pot-bg-gradient-start) 0%,
+    var(--pot-bg-gradient-mid) 50%,
+    var(--pot-bg-gradient-end) 100%
+  );
+  
+  /* 呼吸动画 */
+  animation: potGlowBreathing var(--pot-glow-duration) ease-in-out infinite;
+  
+  /* 过渡效果 */
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  /* 思维纹理背景 */
+  position: relative;
+}
+
+/* 🧠 思维纹理覆盖层 */
+.pot-mode-active::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 0;
+  
+  /* 神经网络连接线纹理 */
+  background-image: 
+    radial-gradient(circle at 20% 20%, var(--pot-bg-texture) 1px, transparent 1px),
+    radial-gradient(circle at 80% 20%, var(--pot-bg-texture) 1px, transparent 1px),
+    radial-gradient(circle at 40% 40%, var(--pot-bg-texture) 1px, transparent 1px),
+    radial-gradient(circle at 60% 60%, var(--pot-bg-texture) 1px, transparent 1px),
+    radial-gradient(circle at 80% 80%, var(--pot-bg-texture) 1px, transparent 1px),
+    radial-gradient(circle at 20% 80%, var(--pot-bg-texture) 1px, transparent 1px);
+  
+  background-size: 50px 50px, 60px 60px, 40px 40px, 70px 70px, 55px 55px, 45px 45px;
+  background-position: 0 0, 25px 25px, 40px 10px, 10px 40px, 30px 50px, 50px 30px;
+  
+  /* 连接线效果 */
+  background-image: 
+    linear-gradient(45deg, transparent 46%, var(--pot-bg-texture) 47%, var(--pot-bg-texture) 53%, transparent 54%),
+    linear-gradient(-45deg, transparent 46%, var(--pot-bg-texture) 47%, var(--pot-bg-texture) 53%, transparent 54%);
+  background-size: 30px 30px, 30px 30px;
+  
+  opacity: var(--pot-texture-opacity);
+  border-radius: inherit;
+}
+
+/* 🌟 呼吸光晕动画 */
+@keyframes potGlowBreathing {
+  0%, 100% {
+    box-shadow: 
+      0 0 0 1px var(--pot-glow-color),
+      0 0 15px rgba(245, 158, 11, 0.3),
+      0 0 30px rgba(245, 158, 11, 0.1);
+  }
+  50% {
+    box-shadow: 
+      0 0 0 1px rgba(245, 158, 11, 0.8),
+      0 0 25px rgba(245, 158, 11, 0.5),
+      0 0 50px rgba(245, 158, 11, 0.2);
+  }
+}
+
+/* ========================================
+   移动端专用优化
+   ======================================== */
+
+@media (max-width: 640px) {
+  .pot-mode-active {
+    /* 移动端稍微减弱光晕效果，避免性能问题 */
+    animation: potGlowBreathingMobile var(--pot-glow-duration) ease-in-out infinite;
+  }
+  
+  @keyframes potGlowBreathingMobile {
+    0%, 100% {
+      box-shadow: 
+        0 0 0 1px var(--pot-glow-color),
+        0 0 10px rgba(245, 158, 11, 0.25);
+    }
+    50% {
+      box-shadow: 
+        0 0 0 1px rgba(245, 158, 11, 0.7),
+        0 0 20px rgba(245, 158, 11, 0.4);
+    }
+  }
+  
+  .pot-mode-active::before {
+    /* 移动端简化纹理 */
+    background-size: 40px 40px, 50px 50px;
+    opacity: calc(var(--pot-texture-opacity) * 0.7);
+  }
+}
+
+/* ========================================
+   PoT Mode 状态指示器样式
+   ======================================== */
+
+/* 🏷️ PoT Mode ON 状态文字 */
+.pot-status-text {
+  background: linear-gradient(45deg, var(--pot-primary), var(--pot-primary-dark));
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  font-weight: 600;
+  letter-spacing: 0.025em;
+}
+
+/* 🔄 PoT Mode 激活过渡效果 */
+.pot-mode-transition-enter {
+  transform: scale(0.95);
+  opacity: 0;
+}
+
+.pot-mode-transition-enter-active {
+  transform: scale(1);
+  opacity: 1;
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.pot-mode-transition-exit {
+  transform: scale(1);
+  opacity: 1;
+}
+
+.pot-mode-transition-exit-active {
+  transform: scale(0.95);
+  opacity: 0;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ========================================
+   PoT Mode 输入框样式
+   ======================================== */
+
+/* 💬 PoT Mode 激活的输入框 */
+.pot-mode-input {
+  border-color: var(--pot-border-color);
+  box-shadow: 
+    0 0 0 1px var(--pot-glow-color),
+    0 0 10px rgba(245, 158, 11, 0.15);
+  
+  background: linear-gradient(
+    to right,
+    rgba(254, 243, 199, 0.1),
+    rgba(253, 230, 138, 0.05),
+    rgba(254, 243, 199, 0.1)
+  );
+}
+
+.pot-mode-input:focus {
+  border-color: var(--pot-primary);
+  box-shadow: 
+    0 0 0 2px rgba(245, 158, 11, 0.3),
+    0 0 15px rgba(245, 158, 11, 0.2);
+}
+
+.pot-mode-input::placeholder {
+  color: var(--pot-primary);
+  opacity: 0.7;
+  font-weight: 500;
+}
+
+/* ========================================
+   PoT Mode 电源键激活动画
+   ======================================== */
+
+/* ⚡ 电源键激活扩散效果 */
+@keyframes potPowerActivation {
+  0% {
+    transform: scale(0);
+    opacity: 1;
+  }
+  70% {
+    transform: scale(1.8);
+    opacity: 0.6;
+  }
+  100% {
+    transform: scale(2.5);
+    opacity: 0;
+  }
+}
+
+.pot-power-activation {
+  animation: potPowerActivation 0.4s ease-out;
+}
+
+/* 🔄 电源键旋转加载 */
+@keyframes potPowerLoading {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.pot-power-loading {
+  animation: potPowerLoading 0.3s ease-in-out;
+}
+
+/* ========================================
+   性能优化和兼容性
+   ======================================== */
+
+/* 🚀 GPU 加速优化 */
+.pot-mode-active,
+.pot-mode-active::before {
+  will-change: box-shadow, opacity, transform;
+  transform: translateZ(0);
+}
+
+/* 📱 减少动画 preference 支持 */
+@media (prefers-reduced-motion: reduce) {
+  .pot-mode-active {
+    animation: none;
+  }
+  
+  .pot-power-activation,
+  .pot-power-loading {
+    animation: none;
+  }
+  
+  .pot-mode-transition-enter-active,
+  .pot-mode-transition-exit-active {
+    transition: none;
+  }
+}
+
+/* 🌐 浏览器兼容性回退 */
+@supports not (background-clip: text) {
+  .pot-status-text {
+    color: var(--pot-primary);
+    background: none;
+  }
+}
+
+/* 🔋 低功耗设备优化 */
+@media (max-resolution: 144dpi) {
+  .pot-mode-active::before {
+    display: none;
+  }
+  
+  .pot-mode-active {
+    animation-duration: calc(var(--pot-glow-duration) * 2);
+  }
+}
