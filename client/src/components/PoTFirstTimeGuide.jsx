@@ -17,6 +17,7 @@ const PoTFirstTimeGuide = ({
 }) => {
   const haptic = useHapticFeedback();
   const [position, setPosition] = useState({ top: 0, left: 0, width: 0 });
+  const [dontShowAgain, setDontShowAgain] = useState(false);
 
   // 计算引导浮层位置
   useEffect(() => {
@@ -26,7 +27,7 @@ const PoTFirstTimeGuide = ({
         const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
         
         setPosition({
-          top: inputRect.top + scrollTop - (isMobile ? 100 : 80),
+          top: inputRect.top + scrollTop - (isMobile ? 120 : 100),
           left: inputRect.left,
           width: inputRect.width
         });
@@ -52,11 +53,11 @@ const PoTFirstTimeGuide = ({
       const inputElement = inputRef.current;
       
       const handleInput = () => {
-        onStartTyping?.();
+        onStartTyping?.(dontShowAgain);
       };
 
       const handleFocus = () => {
-        onStartTyping?.();
+        onStartTyping?.(dontShowAgain);
       };
 
       inputElement.addEventListener('input', handleInput);
@@ -67,11 +68,11 @@ const PoTFirstTimeGuide = ({
         inputElement.removeEventListener('focus', handleFocus);
       };
     }
-  }, [isVisible, inputRef, onStartTyping]);
+  }, [isVisible, inputRef, onStartTyping, dontShowAgain]);
 
   const handleDismiss = () => {
     haptic.light();
-    onDismiss?.();
+    onDismiss?.(dontShowAgain);
   };
 
   if (!isVisible) return null;
@@ -167,15 +168,41 @@ const PoTFirstTimeGuide = ({
                 </div>
               </div>
 
-              {/* 了解按钮 */}
-              <div className="flex justify-end">
+              {/* 不再显示选项 */}
+              <div className={`
+                bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3 mb-4
+                border border-gray-200 dark:border-gray-700/50
+              `}>
+                <label className="flex items-center gap-3 cursor-pointer group">
+                  <input
+                    type="checkbox"
+                    checked={dontShowAgain}
+                    onChange={(e) => {
+                      setDontShowAgain(e.target.checked);
+                      haptic.light();
+                    }}
+                    className="w-4 h-4 text-amber-600 bg-gray-100 border-gray-300 rounded 
+                             focus:ring-amber-500 focus:ring-2 dark:focus:ring-amber-600 
+                             dark:ring-offset-gray-800 dark:bg-gray-700 dark:border-gray-600
+                             transition-colors duration-200"
+                  />
+                  <span className="text-sm text-gray-600 dark:text-gray-400 
+                                 group-hover:text-gray-800 dark:group-hover:text-gray-200
+                                 transition-colors duration-200">
+                    不再显示此引导
+                  </span>
+                </label>
+              </div>
+
+              {/* 操作按钮 */}
+              <div className="flex justify-end gap-3">
                 <PrimaryButton
                   onClick={handleDismiss}
                   size={isMobile ? "sm" : "sm"}
                   variant="primary"
                   className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
                 >
-                  了解了
+                  开始使用
                 </PrimaryButton>
               </div>
             </div>

@@ -46,7 +46,8 @@ const SubmitTask = () => {
     getInputPlaceholder,
     getPoTStatusText,
     POT_MODEL,
-    enablePoTMode
+    enablePoTMode,
+    saveGuidePreference
   } = usePoTMode();
   // 🆕 PoT Mode 对话框状态
   const [showPoTDialog, setShowPoTDialog] = useState(false);
@@ -1320,7 +1321,7 @@ const getModelDisplayName = useCallback((modelValue) => {
         setModel(result.newModel);
         
         // 如果是开启PoT且首次使用，显示引导
-        if (result.action === 'enable' && result.showFirstTimeGuide) {
+      if (result.action === 'enabled' && result.showFirstTimeGuide) {
           setShowFirstTimeGuide(true);
         }
       }
@@ -1340,10 +1341,10 @@ const getModelDisplayName = useCallback((modelValue) => {
     if (result.success) {
       setModel(result.newModel);
       
-      // 如果是首次使用PoT，显示引导
-      if (result.showFirstTimeGuide) {
-        setShowFirstTimeGuide(true);
-      }
+    // 🆕 如果引导未被永久隐藏，显示引导
+    if (result.showFirstTimeGuide) {
+      setShowFirstTimeGuide(true);
+    }
     }
     
     haptic.success();
@@ -2467,11 +2468,21 @@ const getModelDisplayName = useCallback((modelValue) => {
         />
         {/* PoT Mode 首次使用引导 */}
         <PoTFirstTimeGuide
-            isOpen={showFirstTimeGuide}
-            onClose={() => setShowFirstTimeGuide(false)}
-            onStartTyping={() => setShowFirstTimeGuide(false)}
-            isMobile={isMobile}
-            inputRef={textareaRef}
+          isVisible={showFirstTimeGuide}
+          onDismiss={(dontShowAgain) => {
+            setShowFirstTimeGuide(false);
+            if (dontShowAgain) {
+              saveGuidePreference(true); // 保存用户偏好
+            }
+          }}
+          onStartTyping={(dontShowAgain) => {
+            setShowFirstTimeGuide(false);
+            if (dontShowAgain) {
+              saveGuidePreference(true); // 保存用户偏好
+            }
+          }}
+          isMobile={isMobile}
+          inputRef={textareaRef}
         />
     </div>
     
