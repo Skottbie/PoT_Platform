@@ -1884,7 +1884,7 @@ const getModelDisplayName = useCallback((modelValue) => {
                     disabled={loading || !input.trim()}
                     className={`absolute right-2 w-10 h-10 rounded-full transition-all duration-200 flex items-center justify-center aigc-native-button ${
                       !loading && input.trim()
-                        ? 'bg-gradient-to-br from-purple-500 to-indigo-600 text-white hover:from-purple-600 hover:to-indigo-700 active:scale-95 shadow-lg' 
+                        ? `${potEnabled ? 'pot-send-button' : 'bg-gradient-to-br from-purple-500 to-indigo-600 text-white hover:from-purple-600 hover:to-indigo-700 active:scale-95'}`
                         : isMobile 
                           ? 'bg-white/5 dark:bg-white/5 text-gray-400 dark:text-gray-500 cursor-not-allowed border border-gray-600/20 dark:border-gray-600/20'
                           : 'bg-gray-200 dark:bg-gray-600 text-gray-400 dark:text-gray-500 cursor-not-allowed'
@@ -2412,7 +2412,7 @@ const getModelDisplayName = useCallback((modelValue) => {
                         disabled={loading || !input.trim()}
                         className={`absolute right-2 w-8 h-8 rounded-full transition-all duration-200 flex items-center justify-center ${
                           !loading && input.trim()
-                            ? 'bg-gradient-to-br from-purple-500 to-indigo-600 text-white hover:from-purple-600 hover:to-indigo-700 active:scale-95' 
+                            ? `${potEnabled ? 'pot-send-button' : 'bg-gradient-to-br from-purple-500 to-indigo-600 text-white hover:from-purple-600 hover:to-indigo-700'}` 
                             : 'bg-gray-200 dark:bg-gray-600 text-gray-400 dark:text-gray-500 cursor-not-allowed'
                         }`}
                         style={{

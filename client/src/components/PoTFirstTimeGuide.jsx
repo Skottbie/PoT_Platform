@@ -67,14 +67,21 @@ const PoTFirstTimeGuide = ({
         {/* 引导弹窗 */}
         <motion.div
         className={`
-            relative bg-white dark:bg-gray-900 rounded-2xl shadow-2xl
-            pot-first-guide-border
+            relative pot-first-guide-container
+            rounded-2xl shadow-2xl
             ${isMobile ? 'mx-4 p-6 max-w-sm' : 'mx-8 p-8 max-w-md'}
         `}
         initial={{ opacity: 0, scale: 0.9, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.9, y: 20 }}
         transition={{ duration: 0.4, ease: "easeOut" }}
+        onAnimationComplete={() => {
+            // 动画完成后添加loaded类，启用过渡效果
+            const container = document.querySelector('.pot-first-guide-container');
+            if (container) {
+            container.classList.add('loaded');
+            }
+        }}
         >
           {/* 发光边框效果 */}
           <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-amber-400/20 via-orange-400/20 to-amber-400/20 blur-sm -z-10" />
@@ -174,7 +181,7 @@ const PoTFirstTimeGuide = ({
           </div>
 
           {/* 呼吸光晕效果 */}
-          <motion.div
+            <motion.div
             className="absolute inset-0 rounded-2xl pot-first-guide-glow blur-xl -z-10"
             animate={{ 
                 opacity: [0.3, 0.6, 0.3],

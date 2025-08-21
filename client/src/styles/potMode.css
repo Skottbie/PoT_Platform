@@ -588,3 +588,171 @@
     opacity: 0.12 !important;
   }
 }
+
+/* ========================================
+   PoT Mode 问题修复 - 追加到 potMode.css
+   ======================================== */
+
+/* 🔧 1. 修复桌面端横向滚动条问题 */
+.pot-mode-active {
+  /* 强制防止横向滚动 */
+  overflow-x: hidden !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.pot-mode-active * {
+  /* 确保所有子元素不会超出容器 */
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+/* 🔧 2. 修复PoTFirstTimeGuide颜色闪烁问题 */
+.pot-first-guide-container {
+  /* 预设正确的初始颜色，避免闪烁 */
+  background-color: white !important;
+  border: 2px solid rgba(212, 165, 116, 0.25) !important;
+}
+
+.dark .pot-first-guide-container {
+  background-color: rgb(17, 24, 39) !important;
+  border: 2px solid rgba(167, 139, 250, 0.3) !important;
+}
+
+/* 移除可能导致闪烁的过渡色 */
+.pot-first-guide-container * {
+  transition: none !important;
+}
+
+.pot-first-guide-container.loaded * {
+  transition: all 0.2s ease !important;
+}
+
+/* 🔧 3. 非全屏状态下"🧠 PoT Mode"文字呼吸样式 */
+.pot-mode-label-text {
+  background: linear-gradient(
+    45deg, 
+    var(--pot-primary) 0%, 
+    var(--pot-primary-light) 50%, 
+    var(--pot-primary-dark) 100%
+  ) !important;
+  background-size: 200% 200% !important;
+  background-clip: text !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  color: transparent !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.025em !important;
+  
+  /* 呼吸渐变动画 */
+  animation: potLabelGradient 4s ease-in-out infinite !important;
+}
+
+@keyframes potLabelGradient {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+/* 🔧 4. 发送键PoT模式配色 */
+.pot-send-button {
+  /* Light Mode: 淡玫瑰金渐变 */
+  background: linear-gradient(135deg, var(--pot-primary), var(--pot-primary-dark)) !important;
+  border: 1px solid var(--pot-primary) !important;
+  color: white !important;
+  box-shadow: 0 2px 8px rgba(212, 165, 116, 0.3) !important;
+  
+  /* 悬停效果 */
+  transition: all 0.2s ease !important;
+}
+
+.pot-send-button:hover {
+  background: linear-gradient(135deg, var(--pot-primary-dark), var(--pot-primary)) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(212, 165, 116, 0.4) !important;
+}
+
+.pot-send-button:active {
+  transform: translateY(0) scale(0.98) !important;
+}
+
+/* Dark Mode 发送键 */
+.dark .pot-send-button {
+  /* Cyberpunk 紫色渐变 */
+  background: linear-gradient(135deg, var(--pot-primary), var(--pot-primary-dark)) !important;
+  border: 1px solid var(--pot-primary) !important;
+  box-shadow: 0 2px 8px rgba(167, 139, 250, 0.4) !important;
+}
+
+.dark .pot-send-button:hover {
+  background: linear-gradient(135deg, var(--pot-primary-dark), var(--pot-primary)) !important;
+  box-shadow: 0 4px 12px rgba(167, 139, 250, 0.5) !important;
+}
+
+/* 发送键禁用状态保持原有灰色 */
+.pot-send-button:disabled {
+  background: #9CA3AF !important;
+  border-color: #9CA3AF !important;
+  color: #6B7280 !important;
+  box-shadow: none !important;
+  transform: none !important;
+  cursor: not-allowed !important;
+}
+
+.dark .pot-send-button:disabled {
+  background: #6B7280 !important;
+  border-color: #6B7280 !important;
+  color: #9CA3AF !important;
+}
+
+/* ========================================
+   额外优化
+   ======================================== */
+
+/* 🎯 确保纹理在所有情况下都可见 */
+.pot-mode-active::before {
+  /* 强制显示 - 解决所有平台问题 */
+  display: block !important;
+  visibility: visible !important;
+  content: '' !important;
+  position: absolute !important;
+  inset: 0 !important;
+  pointer-events: none !important;
+  z-index: -1 !important;
+  border-radius: inherit !important;
+  
+  /* 增强纹理可见性 */
+  background-image: 
+    /* 更明显的神经元节点 */
+    radial-gradient(circle at 20% 20%, var(--pot-bg-texture) 2px, transparent 3px),
+    radial-gradient(circle at 80% 20%, var(--pot-bg-texture) 1.5px, transparent 2.5px),
+    radial-gradient(circle at 40% 40%, var(--pot-bg-texture) 1.8px, transparent 2.8px),
+    radial-gradient(circle at 70% 70%, var(--pot-bg-texture) 1.3px, transparent 2.3px),
+    radial-gradient(circle at 80% 80%, var(--pot-bg-texture) 2.2px, transparent 3.2px),
+    radial-gradient(circle at 20% 80%, var(--pot-bg-texture) 1.2px, transparent 2.2px),
+    
+    /* 更明显的连接线 */
+    linear-gradient(135deg, transparent 47%, var(--pot-bg-texture) 48%, var(--pot-bg-texture) 52%, transparent 53%),
+    linear-gradient(45deg, transparent 47%, var(--pot-bg-texture) 48%, var(--pot-bg-texture) 52%, transparent 53%),
+    linear-gradient(90deg, transparent 48%, var(--pot-bg-texture) 49%, var(--pot-bg-texture) 51%, transparent 52%),
+    linear-gradient(0deg, transparent 48%, var(--pot-bg-texture) 49%, var(--pot-bg-texture) 51%, transparent 52%) !important;
+  
+  background-size: 
+    70px 70px, 50px 50px, 60px 60px, 80px 80px, 65px 65px, 75px 75px,
+    40px 40px, 45px 45px, 30px 30px, 35px 35px !important;
+  
+  background-position: 
+    0 0, 25px 15px, 40px 25px, 15px 50px, 30px 65px, 55px 80px,
+    0 0, 20px 20px, 8px 35px, 28px 8px !important;
+  
+  /* 确保可见性 */
+  opacity: 0.12 !important;
+}
+
+/* Dark Mode 纹理增强 */
+.dark .pot-mode-active::before {
+  opacity: 0.16 !important;
+}

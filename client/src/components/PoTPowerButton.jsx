@@ -121,12 +121,12 @@ const PoTPowerButton = ({
       {/* 左侧标签文字（仅非全屏模式 + showLabel 时显示） */}
       {mode === 'normal' && showLabel && (
         <div className="flex items-center gap-2">
-          <span className="text-lg">🧠</span>
-          <span className={getLabelClass()}>
+            <span className="text-lg">🧠</span>
+            <span className={`${getLabelClass()} ${potEnabled ? 'pot-mode-label-text' : ''}`}>
             PoT Mode
-          </span>
+            </span>
         </div>
-      )}
+        )}
 
       {/* 电源键按钮 */}
       <motion.button
