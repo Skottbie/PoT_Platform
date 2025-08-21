@@ -1899,6 +1899,33 @@ const getModelDisplayName = useCallback((modelValue) => {
               )}
             </div>
           </div>
+        {/* PoT Mode 对话框 - 全屏模式专用 */}
+        <PoTModeDialog
+          isOpen={showPoTDialog}
+          onConfirm={handlePoTDialogConfirm}
+          onCancel={handlePoTDialogCancel}
+          action={potDialogAction}
+          isMobile={isMobile}
+        />
+
+        {/* PoT Mode 首次使用引导 - 全屏模式专用 */}
+        <PoTFirstTimeGuide
+          isVisible={showFirstTimeGuide}
+          onDismiss={(dontShowAgain) => {
+            setShowFirstTimeGuide(false);
+            if (dontShowAgain) {
+              saveGuidePreference(true);
+            }
+          }}
+          onStartTyping={(dontShowAgain) => {
+            setShowFirstTimeGuide(false);
+            if (dontShowAgain) {
+              saveGuidePreference(true);
+            }
+          }}
+          isMobile={isMobile}
+          inputRef={textareaRef}
+        />
 
           <FontSizeSelector
             isOpen={showFontSelector}
@@ -2504,13 +2531,13 @@ const getModelDisplayName = useCallback((modelValue) => {
           onDismiss={(dontShowAgain) => {
             setShowFirstTimeGuide(false);
             if (dontShowAgain) {
-              saveGuidePreference(true); // 保存用户偏好
+              saveGuidePreference(true);
             }
           }}
           onStartTyping={(dontShowAgain) => {
             setShowFirstTimeGuide(false);
             if (dontShowAgain) {
-              saveGuidePreference(true); // 保存用户偏好
+              saveGuidePreference(true);
             }
           }}
           isMobile={isMobile}
