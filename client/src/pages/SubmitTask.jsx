@@ -1355,31 +1355,63 @@ const getModelDisplayName = useCallback((modelValue) => {
     haptic.light();
   }, [haptic]);
 
+  const getTextareaClasses = useCallback((isFullscreen, isMobile) => {
+    const baseClasses = "w-full resize-none transition-all duration-200 aigc-native-input";
+    
+    let modeClasses = "";
+    if (isFullscreen) {
+      if (isMobile) {
+        modeClasses = "rounded-3xl placeholder-gray-400 dark:placeholder-gray-500 pr-14 px-4 py-3 border border-gray-300/30 dark:border-gray-600/30 bg-white/10 dark:bg-white/10 text-gray-900 dark:text-gray-100 text-base focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500/50";
+      } else {
+        modeClasses = "rounded-3xl placeholder-gray-400 dark:placeholder-gray-500 pr-14 px-4 py-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-base focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500";
+      }
+    } else {
+      // 非全屏模式
+      modeClasses = "border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 pr-12 px-4 py-3 text-sm focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500";
+    }
+    
+    // PoT模式下添加特殊样式类
+    const potClass = potEnabled ? " pot-mode-input" : "";
+    
+    return `${baseClasses} ${modeClasses}${potClass}`;
+  }, [potEnabled]);
+
   // ===== 6. 修改模型选择器逻辑 =====
   // 在模型选择器的 select 元素中，添加条件渲染：
   // 非全屏模式下，模型选择器下方添加PoT开关：
   const renderPoTModeToggle = (mode = 'normal', device = 'mobile') => {
     if (!task?.allowAIGC) return null;
+    
     return (
-      <div className={mode === 'normal' ? 'mt-2' : ''}> {/* 🆕 添加上边距 */}
-      <PoTPowerButton
-        potEnabled={potEnabled}
-        isActivating={isActivating}
-        onClick={handlePoTToggle}
-        statusText={getPoTStatusText()}
-        mode={mode}
-        device={device}
-      />
-      </div>
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={potEnabled ? 'pot-on' : 'pot-off'}
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.95 }}
+          transition={{ duration: 0.2 }}
+          className={mode === 'normal' ? 'mt-2' : ''}
+        >
+          <PoTPowerButton
+            potEnabled={potEnabled}
+            isActivating={isActivating}
+            onClick={handlePoTToggle}
+            mode={mode}
+            device={device}
+          />
+        </motion.div>
+      </AnimatePresence>
     );
   };
     // ===== 8. 添加PoT模式的CSS类名 =====
   // 在聊天容器的className中添加条件类名：
   const getChatContainerClasses = () => {
-    const baseClasses = "bg-gray-50/80 dark:bg-gray-800/50 h-64 rounded-lg border border-gray-200/50 dark:border-gray-600/50 p-4 mb-4 overflow-y-auto";
+    const baseClasses = "bg-gray-50/80 dark:bg-gray-800/50 h-64 rounded-lg border border-gray-200/50 dark:border-gray-600/50 p-4 mb-4 overflow-y-auto transition-all duration-500";
+    
     if (potEnabled) {
       return `${baseClasses} pot-mode-active`;
     }
+    
     return baseClasses;
   };
 
@@ -1533,7 +1565,7 @@ const getModelDisplayName = useCallback((modelValue) => {
                 {isMobile ? (
                   potEnabled ? (
                     <div className="flex items-center justify-center flex-1 min-w-0">
-                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{getPoTStatusText()}</span>
+                        <span className="text-sm font-medium pot-status-text">{getPoTStatusText()}</span>
                     </div>
                     ) : (
                   <div className="flex items-center gap-2 flex-1 min-w-0">
@@ -1589,7 +1621,11 @@ const getModelDisplayName = useCallback((modelValue) => {
                     </h3>
                     <div className="md:flex md:items-center md:gap-2">
                       <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
-                      {potEnabled ? getPoTStatusText() : getCurrentModelLabel(model)}
+                      {potEnabled ? (
+                        <span className="pot-status-text">{getPoTStatusText()}</span>
+                      ) : (
+                        getCurrentModelLabel(model)
+                      )}
                       </p>
                       <span className="hidden md:inline text-gray-400">·</span>
                       <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -1816,11 +1852,7 @@ const getModelDisplayName = useCallback((modelValue) => {
                     placeholder={getInputPlaceholder()}
                     disabled={loading}
                     rows={1}
-                    className={`w-full resize-none rounded-3xl placeholder-gray-400 dark:placeholder-gray-500 pr-14 px-4 py-3 transition-all duration-200 aigc-native-input ${
-                      isMobile 
-                        ? 'border border-gray-300/30 dark:border-gray-600/30 bg-white/10 dark:bg-white/10 text-gray-900 dark:text-gray-100 text-base focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500/50'
-                        : 'border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-base focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500'
-                    }`}
+                    className={getTextareaClasses(true, isMobile)}
                     style={{ 
                       minHeight: '44px',
                       maxHeight: isMobile ? '100px' : '120px',
@@ -2321,7 +2353,7 @@ const getModelDisplayName = useCallback((modelValue) => {
                         placeholder={getInputPlaceholder()}
                         disabled={loading}
                         rows={1}
-                        className="w-full resize-none border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 pr-12 px-4 py-3 text-sm focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500"
+                        className={getTextareaClasses(false, isMobile)}
                         style={{ 
                           minHeight: '44px',
                           maxHeight: '88px',

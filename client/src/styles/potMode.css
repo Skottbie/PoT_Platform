@@ -33,7 +33,31 @@
     --pot-bg-gradient-mid: rgba(217, 119, 6, 0.1);
     --pot-bg-gradient-end: rgba(245, 158, 11, 0.15);
     --pot-texture-opacity: 0.08;
+    --pot-glow-color: rgba(245, 158, 11, 0.4);
   }
+}
+
+/* 🌙 深色模式下的特殊处理 */
+.dark .pot-mode-active {
+  border-color: rgba(245, 158, 11, 0.6);
+}
+
+.dark .pot-mode-input {
+  border-color: rgba(245, 158, 11, 0.5) !important;
+}
+
+.dark .pot-status-text {
+  /* 深色模式下增强对比度 */
+  background: linear-gradient(
+    45deg, 
+    #FCD34D 0%, 
+    #F59E0B 50%, 
+    #D97706 100%
+  );
+  background-size: 200% 200%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 /* ========================================
@@ -80,26 +104,55 @@
   pointer-events: none;
   z-index: 0;
   
-  /* 神经网络连接线纹理 */
+  /* 🧠 复杂的神经网络连接线纹理 */
   background-image: 
-    radial-gradient(circle at 20% 20%, var(--pot-bg-texture) 1px, transparent 1px),
-    radial-gradient(circle at 80% 20%, var(--pot-bg-texture) 1px, transparent 1px),
-    radial-gradient(circle at 40% 40%, var(--pot-bg-texture) 1px, transparent 1px),
-    radial-gradient(circle at 60% 60%, var(--pot-bg-texture) 1px, transparent 1px),
-    radial-gradient(circle at 80% 80%, var(--pot-bg-texture) 1px, transparent 1px),
-    radial-gradient(circle at 20% 80%, var(--pot-bg-texture) 1px, transparent 1px);
+    /* 神经元节点 */
+    radial-gradient(circle at 15% 15%, var(--pot-bg-texture) 1.5px, transparent 1.5px),
+    radial-gradient(circle at 85% 15%, var(--pot-bg-texture) 1px, transparent 1px),
+    radial-gradient(circle at 35% 35%, var(--pot-bg-texture) 1.2px, transparent 1.2px),
+    radial-gradient(circle at 65% 65%, var(--pot-bg-texture) 1px, transparent 1px),
+    radial-gradient(circle at 85% 85%, var(--pot-bg-texture) 1.5px, transparent 1.5px),
+    radial-gradient(circle at 15% 85%, var(--pot-bg-texture) 1px, transparent 1px),
+    /* 连接线 - 对角线 */
+    linear-gradient(135deg, transparent 48%, var(--pot-bg-texture) 49%, var(--pot-bg-texture) 51%, transparent 52%),
+    linear-gradient(45deg, transparent 48%, var(--pot-bg-texture) 49%, var(--pot-bg-texture) 51%, transparent 52%),
+    /* 连接线 - 水平和垂直 */
+    linear-gradient(0deg, transparent 49%, var(--pot-bg-texture) 50%, transparent 51%),
+    linear-gradient(90deg, transparent 49%, var(--pot-bg-texture) 50%, transparent 51%);
   
-  background-size: 50px 50px, 60px 60px, 40px 40px, 70px 70px, 55px 55px, 45px 45px;
-  background-position: 0 0, 25px 25px, 40px 10px, 10px 40px, 30px 50px, 50px 30px;
+  background-size: 
+    /* 神经元节点大小 */
+    80px 80px, 60px 60px, 70px 70px, 90px 90px, 75px 75px, 85px 85px,
+    /* 连接线大小 */
+    40px 40px, 45px 45px, 35px 35px, 50px 50px;
   
-  /* 连接线效果 */
-  background-image: 
-    linear-gradient(45deg, transparent 46%, var(--pot-bg-texture) 47%, var(--pot-bg-texture) 53%, transparent 54%),
-    linear-gradient(-45deg, transparent 46%, var(--pot-bg-texture) 47%, var(--pot-bg-texture) 53%, transparent 54%);
-  background-size: 30px 30px, 30px 30px;
+  background-position: 
+    /* 神经元节点位置 */
+    0 0, 30px 15px, 45px 25px, 15px 50px, 35px 65px, 60px 80px,
+    /* 连接线位置 */
+    0 0, 20px 20px, 10px 30px, 25px 5px;
   
   opacity: var(--pot-texture-opacity);
   border-radius: inherit;
+  
+  /* 🌟 增加微妙的动画效果 */
+  animation: potTextureShift 20s ease-in-out infinite;
+}
+
+/* 🌟 纹理微妙移动动画 */
+@keyframes potTextureShift {
+  0%, 100% {
+    transform: translate(0, 0);
+  }
+  25% {
+    transform: translate(1px, -1px);
+  }
+  50% {
+    transform: translate(-1px, 1px);
+  }
+  75% {
+    transform: translate(1px, 1px);
+  }
 }
 
 /* 🌟 呼吸光晕动画 */
@@ -192,30 +245,77 @@
 
 /* 💬 PoT Mode 激活的输入框 */
 .pot-mode-input {
-  border-color: var(--pot-border-color);
+  border-color: var(--pot-border-color) !important;
   box-shadow: 
     0 0 0 1px var(--pot-glow-color),
-    0 0 10px rgba(245, 158, 11, 0.15);
+    0 0 10px rgba(245, 158, 11, 0.15) !important;
   
   background: linear-gradient(
     to right,
     rgba(254, 243, 199, 0.1),
     rgba(253, 230, 138, 0.05),
     rgba(254, 243, 199, 0.1)
-  );
+  ) !important;
+  
+  /* 🌟 输入框呼吸效果 */
+  animation: potInputGlow 3s ease-in-out infinite;
 }
 
 .pot-mode-input:focus {
-  border-color: var(--pot-primary);
+  border-color: var(--pot-primary) !important;
   box-shadow: 
     0 0 0 2px rgba(245, 158, 11, 0.3),
-    0 0 15px rgba(245, 158, 11, 0.2);
+    0 0 15px rgba(245, 158, 11, 0.2) !important;
 }
 
 .pot-mode-input::placeholder {
-  color: var(--pot-primary);
-  opacity: 0.7;
-  font-weight: 500;
+  color: var(--pot-primary) !important;
+  opacity: 0.7 !important;
+  font-weight: 500 !important;
+}
+
+/* 🌟 输入框专用呼吸动画 */
+@keyframes potInputGlow {
+  0%, 100% {
+    box-shadow: 
+      0 0 0 1px var(--pot-glow-color),
+      0 0 8px rgba(245, 158, 11, 0.1);
+  }
+  50% {
+    box-shadow: 
+      0 0 0 1px rgba(245, 158, 11, 0.6),
+      0 0 12px rgba(245, 158, 11, 0.2);
+  }
+}
+
+/* 🏷️ PoT Mode ON 状态文字 - 增强版 */
+.pot-status-text {
+  background: linear-gradient(
+    45deg, 
+    var(--pot-primary) 0%, 
+    var(--pot-primary-light) 50%, 
+    var(--pot-primary-dark) 100%
+  );
+  background-size: 200% 200%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  font-weight: 600;
+  letter-spacing: 0.025em;
+  
+  /* 🌟 渐变动画 */
+  animation: potTextGradient 4s ease-in-out infinite;
+}
+
+/* 🌟 状态文字渐变动画 */
+@keyframes potTextGradient {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
 }
 
 /* ========================================
@@ -282,6 +382,18 @@
   .pot-mode-transition-exit-active {
     transition: none;
   }
+  
+  .pot-mode-input {
+    animation: none;
+  }
+  
+  .pot-status-text {
+    animation: none;
+  }
+  
+  .pot-mode-active::before {
+    animation: none;
+  }
 }
 
 /* 🌐 浏览器兼容性回退 */
@@ -289,6 +401,16 @@
   .pot-status-text {
     color: var(--pot-primary);
     background: none;
+  }
+}
+
+/* 🔥 高分辨率设备优化 */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .pot-mode-active::before {
+    background-size: 
+      /* 高分辨率下适当调整纹理大小 */
+      60px 60px, 45px 45px, 52px 52px, 67px 67px, 56px 56px, 63px 63px,
+      30px 30px, 33px 33px, 26px 26px, 37px 37px;
   }
 }
 
@@ -300,5 +422,55 @@
   
   .pot-mode-active {
     animation-duration: calc(var(--pot-glow-duration) * 2);
+  }
+  
+  .pot-mode-input {
+    animation: none;
+  }
+}
+
+/* ⚡ 触摸设备优化 */
+@media (hover: none) and (pointer: coarse) {
+  .pot-mode-active {
+    /* 触摸设备上减少动画强度 */
+    animation-duration: calc(var(--pot-glow-duration) * 1.5);
+  }
+  
+  .pot-mode-active::before {
+    opacity: calc(var(--pot-texture-opacity) * 0.5);
+  }
+}
+
+/* 🎯 打印样式优化 */
+@media print {
+  .pot-mode-active,
+  .pot-mode-active::before,
+  .pot-mode-input,
+  .pot-status-text {
+    animation: none !important;
+    box-shadow: none !important;
+    background: white !important;
+    border: 1px solid #ccc !important;
+    color: #000 !important;
+  }
+}
+
+/* 🔧 强制硬件加速的备用方案 */
+@supports not (will-change: transform) {
+  .pot-mode-active,
+  .pot-mode-active::before {
+    -webkit-transform: translateZ(0);
+    -moz-transform: translateZ(0);
+    -ms-transform: translateZ(0);
+    transform: translateZ(0);
+  }
+}
+
+/* 🌟 渐变动画的备用方案 */
+@supports not ((background-clip: text) or (-webkit-background-clip: text)) {
+  .pot-status-text {
+    color: #F59E0B;
+    font-weight: 700;
+    text-shadow: 0 0 8px rgba(245, 158, 11, 0.3);
   }
 }
