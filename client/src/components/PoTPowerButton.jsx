@@ -58,7 +58,7 @@ const PoTPowerButton = ({
       ${getButtonSize()}
       rounded-full border-2 transition-all duration-200 
       flex items-center justify-center
-      relative overflow-hidden
+      relative overflow-hidden aigc-native-button
       ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer active:scale-95'}
     `;
 
