@@ -53,25 +53,52 @@ const PoTPowerButton = ({
   };
 
   // 电源键按钮样式
-  const getButtonClass = () => {
+    const getButtonClass = () => {
     const baseClass = `
-      ${getButtonSize()}
-      rounded-full border-2 transition-all duration-200 
-      flex items-center justify-center
-      relative overflow-hidden aigc-native-button
-      ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer active:scale-95'}
+        ${getButtonSize()}
+        rounded-full border-2 transition-all duration-200 
+        flex items-center justify-center
+        relative overflow-hidden aigc-native-button
+        ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer active:scale-95'}
     `;
 
     if (potEnabled) {
-      // ON 状态：金色渐变
-      return `${baseClass} bg-gradient-to-br from-amber-400 to-amber-600 
-              border-amber-500 shadow-lg shadow-amber-500/30`;
+        // ON 状态：使用统一配色
+        return `${baseClass} pot-power-button-on`;
     } else {
-      // OFF 状态：灰色
-      return `${baseClass} bg-gray-400 dark:bg-gray-600 
-              border-gray-500 dark:border-gray-500`;
+        // OFF 状态：统一灰色
+        return `${baseClass} pot-power-button-off`;
     }
-  };
+    };
+
+    // 替换激活光晕效果：
+    {isActivating && (
+    <motion.div
+        className="absolute inset-0 rounded-full pot-power-activation-light"
+        initial={{ scale: 0, opacity: 1 }}
+        animate={{ scale: 2, opacity: 0 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.4, ease: "easeOut" }}
+    />
+    )}
+
+    // 替换ON状态发光效果：
+    {potEnabled && !isActivating && (
+    <motion.div
+        className="absolute inset-0 rounded-full pot-power-glow-light"
+        initial={{ opacity: 0 }}
+        animate={{ 
+        opacity: [0.5, 1, 0.5],
+        scale: [1, 1.1, 1]
+        }}
+        exit={{ opacity: 0 }}
+        transition={{ 
+        duration: 2, 
+        repeat: Infinity, 
+        ease: "easeInOut" 
+        }}
+    />
+    )}
 
   // 电源图标颜色
   const getIconColor = () => {

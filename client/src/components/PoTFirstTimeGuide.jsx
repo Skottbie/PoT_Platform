@@ -66,23 +66,15 @@ const PoTFirstTimeGuide = ({
       >
         {/* 引导弹窗 */}
         <motion.div
-          className={`
+        className={`
             relative bg-white dark:bg-gray-900 rounded-2xl shadow-2xl
-            border-2 border-amber-500/50 
-            ${isMobile ? 'mx-4 p-6 max-w-sm w-full' : 'p-8 max-w-md w-full mx-4'}
-            backdrop-blur-md bg-white/95 dark:bg-gray-900/95
-            pointer-events-auto
-          `}
-          initial={{ opacity: 0, scale: 0.8, y: 50 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.8, y: 50 }}
-          transition={{ 
-            type: "spring", 
-            stiffness: 300, 
-            damping: 25,
-            duration: 0.5 
-          }}
-          onClick={(e) => e.stopPropagation()}
+            pot-first-guide-border
+            ${isMobile ? 'mx-4 p-6 max-w-sm' : 'mx-8 p-8 max-w-md'}
+        `}
+        initial={{ opacity: 0, scale: 0.9, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.9, y: 20 }}
+        transition={{ duration: 0.4, ease: "easeOut" }}
         >
           {/* 发光边框效果 */}
           <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-amber-400/20 via-orange-400/20 to-amber-400/20 blur-sm -z-10" />
@@ -122,12 +114,11 @@ const PoTFirstTimeGuide = ({
               </p>
 
               {/* 特性说明 */}
-              <div className={`
-                bg-amber-50 dark:bg-amber-900/20 rounded-lg p-4 mb-6
-                border border-amber-200 dark:border-amber-700/30
-                text-left
-              `}>
-                <div className="text-sm text-amber-800 dark:text-amber-200 space-y-2">
+                <div className={`
+                pot-first-guide-feature-bg rounded-lg p-4 mb-6
+                border text-left
+                `}>
+                <div className="text-sm pot-first-guide-feature-text space-y-2">
                   <div className="flex items-center gap-3">
                     <span className="text-base">🎯</span>
                     <span>引导式高效思维学习</span>
@@ -172,30 +163,29 @@ const PoTFirstTimeGuide = ({
 
             {/* 操作按钮 */}
             <div className="flex justify-center">
-              <PrimaryButton
+                <PrimaryButton
                 onClick={handleDismiss}
                 size={isMobile ? "md" : "md"}
-                variant="primary"
-                className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 px-8"
-              >
+                className="pot-first-guide-button px-8"
+                >
                 开始使用 PoT Mode
-              </PrimaryButton>
+                </PrimaryButton>
             </div>
           </div>
 
           {/* 呼吸光晕效果 */}
           <motion.div
-            className="absolute inset-0 rounded-2xl bg-amber-400/10 blur-xl -z-10"
+            className="absolute inset-0 rounded-2xl pot-first-guide-glow blur-xl -z-10"
             animate={{ 
-              opacity: [0.3, 0.6, 0.3],
-              scale: [0.98, 1.02, 0.98]
+                opacity: [0.3, 0.6, 0.3],
+                scale: [0.98, 1.02, 0.98]
             }}
             transition={{ 
-              duration: 3, 
-              repeat: Infinity, 
-              ease: "easeInOut" 
+                duration: 3, 
+                repeat: Infinity, 
+                ease: "easeInOut" 
             }}
-          />
+            />
         </motion.div>
       </motion.div>
     </AnimatePresence>

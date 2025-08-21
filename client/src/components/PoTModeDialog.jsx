@@ -125,7 +125,7 @@ const PoTModeDialog = ({
                 size={isMobile ? "lg" : "md"}
                 fullWidth={isMobile}
                 variant={content.confirmVariant}
-                className="min-w-[100px]"
+                className="min-w-[100px] pot-dialog-primary-button"
               >
                 {content.confirmText}
               </PrimaryButton>
@@ -134,7 +134,7 @@ const PoTModeDialog = ({
                 onClick={handleCancel}
                 size={isMobile ? "lg" : "md"}
                 fullWidth={isMobile}
-                className="min-w-[100px]"
+                className="min-w-[100px] pot-dialog-secondary-button"
               >
                 取消
               </SecondaryButton>

@@ -1,70 +1,65 @@
-/* client/src/styles/potMode.css - PoT Mode 专用样式（修复版） */
+/* client/src/styles/potMode.css - PoT Mode 精致化样式 */
 
 /* ========================================
-   PoT Mode 核心样式定义
+   PoT Mode 核心样式定义（精致化版本）
    ======================================== */
 
-/* 🎯 PoT Mode CSS 变量定义 */
+/* 🎯 PoT Mode CSS 变量定义 - 高级感配色 */
 :root {
-  /* 金色主题色 */
-  --pot-primary: #F59E0B;
-  --pot-primary-dark: #D97706;
-  --pot-primary-light: #FCD34D;
+  /* Light Mode - 淡玫瑰金色系 */
+  --pot-primary: #D4A574;              /* 淡玫瑰金主色 */
+  --pot-primary-dark: #B8956A;         /* 深一点的玫瑰金 */
+  --pot-primary-light: #E8C4A0;        /* 浅玫瑰金 */
   
-  /* 边框效果 */
-  --pot-border-color: rgba(245, 158, 11, 0.5);
-  --pot-glow-color: rgba(245, 158, 11, 0.3);
+  /* Light Mode 边框效果 - 很淡的玫瑰金 */
+  --pot-border-color: rgba(212, 165, 116, 0.25);
+  --pot-glow-color: rgba(212, 165, 116, 0.15);
   
-  /* 背景纹理 */
-  --pot-bg-texture: rgba(245, 158, 11, 0.12);
-  --pot-bg-gradient-start: rgba(254, 243, 199, 0.4);
-  --pot-bg-gradient-mid: rgba(253, 230, 138, 0.3);
-  --pot-bg-gradient-end: rgba(254, 240, 138, 0.4);
+  /* Light Mode 背景纹理 - 极淡 */
+  --pot-bg-texture: rgba(212, 165, 116, 0.06);
+  --pot-bg-gradient-start: rgba(248, 245, 240, 0.7);
+  --pot-bg-gradient-mid: rgba(252, 248, 242, 0.5);
+  --pot-bg-gradient-end: rgba(250, 246, 240, 0.7);
   
   /* 动画参数 */
-  --pot-glow-duration: 2s;
-  --pot-texture-opacity: 0.08;
+  --pot-glow-duration: 2.5s;
+  --pot-texture-opacity: 0.04;
 }
 
-/* 🌙 深色模式适配 */
+/* 🌙 Dark Mode - Cyberpunk 紫色系 */
+.dark {
+  --pot-primary: #A78BFA;              /* Cyberpunk 紫色主色 */
+  --pot-primary-dark: #8B5CF6;         /* 深紫色 */
+  --pot-primary-light: #C4B5FD;        /* 浅紫色 */
+  
+  /* Dark Mode 边框效果 - Cyberpunk 紫色 */
+  --pot-border-color: rgba(167, 139, 250, 0.3);
+  --pot-glow-color: rgba(167, 139, 250, 0.2);
+  
+  /* Dark Mode 背景纹理 */
+  --pot-bg-texture: rgba(167, 139, 250, 0.08);
+  --pot-bg-gradient-start: rgba(30, 27, 75, 0.4);
+  --pot-bg-gradient-mid: rgba(24, 24, 27, 0.2);
+  --pot-bg-gradient-end: rgba(39, 39, 42, 0.4);
+  
+  /* Dark Mode 纹理透明度 */
+  --pot-texture-opacity: 0.06;
+}
+
+/* 🌙 系统深色模式偏好检测（回退方案） */
 @media (prefers-color-scheme: dark) {
   :root {
-    --pot-bg-gradient-start: rgba(245, 158, 11, 0.15);
-    --pot-bg-gradient-mid: rgba(217, 119, 6, 0.12);
-    --pot-bg-gradient-end: rgba(245, 158, 11, 0.15);
-    --pot-texture-opacity: 0.12;
-    --pot-glow-color: rgba(245, 158, 11, 0.4);
-    --pot-bg-texture: rgba(245, 158, 11, 0.15);
+    --pot-primary: #A78BFA;
+    --pot-primary-dark: #8B5CF6;
+    --pot-primary-light: #C4B5FD;
+    --pot-border-color: rgba(167, 139, 250, 0.3);
+    --pot-glow-color: rgba(167, 139, 250, 0.2);
+    --pot-bg-texture: rgba(167, 139, 250, 0.08);
+    --pot-bg-gradient-start: rgba(30, 27, 75, 0.4);
+    --pot-bg-gradient-mid: rgba(24, 24, 27, 0.2);
+    --pot-bg-gradient-end: rgba(39, 39, 42, 0.4);
+    --pot-texture-opacity: 0.06;
   }
-}
-
-/* 🌙 Tailwind 深色模式下的特殊处理 */
-.dark .pot-mode-active {
-  border-color: rgba(245, 158, 11, 0.6) !important;
-  background: linear-gradient(
-    135deg,
-    rgba(245, 158, 11, 0.15) 0%,
-    rgba(217, 119, 6, 0.12) 50%,
-    rgba(245, 158, 11, 0.15) 100%
-  ) !important;
-}
-
-.dark .pot-mode-input {
-  border-color: rgba(245, 158, 11, 0.5) !important;
-}
-
-.dark .pot-status-text {
-  /* 深色模式下增强对比度 */
-  background: linear-gradient(
-    45deg, 
-    #FCD34D 0%, 
-    #F59E0B 50%, 
-    #D97706 100%
-  );
-  background-size: 200% 200%;
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
 }
 
 /* ========================================
@@ -73,16 +68,16 @@
 
 /* 🔥 PoT Mode 激活的聊天容器 */
 .pot-mode-active {
-  /* 金色渐变边框 - 强制覆盖 Tailwind */
-  border: 2px solid var(--pot-border-color) !important;
+  /* 精致边框 - 强制覆盖所有 Tailwind 样式 */
+  border: 1.5px solid var(--pot-border-color) !important;
   
-  /* 呼吸光晕效果 */
+  /* 精致光晕效果 */
   box-shadow: 
-    0 0 0 1px var(--pot-glow-color),
-    0 0 20px var(--pot-glow-color),
-    0 0 40px rgba(245, 158, 11, 0.1) !important;
+    0 0 0 0.5px var(--pot-glow-color),
+    0 0 12px var(--pot-glow-color),
+    0 0 24px rgba(212, 165, 116, 0.08) !important;
   
-  /* 背景渐变 - 强制覆盖 Tailwind */
+  /* 精致背景渐变 - 强制覆盖 */
   background: linear-gradient(
     135deg,
     var(--pot-bg-gradient-start) 0%,
@@ -90,133 +85,196 @@
     var(--pot-bg-gradient-end) 100%
   ) !important;
   
-  /* 呼吸动画 */
-  animation: potGlowBreathing var(--pot-glow-duration) ease-in-out infinite;
+  /* 精致呼吸动画 */
+  animation: potGlowBreathingRefined var(--pot-glow-duration) ease-in-out infinite;
   
   /* 过渡效果 */
-  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   
-  /* 🧠 思维纹理背景 */
-  position: relative;
-  z-index: 1;
+  /* 确保纹理层级 */
+  position: relative !important;
+  z-index: 1 !important;
 }
 
-/* 🧠 思维纹理覆盖层 - 完整实现 */
-.pot-mode-active::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  pointer-events: none;
-  z-index: -1;
-  border-radius: inherit;
+/* 🌙 Dark Mode 特殊处理 */
+.dark .pot-mode-active {
+  /* Cyberpunk 紫色边框 */
+  border-color: var(--pot-border-color) !important;
   
-  /* 🧠 复杂的神经网络连接线纹理 */
+  /* Cyberpunk 光晕 */
+  box-shadow: 
+    0 0 0 0.5px var(--pot-glow-color),
+    0 0 15px var(--pot-glow-color),
+    0 0 30px rgba(167, 139, 250, 0.1) !important;
+  
+  /* Cyberpunk 背景 */
+  background: linear-gradient(
+    135deg,
+    var(--pot-bg-gradient-start) 0%,
+    var(--pot-bg-gradient-mid) 50%,
+    var(--pot-bg-gradient-end) 100%
+  ) !important;
+}
+
+/* 🧠 思维纹理覆盖层 - 修复显示问题 */
+.pot-mode-active::before {
+  content: '' !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  pointer-events: none !important;
+  z-index: -1 !important;
+  border-radius: inherit !important;
+  
+  /* 🧠 精致的神经网络纹理 */
   background-image: 
-    /* 神经元节点 - 大节点 */
-    radial-gradient(circle at 15% 15%, var(--pot-bg-texture) 2px, transparent 2px),
-    radial-gradient(circle at 85% 15%, var(--pot-bg-texture) 1.5px, transparent 1.5px),
-    radial-gradient(circle at 35% 35%, var(--pot-bg-texture) 1.8px, transparent 1.8px),
-    radial-gradient(circle at 65% 65%, var(--pot-bg-texture) 1.2px, transparent 1.2px),
-    radial-gradient(circle at 85% 85%, var(--pot-bg-texture) 2px, transparent 2px),
-    radial-gradient(circle at 15% 85%, var(--pot-bg-texture) 1.5px, transparent 1.5px),
+    /* 神经元节点 - 更精致 */
+    radial-gradient(circle at 20% 20%, var(--pot-bg-texture) 1px, transparent 1px),
+    radial-gradient(circle at 80% 20%, var(--pot-bg-texture) 0.8px, transparent 0.8px),
+    radial-gradient(circle at 40% 40%, var(--pot-bg-texture) 1.2px, transparent 1.2px),
+    radial-gradient(circle at 70% 70%, var(--pot-bg-texture) 0.9px, transparent 0.9px),
+    radial-gradient(circle at 80% 80%, var(--pot-bg-texture) 1.1px, transparent 1.1px),
+    radial-gradient(circle at 20% 80%, var(--pot-bg-texture) 0.7px, transparent 0.7px),
     
-    /* 连接线 - 对角线网络 */
-    linear-gradient(135deg, transparent 48%, var(--pot-bg-texture) 49%, var(--pot-bg-texture) 51%, transparent 52%),
-    linear-gradient(45deg, transparent 48%, var(--pot-bg-texture) 49%, var(--pot-bg-texture) 51%, transparent 52%),
-    linear-gradient(120deg, transparent 49%, var(--pot-bg-texture) 49.5%, var(--pot-bg-texture) 50.5%, transparent 51%),
-    linear-gradient(60deg, transparent 49%, var(--pot-bg-texture) 49.5%, var(--pot-bg-texture) 50.5%, transparent 51%),
-    
-    /* 连接线 - 水平和垂直 */
-    linear-gradient(0deg, transparent 49.5%, var(--pot-bg-texture) 50%, transparent 50.5%),
-    linear-gradient(90deg, transparent 49.5%, var(--pot-bg-texture) 50%, transparent 50.5%);
+    /* 连接线 - 更精致的网络 */
+    linear-gradient(135deg, transparent 49%, var(--pot-bg-texture) 49.5%, var(--pot-bg-texture) 50.5%, transparent 51%),
+    linear-gradient(45deg, transparent 49%, var(--pot-bg-texture) 49.5%, var(--pot-bg-texture) 50.5%, transparent 51%),
+    linear-gradient(90deg, transparent 49.2%, var(--pot-bg-texture) 49.7%, var(--pot-bg-texture) 50.3%, transparent 50.8%),
+    linear-gradient(0deg, transparent 49.2%, var(--pot-bg-texture) 49.7%, var(--pot-bg-texture) 50.3%, transparent 50.8%);
   
   background-size: 
-    /* 神经元节点大小 */
-    90px 90px, 70px 70px, 80px 80px, 100px 100px, 85px 85px, 95px 95px,
+    /* 神经元节点大小 - 精致化 */
+    100px 100px, 80px 80px, 90px 90px, 110px 110px, 95px 95px, 105px 105px,
     /* 连接线大小 */
-    50px 50px, 55px 55px, 45px 45px, 60px 60px, 40px 40px, 65px 65px;
+    60px 60px, 65px 65px, 50px 50px, 55px 55px;
   
   background-position: 
     /* 神经元节点位置 */
-    0 0, 35px 20px, 50px 30px, 20px 60px, 40px 75px, 70px 90px,
+    0 0, 40px 25px, 60px 35px, 25px 70px, 50px 85px, 80px 100px,
     /* 连接线位置 */
-    0 0, 25px 25px, 15px 40px, 35px 10px, 10px 35px, 30px 5px;
+    0 0, 30px 30px, 15px 45px, 40px 10px;
   
-  opacity: var(--pot-texture-opacity);
+  opacity: var(--pot-texture-opacity) !important;
   
-  /* 🌟 增加微妙的动画效果 */
-  animation: potTextureShift 20s ease-in-out infinite;
+  /* 微妙动画 */
+  animation: potTextureShiftRefined 25s ease-in-out infinite;
 }
 
-/* 🌟 纹理微妙移动动画 */
-@keyframes potTextureShift {
+/* 🌟 精致呼吸光晕动画 */
+@keyframes potGlowBreathingRefined {
+  0%, 100% {
+    box-shadow: 
+      0 0 0 0.5px var(--pot-glow-color),
+      0 0 8px var(--pot-glow-color),
+      0 0 16px rgba(212, 165, 116, 0.06);
+  }
+  50% {
+    box-shadow: 
+      0 0 0 1px rgba(212, 165, 116, 0.4),
+      0 0 12px var(--pot-glow-color),
+      0 0 24px rgba(212, 165, 116, 0.12);
+  }
+}
+
+/* 🌙 Dark Mode 呼吸动画 */
+@keyframes potGlowBreathingCyberpunk {
+  0%, 100% {
+    box-shadow: 
+      0 0 0 0.5px var(--pot-glow-color),
+      0 0 10px var(--pot-glow-color),
+      0 0 20px rgba(167, 139, 250, 0.08);
+  }
+  50% {
+    box-shadow: 
+      0 0 0 1px rgba(167, 139, 250, 0.5),
+      0 0 15px var(--pot-glow-color),
+      0 0 30px rgba(167, 139, 250, 0.15);
+  }
+}
+
+.dark .pot-mode-active {
+  animation: potGlowBreathingCyberpunk var(--pot-glow-duration) ease-in-out infinite;
+}
+
+/* 🌟 精致纹理移动动画 */
+@keyframes potTextureShiftRefined {
   0%, 100% {
     transform: translate(0, 0);
   }
-  25% {
-    transform: translate(1px, -1px);
+  33% {
+    transform: translate(0.5px, -0.5px);
   }
-  50% {
-    transform: translate(-1px, 1px);
-  }
-  75% {
-    transform: translate(1px, 1px);
-  }
-}
-
-/* 🌟 呼吸光晕动画 */
-@keyframes potGlowBreathing {
-  0%, 100% {
-    box-shadow: 
-      0 0 0 1px var(--pot-glow-color),
-      0 0 15px rgba(245, 158, 11, 0.3),
-      0 0 30px rgba(245, 158, 11, 0.1);
-  }
-  50% {
-    box-shadow: 
-      0 0 0 1px rgba(245, 158, 11, 0.8),
-      0 0 25px rgba(245, 158, 11, 0.5),
-      0 0 50px rgba(245, 158, 11, 0.2);
+  66% {
+    transform: translate(-0.5px, 0.5px);
   }
 }
 
 /* ========================================
-   移动端专用优化
+   响应式和设备优化
    ======================================== */
 
-@media (max-width: 640px) {
+/* 📱 移动端优化 */
+@media (max-width: 768px) {
   .pot-mode-active {
-    /* 移动端稍微减弱光晕效果，避免性能问题 */
     animation: potGlowBreathingMobile var(--pot-glow-duration) ease-in-out infinite;
   }
   
   @keyframes potGlowBreathingMobile {
     0%, 100% {
       box-shadow: 
-        0 0 0 1px var(--pot-glow-color),
-        0 0 10px rgba(245, 158, 11, 0.25);
+        0 0 0 0.5px var(--pot-glow-color),
+        0 0 6px var(--pot-glow-color),
+        0 0 12px rgba(212, 165, 116, 0.05);
     }
     50% {
       box-shadow: 
-        0 0 0 1px rgba(245, 158, 11, 0.7),
-        0 0 20px rgba(245, 158, 11, 0.4);
+        0 0 0 1px var(--pot-glow-color),
+        0 0 10px var(--pot-glow-color),
+        0 0 18px rgba(212, 165, 116, 0.1);
+    }
+  }
+  
+  .dark .pot-mode-active {
+    animation: potGlowBreathingCyberpunkMobile var(--pot-glow-duration) ease-in-out infinite;
+  }
+  
+  @keyframes potGlowBreathingCyberpunkMobile {
+    0%, 100% {
+      box-shadow: 
+        0 0 0 0.5px var(--pot-glow-color),
+        0 0 8px var(--pot-glow-color),
+        0 0 16px rgba(167, 139, 250, 0.06);
+    }
+    50% {
+      box-shadow: 
+        0 0 0 1px var(--pot-glow-color),
+        0 0 12px var(--pot-glow-color),
+        0 0 24px rgba(167, 139, 250, 0.12);
     }
   }
   
   .pot-mode-active::before {
-    /* 移动端简化纹理，提高性能 */
+    /* 移动端优化纹理 */
     background-size: 
-      60px 60px, 50px 50px, 55px 55px, 70px 70px, 60px 60px, 65px 65px,
-      40px 40px, 45px 45px, 35px 35px, 50px 50px, 30px 30px, 55px 55px;
-    opacity: calc(var(--pot-texture-opacity) * 0.8);
+      70px 70px, 60px 60px, 65px 65px, 80px 80px, 70px 70px, 75px 75px,
+      45px 45px, 50px 50px, 40px 40px, 42px 42px;
+    opacity: calc(var(--pot-texture-opacity) * 1.2) !important;
+  }
+}
+
+/* 🖥️ 桌面端确保纹理显示 */
+@media (min-width: 769px) {
+  .pot-mode-active::before {
+    display: block !important;
+    opacity: var(--pot-texture-opacity) !important;
+    z-index: -1 !important;
   }
 }
 
 /* ========================================
-   PoT Mode 状态指示器样式
+   其他组件样式保持
    ======================================== */
 
 /* 🏷️ PoT Mode ON 状态文字 */
@@ -230,56 +288,33 @@
   letter-spacing: 0.025em;
 }
 
-/* 🔄 PoT Mode 激活过渡效果 */
-.pot-mode-transition-enter {
-  transform: scale(0.95);
-  opacity: 0;
-}
-
-.pot-mode-transition-enter-active {
-  transform: scale(1);
-  opacity: 1;
-  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.pot-mode-transition-exit {
-  transform: scale(1);
-  opacity: 1;
-}
-
-.pot-mode-transition-exit-active {
-  transform: scale(0.95);
-  opacity: 0;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* ========================================
-   PoT Mode 输入框样式
-   ======================================== */
-
-/* 💬 PoT Mode 激活的输入框 */
+/* 💬 PoT Mode 输入框 */
 .pot-mode-input {
   border-color: var(--pot-border-color) !important;
   box-shadow: 
-    0 0 0 1px var(--pot-glow-color),
-    0 0 10px rgba(245, 158, 11, 0.15) !important;
+    0 0 0 0.5px var(--pot-glow-color),
+    0 0 8px rgba(212, 165, 116, 0.1) !important;
   
   background: linear-gradient(
     to right,
-    rgba(254, 243, 199, 0.1),
-    rgba(253, 230, 138, 0.05),
-    rgba(254, 243, 199, 0.1)
+    rgba(248, 245, 240, 0.3),
+    rgba(252, 248, 242, 0.2),
+    rgba(248, 245, 240, 0.3)
   ) !important;
-  
-  /* 🌟 输入框呼吸效果 */
-  animation: potInputGlow 3s ease-in-out infinite;
 }
 
-.pot-mode-input:focus {
-  border-color: var(--pot-primary) !important;
+.dark .pot-mode-input {
+  border-color: var(--pot-border-color) !important;
   box-shadow: 
-    0 0 0 2px rgba(245, 158, 11, 0.3),
-    0 0 15px rgba(245, 158, 11, 0.2) !important;
+    0 0 0 0.5px var(--pot-glow-color),
+    0 0 8px rgba(167, 139, 250, 0.1) !important;
+  
+  background: linear-gradient(
+    to right,
+    rgba(30, 27, 75, 0.3),
+    rgba(24, 24, 27, 0.2),
+    rgba(30, 27, 75, 0.3)
+  ) !important;
 }
 
 .pot-mode-input::placeholder {
@@ -288,203 +323,268 @@
   font-weight: 500 !important;
 }
 
-/* 🌟 输入框专用呼吸动画 */
-@keyframes potInputGlow {
-  0%, 100% {
-    box-shadow: 
-      0 0 0 1px var(--pot-glow-color),
-      0 0 8px rgba(245, 158, 11, 0.1);
-  }
-  50% {
-    box-shadow: 
-      0 0 0 1px rgba(245, 158, 11, 0.6),
-      0 0 12px rgba(245, 158, 11, 0.2);
-  }
-}
-
-/* 🏷️ PoT Mode ON 状态文字 - 增强版 */
-.pot-status-text {
-  background: linear-gradient(
-    45deg, 
-    var(--pot-primary) 0%, 
-    var(--pot-primary-light) 50%, 
-    var(--pot-primary-dark) 100%
-  );
-  background-size: 200% 200%;
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  color: transparent;
-  font-weight: 600;
-  letter-spacing: 0.025em;
-  
-  /* 🌟 渐变动画 */
-  animation: potTextGradient 4s ease-in-out infinite;
-}
-
-/* 🌟 状态文字渐变动画 */
-@keyframes potTextGradient {
-  0%, 100% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-}
-
 /* ========================================
-   PoT Mode 电源键激活动画
+   性能优化
    ======================================== */
 
-/* ⚡ 电源键激活扩散效果 */
-@keyframes potPowerActivation {
-  0% {
-    transform: scale(0);
-    opacity: 1;
-  }
-  70% {
-    transform: scale(1.8);
-    opacity: 0.6;
-  }
-  100% {
-    transform: scale(2.5);
-    opacity: 0;
-  }
-}
-
-.pot-power-activation {
-  animation: potPowerActivation 0.4s ease-out;
-}
-
-/* 🔄 电源键旋转加载 */
-@keyframes potPowerLoading {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.pot-power-loading {
-  animation: potPowerLoading 0.3s ease-in-out;
-}
-
-/* ========================================
-   性能优化和兼容性
-   ======================================== */
-
-/* 🚀 GPU 加速优化 */
+/* 🚀 GPU 加速 */
 .pot-mode-active,
 .pot-mode-active::before {
   will-change: box-shadow, opacity, transform;
   transform: translateZ(0);
 }
 
-/* 📱 减少动画 preference 支持 */
+/* 📱 减少动画支持 */
 @media (prefers-reduced-motion: reduce) {
-  .pot-mode-active {
-    animation: none;
-  }
-  
-  .pot-power-activation,
-  .pot-power-loading {
-    animation: none;
-  }
-  
-  .pot-mode-transition-enter-active,
-  .pot-mode-transition-exit-active {
-    transition: none;
-  }
-  
-  .pot-mode-input {
-    animation: none;
-  }
-  
-  .pot-status-text {
-    animation: none;
-  }
-  
+  .pot-mode-active,
   .pot-mode-active::before {
-    animation: none;
-  }
-}
-
-/* 🌐 浏览器兼容性回退 */
-@supports not (background-clip: text) {
-  .pot-status-text {
-    color: var(--pot-primary);
-    background: none;
-  }
-}
-
-/* 🔥 高分辨率设备优化 */
-@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
-  .pot-mode-active::before {
-    background-size: 
-      /* 高分辨率下适当调整纹理大小 */
-      70px 70px, 55px 55px, 62px 62px, 77px 77px, 66px 66px, 73px 73px,
-      40px 40px, 43px 43px, 36px 36px, 47px 47px, 32px 32px, 52px 52px;
+    animation: none !important;
   }
 }
 
 /* 🔋 低功耗设备优化 */
 @media (max-resolution: 144dpi) {
   .pot-mode-active::before {
-    display: none;
-  }
-  
-  .pot-mode-active {
-    animation-duration: calc(var(--pot-glow-duration) * 2);
-  }
-  
-  .pot-mode-input {
-    animation: none;
+    opacity: calc(var(--pot-texture-opacity) * 0.5) !important;
   }
 }
 
-/* ⚡ 触摸设备优化 */
-@media (hover: none) and (pointer: coarse) {
-  .pot-mode-active {
-    /* 触摸设备上减少动画强度 */
-    animation-duration: calc(var(--pot-glow-duration) * 1.5);
-  }
-  
-  .pot-mode-active::before {
-    opacity: calc(var(--pot-texture-opacity) * 0.7);
-  }
-}
-
-/* 🎯 打印样式优化 */
-@media print {
-  .pot-mode-active,
-  .pot-mode-active::before,
-  .pot-mode-input,
+/* 🌐 浏览器兼容性 */
+@supports not (background-clip: text) {
   .pot-status-text {
-    animation: none !important;
-    box-shadow: none !important;
-    background: white !important;
-    border: 1px solid #ccc !important;
-    color: #000 !important;
+    color: var(--pot-primary);
+    background: none;
   }
 }
+/* ========================================
+   PoT Mode 组件统一配色体系
+   ======================================== */
 
-/* 🔧 强制硬件加速的备用方案 */
-@supports not (will-change: transform) {
-  .pot-mode-active,
+/* 🎯 电源键按钮配色 */
+.pot-power-button-on {
+  /* Light Mode: 淡玫瑰金 */
+  background: linear-gradient(135deg, var(--pot-primary), var(--pot-primary-dark)) !important;
+  border-color: var(--pot-primary) !important;
+  box-shadow: 0 4px 12px rgba(212, 165, 116, 0.3) !important;
+}
+
+.pot-power-button-off {
+  /* 统一的OFF状态 */
+  background: #9CA3AF !important;
+  border-color: #9CA3AF !important;
+}
+
+.dark .pot-power-button-on {
+  /* Dark Mode: Cyberpunk 紫色 */
+  background: linear-gradient(135deg, var(--pot-primary), var(--pot-primary-dark)) !important;
+  border-color: var(--pot-primary) !important;
+  box-shadow: 0 4px 12px rgba(167, 139, 250, 0.4) !important;
+}
+
+.dark .pot-power-button-off {
+  background: #6B7280 !important;
+  border-color: #6B7280 !important;
+}
+
+/* 🎯 电源键激活光晕效果 */
+.pot-power-activation-light {
+  background: rgba(212, 165, 116, 0.5) !important;
+}
+
+.dark .pot-power-activation-light {
+  background: rgba(167, 139, 250, 0.5) !important;
+}
+
+.pot-power-glow-light {
+  background: rgba(212, 165, 116, 0.2) !important;
+}
+
+.dark .pot-power-glow-light {
+  background: rgba(167, 139, 250, 0.2) !important;
+}
+
+/* 🎯 首次引导弹窗配色 */
+.pot-first-guide-border {
+  border-color: var(--pot-border-color) !important;
+}
+
+.pot-first-guide-glow {
+  background: var(--pot-glow-color) !important;
+}
+
+.pot-first-guide-bg {
+  background: rgba(248, 245, 240, 0.3) !important;
+}
+
+.dark .pot-first-guide-bg {
+  background: rgba(30, 27, 75, 0.3) !important;
+}
+
+.pot-first-guide-button {
+  background: linear-gradient(135deg, var(--pot-primary), var(--pot-primary-dark)) !important;
+  border: none !important;
+  color: white !important;
+}
+
+.pot-first-guide-button:hover {
+  background: linear-gradient(135deg, var(--pot-primary-dark), var(--pot-primary)) !important;
+  transform: translateY(-1px) !important;
+}
+
+.pot-first-guide-feature-bg {
+  background: rgba(212, 165, 116, 0.1) !important;
+  border-color: rgba(212, 165, 116, 0.2) !important;
+}
+
+.dark .pot-first-guide-feature-bg {
+  background: rgba(167, 139, 250, 0.1) !important;
+  border-color: rgba(167, 139, 250, 0.2) !important;
+}
+
+.pot-first-guide-feature-text {
+  color: rgba(212, 165, 116, 0.8) !important;
+}
+
+.dark .pot-first-guide-feature-text {
+  color: rgba(167, 139, 250, 0.8) !important;
+}
+
+/* 🎯 对话框按钮配色 */
+.pot-dialog-primary-button {
+  background: linear-gradient(135deg, var(--pot-primary), var(--pot-primary-dark)) !important;
+  border: none !important;
+  color: white !important;
+}
+
+.pot-dialog-primary-button:hover {
+  background: linear-gradient(135deg, var(--pot-primary-dark), var(--pot-primary)) !important;
+}
+
+.pot-dialog-secondary-button {
+  background: transparent !important;
+  border: 1px solid var(--pot-border-color) !important;
+  color: var(--pot-primary) !important;
+}
+
+.pot-dialog-secondary-button:hover {
+  background: var(--pot-glow-color) !important;
+}
+
+/* ========================================
+   纹理显示修复
+   ======================================== */
+
+/* 🔧 强制纹理显示 - 解决所有平台显示问题 */
+.pot-mode-active {
+  /* 确保容器层级 */
+  position: relative !important;
+  z-index: 1 !important;
+  isolation: isolate !important;
+}
+
+.pot-mode-active::before {
+  /* 强制纹理层显示 */
+  content: '' !important;
+  display: block !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  pointer-events: none !important;
+  z-index: -1 !important;
+  border-radius: inherit !important;
+  
+  /* 🧠 增强的神经网络纹理 - 提高可见性 */
+  background-image: 
+    /* 神经元节点 - 增强版 */
+    radial-gradient(circle at 20% 20%, var(--pot-bg-texture) 1.5px, transparent 2px),
+    radial-gradient(circle at 80% 20%, var(--pot-bg-texture) 1px, transparent 1.5px),
+    radial-gradient(circle at 40% 40%, var(--pot-bg-texture) 1.3px, transparent 1.8px),
+    radial-gradient(circle at 70% 70%, var(--pot-bg-texture) 1.1px, transparent 1.6px),
+    radial-gradient(circle at 80% 80%, var(--pot-bg-texture) 1.4px, transparent 1.9px),
+    radial-gradient(circle at 20% 80%, var(--pot-bg-texture) 0.9px, transparent 1.4px),
+    
+    /* 连接线 - 增强版 */
+    linear-gradient(135deg, transparent 48.5%, var(--pot-bg-texture) 49%, var(--pot-bg-texture) 51%, transparent 51.5%),
+    linear-gradient(45deg, transparent 48.5%, var(--pot-bg-texture) 49%, var(--pot-bg-texture) 51%, transparent 51.5%),
+    linear-gradient(90deg, transparent 49%, var(--pot-bg-texture) 49.5%, var(--pot-bg-texture) 50.5%, transparent 51%),
+    linear-gradient(0deg, transparent 49%, var(--pot-bg-texture) 49.5%, var(--pot-bg-texture) 50.5%, transparent 51%);
+  
+  background-size: 
+    /* 神经元节点大小 */
+    80px 80px, 60px 60px, 70px 70px, 90px 90px, 75px 75px, 85px 85px,
+    /* 连接线大小 */
+    50px 50px, 55px 55px, 40px 40px, 45px 45px !important;
+  
+  background-position: 
+    /* 神经元节点位置 */
+    0 0, 30px 20px, 50px 30px, 20px 60px, 40px 75px, 70px 90px,
+    /* 连接线位置 */
+    0 0, 25px 25px, 10px 40px, 35px 10px !important;
+  
+  /* 提高透明度确保可见 */
+  opacity: 0.08 !important;
+  
+  /* 微妙动画 */
+  animation: potTextureShiftRefined 25s ease-in-out infinite !important;
+}
+
+/* 🌙 Dark Mode 纹理增强 */
+.dark .pot-mode-active::before {
+  opacity: 0.12 !important;
+  background-image: 
+    /* 神经元节点 - 紫色系 */
+    radial-gradient(circle at 20% 20%, rgba(167, 139, 250, 0.15) 1.5px, transparent 2px),
+    radial-gradient(circle at 80% 20%, rgba(167, 139, 250, 0.12) 1px, transparent 1.5px),
+    radial-gradient(circle at 40% 40%, rgba(167, 139, 250, 0.14) 1.3px, transparent 1.8px),
+    radial-gradient(circle at 70% 70%, rgba(167, 139, 250, 0.11) 1.1px, transparent 1.6px),
+    radial-gradient(circle at 80% 80%, rgba(167, 139, 250, 0.16) 1.4px, transparent 1.9px),
+    radial-gradient(circle at 20% 80%, rgba(167, 139, 250, 0.10) 0.9px, transparent 1.4px),
+    
+    /* 连接线 - 紫色系 */
+    linear-gradient(135deg, transparent 48.5%, rgba(167, 139, 250, 0.12) 49%, rgba(167, 139, 250, 0.12) 51%, transparent 51.5%),
+    linear-gradient(45deg, transparent 48.5%, rgba(167, 139, 250, 0.12) 49%, rgba(167, 139, 250, 0.12) 51%, transparent 51.5%),
+    linear-gradient(90deg, transparent 49%, rgba(167, 139, 250, 0.12) 49.5%, rgba(167, 139, 250, 0.12) 50.5%, transparent 51%),
+    linear-gradient(0deg, transparent 49%, rgba(167, 139, 250, 0.12) 49.5%, rgba(167, 139, 250, 0.12) 50.5%, transparent 51%) !important;
+}
+
+/* 🖥️ 桌面端强制显示 */
+@media (min-width: 1024px) {
   .pot-mode-active::before {
-    -webkit-transform: translateZ(0);
-    -moz-transform: translateZ(0);
-    -ms-transform: translateZ(0);
-    transform: translateZ(0);
+    display: block !important;
+    visibility: visible !important;
+    opacity: 0.06 !important;
+  }
+  
+  .dark .pot-mode-active::before {
+    opacity: 0.10 !important;
   }
 }
 
-/* 🌟 渐变动画的备用方案 */
-@supports not ((background-clip: text) or (-webkit-background-clip: text)) {
-  .pot-status-text {
-    color: #F59E0B;
-    font-weight: 700;
-    text-shadow: 0 0 8px rgba(245, 158, 11, 0.3);
+/* 📱 移动端优化 */
+@media (max-width: 768px) {
+  .pot-mode-active::before {
+    opacity: 0.10 !important;
+    background-size: 
+      60px 60px, 45px 45px, 52px 52px, 67px 67px, 56px 56px, 63px 63px,
+      35px 35px, 40px 40px, 30px 30px, 32px 32px !important;
+  }
+  
+  .dark .pot-mode-active::before {
+    opacity: 0.14 !important;
+  }
+}
+
+/* 🎯 平板端适配 */
+@media (min-width: 769px) and (max-width: 1023px) {
+  .pot-mode-active::before {
+    opacity: 0.08 !important;
+  }
+  
+  .dark .pot-mode-active::before {
+    opacity: 0.12 !important;
   }
 }
