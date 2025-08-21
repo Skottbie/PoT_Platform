@@ -1303,39 +1303,51 @@ const getModelDisplayName = useCallback((modelValue) => {
   // ===== 4. 添加PoT Mode切换处理函数 =====
   const handlePoTToggle = useCallback(async () => {
     if (isActivating) return;
+    
+    // 🔧 正确的确认逻辑：只在【未开启PoT + 有AIGC记录】时需要确认
     const hasConversation = aigcLog.length > 1;
-    const result = await togglePoTMode(model, hasConversation);
-    if (!result.success) return;
-    if (result.needsClearConversation) {
-      // 显示确认对话框
-      setPotDialogAction(result.action);
+    const needsConfirmation = !potEnabled && hasConversation;
+    
+    if (needsConfirmation) {
+      // 情况2：需要确认清空现有记录
+      setPotDialogAction('enable');
       setShowPoTDialog(true);
     } else {
-      // 直接切换
+      // 情况1、3、4：直接切换，无需确认
+      const result = await togglePoTMode(model);
+      if (result.success) {
+        // 根据切换结果更新状态
+        setModel(result.newModel);
+        
+        // 如果是开启PoT且首次使用，显示引导
+        if (result.action === 'enable' && result.showFirstTimeGuide) {
+          setShowFirstTimeGuide(true);
+        }
+      }
+    }
+  }, [isActivating, aigcLog.length, potEnabled, togglePoTMode, model]);
+
+  // ===== 5. 添加PoT对话框确认处理 =====
+  const handlePoTDialogConfirm = useCallback(async () => {
+    setShowPoTDialog(false);
+    
+    // 清空现有的AIGC记录（这是用户确认要做的）
+    setAigcLog([]);
+    setInput('');
+    
+    // 执行PoT模式切换（此时确定是要开启PoT）
+    const result = await togglePoTMode(model);
+    if (result.success) {
       setModel(result.newModel);
+      
+      // 如果是首次使用PoT，显示引导
       if (result.showFirstTimeGuide) {
         setShowFirstTimeGuide(true);
       }
     }
-  }, [isActivating, aigcLog.length, togglePoTMode, model]);
-
-  // ===== 5. 添加PoT对话框确认处理 =====
-  const handlePoTDialogConfirm = useCallback(() => {
-    setShowPoTDialog(false);
-    // 清空对话记录
-    setAigcLog([]);
-    setInput('');
-    // 切换模型
-    if (potEnabled) {
-      setModel(POT_MODEL);
-      if (isFirstTime) {
-        setShowFirstTimeGuide(true);
-      }
-    } else {
-      setModel('qwen-flash'); // 恢复默认模型
-    }
+    
     haptic.success();
-  }, [potEnabled, POT_MODEL, isFirstTime, haptic]);
+  }, [togglePoTMode, model, haptic]);
 
   const handlePoTDialogCancel = useCallback(() => {
     setShowPoTDialog(false);
@@ -1348,6 +1360,7 @@ const getModelDisplayName = useCallback((modelValue) => {
   const renderPoTModeToggle = (mode = 'normal', device = 'mobile') => {
     if (!task?.allowAIGC) return null;
     return (
+      <div className={mode === 'normal' ? 'mt-2' : ''}> {/* 🆕 添加上边距 */}
       <PoTPowerButton
         potEnabled={potEnabled}
         isActivating={isActivating}
@@ -1356,6 +1369,7 @@ const getModelDisplayName = useCallback((modelValue) => {
         mode={mode}
         device={device}
       />
+      </div>
     );
   };
     // ===== 8. 添加PoT模式的CSS类名 =====
@@ -1512,7 +1526,7 @@ const getModelDisplayName = useCallback((modelValue) => {
                     <span className="text-sm font-semibold">A</span>
                   </div>
                 </button>
-                {renderPoTModeToggle('fullscreen', 'mobile')}
+                {isMobile && renderPoTModeToggle('fullscreen', 'mobile')}
                 
                 {/* 标题和模型选择 - 移动端完全隐身的响应式设计 */}
                 {isMobile ? (

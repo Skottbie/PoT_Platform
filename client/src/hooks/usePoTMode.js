@@ -132,33 +132,32 @@ export const usePoTMode = () => {
   /**
    * 切换 PoT Mode 状态
    */
-  const togglePoTMode = useCallback(async (currentModel, hasConversation = false) => {
+    const togglePoTMode = useCallback(async (currentModel) => {
     // 如果正在激活中，忽略点击
     if (isActivating) {
-      return { success: false, reason: 'activating' };
+        return { success: false, reason: 'activating' };
     }
 
     if (!potEnabled) {
-      // 开启 PoT Mode
-      const success = await enablePoTMode(currentModel);
-      return { 
+        // 开启 PoT Mode
+        const success = await enablePoTMode(currentModel);
+        return { 
         success, 
-        action: 'enabled', 
+        action: 'enable', 
         newModel: POT_MODEL,
-        needsClearConversation: hasConversation,
         showFirstTimeGuide: isFirstTime
-      };
+        };
     } else {
-      // 关闭 PoT Mode
-      const restoredModel = disablePoTMode();
-      return { 
+        // 关闭 PoT Mode
+        const restoredModel = disablePoTMode();
+        return { 
         success: true, 
-        action: 'disabled', 
+        action: 'disable', 
         newModel: restoredModel,
-        needsClearConversation: hasConversation
-      };
+        showFirstTimeGuide: false
+        };
     }
-  }, [potEnabled, isActivating, enablePoTMode, disablePoTMode, isFirstTime]);
+    }, [potEnabled, isActivating, enablePoTMode, disablePoTMode, isFirstTime, POT_MODEL]);
 
   /**
    * 获取当前应该使用的模型
