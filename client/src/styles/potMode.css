@@ -756,3 +756,171 @@
 .dark .pot-mode-active::before {
   opacity: 0.16 !important;
 }
+
+/* ==========================================
+   PoT Mode 问题修复 - 追加到 potMode.css
+   ========================================== */
+
+/* 🔧 问题1: 桌面端全屏聊天容器POT MODE居中修复 */
+/* 确保POT模式下桌面端的消息布局保持居中 */
+@media (min-width: 1024px) {
+  /* 关键修复：针对全屏模式下的主要消息容器 */
+  .pot-mode-active > div:not(.absolute) {
+    max-width: 56rem !important;  /* 对应 max-w-4xl */
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+  
+  /* 更具体的选择器：针对包含消息的div */
+  .pot-mode-active > div[class*="px-4"],
+  .pot-mode-active > div[class*="py-6"] {
+    max-width: 56rem !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+}
+
+/* 🎯 桌面端专用：确保不影响移动端 */
+@media (min-width: 768px) and (max-width: 1023px) {
+  /* 平板端也保持居中 */
+  .pot-mode-active > div:not(.absolute) {
+    max-width: 48rem !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+}
+
+/* 🔒 确保移动端不受影响 */
+@media (max-width: 767px) {
+  .pot-mode-active > div {
+    max-width: 100% !important;
+    margin-left: inherit !important;
+    margin-right: inherit !important;
+  }
+}
+
+/* 🔧 问题2: PoTFirstTimeGuide颜色闪烁修复 */
+/* 核心解决方案：预设正确的初始状态，避免CSS变量延迟加载 */
+.pot-first-guide-container {
+  /* Light Mode - 强制设置初始背景色 */
+  background-color: rgba(248, 245, 240, 0.95) !important;
+  border: 2px solid rgba(212, 165, 116, 0.25) !important;
+  
+  /* 关键：阻止所有过渡效果直到完全加载 */
+  transition: none !important;
+  animation: none !important;
+}
+
+.dark .pot-first-guide-container {
+  /* Dark Mode - 强制设置初始背景色 */
+  background-color: rgba(17, 24, 39, 0.95) !important;
+  border: 2px solid rgba(167, 139, 250, 0.3) !important;
+}
+
+/* 阻止所有子元素的过渡和动画，直到loaded类被添加 */
+.pot-first-guide-container *,
+.pot-first-guide-container::before,
+.pot-first-guide-container::after {
+  transition: none !important;
+  animation: none !important;
+}
+
+/* 发光边框的初始状态修复 */
+.pot-first-guide-container .absolute.inset-0 {
+  /* Light Mode */
+  background: linear-gradient(
+    45deg, 
+    rgba(212, 165, 116, 0.15) 0%, 
+    rgba(251, 146, 60, 0.15) 50%, 
+    rgba(212, 165, 116, 0.15) 100%
+  ) !important;
+  
+  /* 阻止blur效果可能导致的闪烁 */
+  filter: blur(4px) !important;
+  transition: none !important;
+}
+
+.dark .pot-first-guide-container .absolute.inset-0 {
+  /* Dark Mode */
+  background: linear-gradient(
+    45deg, 
+    rgba(167, 139, 250, 0.15) 0%, 
+    rgba(196, 181, 253, 0.15) 50%, 
+    rgba(167, 139, 250, 0.15) 100%
+  ) !important;
+  
+  filter: blur(4px) !important;
+  transition: none !important;
+}
+
+/* 按钮初始状态修复 */
+.pot-first-guide-container .pot-first-guide-button {
+  /* Light Mode */
+  background: linear-gradient(135deg, #D4A574, #B8956A) !important;
+  color: white !important;
+  transition: none !important;
+}
+
+.dark .pot-first-guide-container .pot-first-guide-button {
+  /* Dark Mode */
+  background: linear-gradient(135deg, #A78BFA, #8B5CF6) !important;
+  color: white !important;
+  transition: none !important;
+}
+
+/* 特性背景区域初始状态 */
+.pot-first-guide-feature-bg {
+  /* Light Mode */
+  background: rgba(212, 165, 116, 0.08) !important;
+  border-color: rgba(212, 165, 116, 0.15) !important;
+  transition: none !important;
+}
+
+.dark .pot-first-guide-feature-bg {
+  /* Dark Mode */
+  background: rgba(167, 139, 250, 0.08) !important;
+  border-color: rgba(167, 139, 250, 0.15) !important;
+  transition: none !important;
+}
+
+.pot-first-guide-feature-text {
+  /* Light Mode */
+  color: rgba(212, 165, 116, 0.85) !important;
+}
+
+.dark .pot-first-guide-feature-text {
+  /* Dark Mode */
+  color: rgba(167, 139, 250, 0.85) !important;
+}
+
+/* ====== 组件加载完成后启用过渡效果 ====== */
+.pot-first-guide-container.loaded {
+  transition: all 0.2s ease !important;
+}
+
+.pot-first-guide-container.loaded *,
+.pot-first-guide-container.loaded::before,
+.pot-first-guide-container.loaded::after {
+  transition: all 0.2s ease !important;
+}
+
+/* 加载完成后的按钮悬停效果 */
+.pot-first-guide-container.loaded .pot-first-guide-button:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(212, 165, 116, 0.3) !important;
+}
+
+.dark .pot-first-guide-container.loaded .pot-first-guide-button:hover {
+  box-shadow: 0 4px 12px rgba(167, 139, 250, 0.3) !important;
+}
+
+/* 🎯 额外保险：防止任何默认颜色的闪现 */
+.pot-first-guide-container,
+.pot-first-guide-container * {
+  /* 覆盖任何可能的默认样式 */
+  box-shadow: none !important;
+}
+
+.pot-first-guide-container.loaded {
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+}

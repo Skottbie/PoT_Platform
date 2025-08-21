@@ -76,11 +76,13 @@ const PoTFirstTimeGuide = ({
         exit={{ opacity: 0, scale: 0.9, y: 20 }}
         transition={{ duration: 0.4, ease: "easeOut" }}
         onAnimationComplete={() => {
-            // 动画完成后添加loaded类，启用过渡效果
+        // 🔧 关键修复：动画完成后添加loaded类，启用过渡效果
+        setTimeout(() => {
             const container = document.querySelector('.pot-first-guide-container');
             if (container) {
             container.classList.add('loaded');
             }
+        }, 50); // 短暂延迟确保DOM已更新
         }}
         >
           {/* 发光边框效果 */}
