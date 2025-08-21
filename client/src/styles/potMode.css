@@ -474,3 +474,134 @@
     text-shadow: 0 0 8px rgba(245, 158, 11, 0.3);
   }
 }
+
+/* 🎯 定义 PoT Mode 相关组件的 z-index 层级 */
+:root {
+  /* PoT Mode 组件层级定义 */
+  --pot-power-button-z: 10;
+  --pot-guide-z: 9998;
+  --pot-dialog-z: 99999;
+  --pot-dialog-backdrop-z: 99998;
+  
+  /* 全屏模式层级（参考） */
+  --fullscreen-mode-z: 9999;
+}
+
+/* 🔧 PoT Mode 对话框层级修复 */
+.pot-mode-dialog {
+  z-index: var(--pot-dialog-z) !important;
+  position: fixed;
+  isolation: isolate; /* 创建新的层叠上下文 */
+}
+
+.pot-mode-dialog-backdrop {
+  z-index: var(--pot-dialog-backdrop-z) !important;
+}
+
+/* 🔧 PoT 首次使用引导层级 */
+.pot-first-time-guide {
+  z-index: var(--pot-guide-z) !important;
+  position: fixed;
+  isolation: isolate;
+}
+
+/* 🔧 PoT 电源键按钮层级 */
+.pot-power-button {
+  z-index: var(--pot-power-button-z);
+  position: relative;
+}
+
+/* 🔧 全屏模式下的特殊处理 */
+.aigc-fullscreen-mode .pot-power-button {
+  z-index: calc(var(--pot-power-button-z) + 1);
+}
+
+/* ========================================
+   层级冲突防护措施
+   ======================================== */
+
+/* 🛡️ 确保 PoT 对话框永远在最顶层 */
+.pot-mode-dialog {
+  /* 使用更高的层级 */
+  z-index: 2147483647 !important; /* 最大安全整数值 */
+}
+
+/* 🛡️ 防止其他组件意外覆盖 */
+.pot-mode-dialog * {
+  z-index: inherit;
+}
+
+/* 🛡️ 移动端 Safari 特殊处理 */
+@supports (-webkit-touch-callout: none) {
+  .pot-mode-dialog {
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+    will-change: transform;
+  }
+}
+
+/* ========================================
+   调试辅助（开发阶段可启用）
+   ======================================== */
+
+/* 🔍 开发调试：可视化 z-index 层级 */
+/*
+.debug-z-index .pot-mode-dialog::before {
+  content: "PoT Dialog z-index: " attr(data-z-index);
+  position: absolute;
+  top: -30px;
+  left: 10px;
+  background: rgba(255, 0, 0, 0.8);
+  color: white;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-family: monospace;
+  z-index: 1;
+}
+*/
+
+/* ========================================
+   响应式层级优化
+   ======================================== */
+
+/* 📱 移动端层级优化 */
+@media (max-width: 640px) {
+  .pot-mode-dialog {
+    /* 移动端确保最高层级 */
+    z-index: 2147483647 !important;
+  }
+  
+  .pot-first-time-guide {
+    z-index: 2147483646 !important;
+  }
+}
+
+/* 🖥️ 桌面端层级优化 */
+@media (min-width: 1024px) {
+  .pot-power-button:hover {
+    z-index: calc(var(--pot-power-button-z) + 1);
+  }
+}
+
+/* ========================================
+   兼容性保障
+   ======================================== */
+
+/* 🌐 旧浏览器兼容性 */
+@supports not (z-index: var(--pot-dialog-z)) {
+  .pot-mode-dialog {
+    z-index: 99999 !important;
+  }
+  
+  .pot-first-time-guide {
+    z-index: 9998 !important;
+  }
+}
+
+/* 🔧 强制层级的最后保障 */
+.pot-priority-highest {
+  z-index: 2147483647 !important;
+  position: fixed !important;
+  isolation: isolate !important;
+}
