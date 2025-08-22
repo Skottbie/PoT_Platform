@@ -44,6 +44,32 @@ async function uploadToGridFS(file, decodedFilename) {
   });
 }
 
+// 🆕 简化的PoT模式数据分析函数
+function analyzePotModeData(aigcData) {
+  const analysis = {
+    hasPotMode: false,
+    potMessages: 0,
+    normalMessages: 0
+  };
+
+  if (!Array.isArray(aigcData)) {
+    return analysis;
+  }
+
+  for (const message of aigcData) {
+    if (message.role === 'assistant') {
+      if (message.potMode) {
+        analysis.hasPotMode = true;
+        analysis.potMessages++;
+      } else {
+        analysis.normalMessages++;
+      }
+    }
+  }
+
+  return analysis;
+}
+
 // ✅ 学生提交作业（支持多种类型 + 截止时间检查）
 router.post('/:taskId', verifyToken, upload.fields([
   { name: 'file', maxCount: 1 },
@@ -96,6 +122,7 @@ router.post('/:taskId', verifyToken, upload.fields([
     let fileId = null;
     let fileName = null;
     let aigcLogId = null;
+    let potModeInfo = null; // 🆕 PoT模式信息
     const imageIds = [];
 
     // 处理作业文件
@@ -117,10 +144,24 @@ router.post('/:taskId', verifyToken, upload.fields([
       }
     }
 
-    // 处理 AIGC 日志
+    // 🆕 处理 AIGC 日志时检测PoT模式
     if (aigcLogFile) {
       const logResult = await uploadToGridFS(aigcLogFile, aigcLogFile.originalname);
       aigcLogId = logResult.fileId;
+
+      // 🎯 解析AIGC日志，检测PoT模式
+      try {
+        const logContent = aigcLogFile.buffer.toString('utf8');
+        const aigcData = JSON.parse(logContent);
+        
+        potModeInfo = analyzePotModeData(aigcData);
+        
+        if (potModeInfo.hasPotMode) {
+          console.log(`✅ 检测到PoT模式提交`);
+        }
+      } catch (parseError) {
+        console.warn('AIGC日志解析失败:', parseError);
+      }
     }
 
     // 📌 新增：计算逾期时间
@@ -139,20 +180,28 @@ router.post('/:taskId', verifyToken, upload.fields([
       aigcLogId: aigcLogId,
       // 📌 新增：逾期信息
       isLateSubmission: isLate,
-      lateMinutes: actualLateMinutes
+      lateMinutes: actualLateMinutes,
+      // 🆕 PoT模式相关字段
+      potModeData: potModeInfo
     });
 
     await submission.save();
     
+    // 根据是否包含PoT模式返回不同消息
+    let message = '提交成功';
     if (isLate) {
-      res.json({ 
-        message: '逾期提交成功，该作业将被标注为逾期提交',
-        isLateSubmission: true,
-        lateMinutes: actualLateMinutes
-      });
-    } else {
-      res.json({ message: '提交成功' });
+      message = '逾期提交成功，该作业将被标注为逾期提交';
     }
+    if (potModeInfo?.hasPotMode) {
+      message += ` (包含PoT思维过程)`;
+    }
+
+    res.json({ 
+      message,
+      isLateSubmission: isLate,
+      lateMinutes: actualLateMinutes,
+      potModeDetected: potModeInfo?.hasPotMode || false
+    });
   } catch (err) {
     console.error('提交失败:', err);
     res.status(500).json({ message: '服务器错误' });

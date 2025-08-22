@@ -50,6 +50,13 @@ const submissionSchema = new mongoose.Schema({
     createdAt: { type: Date, default: null }, // 反馈时间
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null }, // 反馈教师
     updatedAt: { type: Date, default: null } // 最后更新时间
+  },
+  // 🆕 PoT模式相关字段
+  potModeData: {
+    hasPotMode: { type: Boolean, default: false },
+    potMessages: { type: Number, default: 0 },
+    normalMessages: { type: Number, default: 0 },
+    detectedAt: { type: Date, default: Date.now }
   }
 }, { 
   timestamps: true 

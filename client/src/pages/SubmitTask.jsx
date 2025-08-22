@@ -77,13 +77,18 @@ const getCurrentModelLabel = useCallback((modelValue) => {
 }, []);
 
 // 获取简短模型名 - 用于对话显示
-const getModelDisplayName = useCallback((modelValue) => {
+const getModelDisplayName = useCallback((modelValue, isPotMode = false) => {
+  if (isPotMode) {
+    return 'PoT Tutor';
+  }
+  
   switch(modelValue) {
     case 'qwen-flash': return '通义千问-Flash';
     case 'qwen-plus': return '通义千问-Plus'; 
     case 'deepseek-r1-distill': return 'DeepSeek-R1';
     case 'ernie-speed': return 'ERNIE Speed';
     case 'openai': return 'ChatGPT';
+    case 'pot-tutor': return 'PoT Tutor';
     default: return modelValue;
   }
 }, []);
@@ -781,41 +786,96 @@ const getModelDisplayName = useCallback((modelValue) => {
     
     const currentModel = getCurrentModel(model);
 
-    const userMessage = { role: 'user', content: input, model: currentModel };
+    const userMessage = { 
+      role: 'user', 
+      content: input, 
+      model: currentModel,
+      timestamp: Date.now()
+    };
     setAigcLog((prev) => [...prev, userMessage]);
     setInput('');
     setLoading(true);
     
-    // 🆕 DeepSeek延迟提示逻辑
+    // 🆕 PoT模式延迟提示逻辑
+    let potTipTimer = null;
+    if (potEnabled) {
+      potTipTimer = setTimeout(() => {
+        setShowDeepSeekTip(true); // 复用现有的提示UI
+      }, 5000);
+    }
+    
+    // 🆕 DeepSeek延迟提示逻辑（保持现有逻辑）
     let deepSeekTipTimer = null;
     if (currentModel === 'deepseek-r1-distill') {
       deepSeekTipTimer = setTimeout(() => {
         setShowDeepSeekTip(true);
-      }, 4000); // 4秒后显示延迟提示
+      }, 4000);
     }
 
     try {
-      const res = await api.post('/aigc/chat', {
+      // 🎯 构建API请求参数 - 简化版
+      const apiParams = {
         messages: [...aigcLog, userMessage],
         model: currentModel,
-      }, {
-        timeout: 60000
+      };
+
+      // 🆕 PoT模式特有参数
+      if (potEnabled) {
+        apiParams.potMode = true;
+        // 🗑️ 删除：不再需要 sessionId, userId, taskId
+      }
+
+      const res = await api.post('/aigc/chat', apiParams, {
+        timeout: potEnabled ? 90000 : 60000 // PoT模式延长超时时间到90秒
       });
 
+      // 🎯 处理响应数据
+      const responseData = res.data;
+      
       const aiMessage = { 
         role: 'assistant', 
-        content: res.data.reply, 
-        model: currentModel,
-        reasoning_content: res.data.reasoning_content || null
+        content: responseData.reply, 
+        model: responseData.potMode ? 'pot-tutor' : currentModel,
+        reasoning_content: responseData.reasoning_content || null,
+        timestamp: Date.now(),
+        // 🆕 PoT模式相关字段
+        potMode: responseData.potMode || false
+        // 🗑️ 删除：不再需要 potSessionId
       };
+
+      // 🗑️ 删除：不再需要更新 potSessionId
+      // if (responseData.potMode && responseData.potSessionId) {
+      //   setPotSessionId(responseData.potSessionId);
+      // }
+
       setAigcLog((prev) => [...prev, aiMessage]);
       haptic.success();
+
+      // 🎯 PoT模式成功提示
+      if (responseData.potMode) {
+        console.log(`✅ PoT对话成功`);
+      }
+
     } catch (err) {
       console.error('AIGC请求失败:', err);
+      
+      // 🎯 错误消息处理
+      let errorContent = '❌ AI 回复失败，请稍后重试';
+      
+      if (potEnabled && err.response?.data?.potMode) {
+        errorContent = '❌ PoT Tutor 暂时无法响应，请稍后重试';
+      } else if (err.code === 'ECONNABORTED') {
+        errorContent = potEnabled 
+          ? '❌ PoT Tutor 思考时间过长，请稍后重试'
+          : '❌ AI 响应超时，请稍后重试';
+      }
+      
       const errorMessage = { 
         role: 'assistant', 
-        content: '❌ AI 回复失败，请稍后重试',
-        model: currentModel 
+        content: errorContent,
+        model: potEnabled ? 'pot-tutor' : currentModel,
+        timestamp: Date.now(),
+        isError: true
       };
       setAigcLog((prev) => [...prev, errorMessage]);
       haptic.error();
@@ -824,11 +884,14 @@ const getModelDisplayName = useCallback((modelValue) => {
       setShowDeepSeekTip(false);
       
       // 🆕 清理延迟提示定时器
+      if (potTipTimer) {
+        clearTimeout(potTipTimer);
+      }
       if (deepSeekTipTimer) {
         clearTimeout(deepSeekTipTimer);
       }
     }
-  }, [input, aigcLog, model, haptic, getCurrentModel]);
+  }, [input, aigcLog, model, haptic, getCurrentModel, potEnabled]);
 
   // 🎯 优化图片处理
   const handleImageChange = useCallback((e) => {
@@ -1772,9 +1835,9 @@ const getModelDisplayName = useCallback((modelValue) => {
                       <div className={isMobile ? 'w-full' : 'max-w-3xl'}>
                         {!isMobile && (
                           <div className="text-xs text-gray-500 dark:text-gray-400 mb-1 flex items-center gap-1">
-                            <span>🤖</span>
+                            <span>{msg.potMode ? '🧠' : '🤖'}</span>
                             <span>
-                              {getModelDisplayName(msg.model)}
+                              {getModelDisplayName(msg.model, msg.potMode)}
                             </span>
                           </div>
                         )}
@@ -1808,9 +1871,9 @@ const getModelDisplayName = useCallback((modelValue) => {
                     <div className={isMobile ? 'py-2' : 'max-w-3xl'}>
                       {!isMobile && (
                         <div className="text-xs text-gray-500 dark:text-gray-400 mb-1 flex items-center gap-1">
-                          <span>🤖</span>
-                          <span>
-                            {getModelDisplayName(model)}
+                        <span>{potMode ? '🧠' : '🤖'}</span>
+                        <span>
+                          {getModelDisplayName(model, potMode)}
                         </span>
                         </div>
                       )}
@@ -2310,7 +2373,7 @@ const getModelDisplayName = useCallback((modelValue) => {
                                 {msg.role === 'user' ? '👤' : '🤖'}
                               </span>
                               <span>
-                                {msg.role === 'user' ? '你' : getModelDisplayName(msg.model)}
+                                {msg.role === 'user' ? '你' : getModelDisplayName(msg.model, msg.potMode)}
                               </span>
                             </div>
                             
@@ -2346,9 +2409,9 @@ const getModelDisplayName = useCallback((modelValue) => {
                           <div className="flex justify-start">
                             <div className="max-w-[80%]">
                               <div className="text-xs text-gray-500 dark:text-gray-400 mb-1 flex items-center gap-1">
-                                <span>🤖</span>
-                                <span>
-                                  {getModelDisplayName(model)}
+                            <span>{potMode ? '🧠' : '🤖'}</span>
+                            <span>
+                              {getModelDisplayName(model, potMode)}
                               </span>
                               </div>
                               <div className="bg-white dark:bg-gray-700 rounded-xl rounded-bl-sm px-3 py-2 border border-gray-200 dark:border-gray-600">
