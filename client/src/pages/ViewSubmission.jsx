@@ -12,6 +12,14 @@ import toast from 'react-hot-toast';
 import PullToRefreshContainer from '../components/PullToRefreshContainer';
 import useAutoRefresh from '../hooks/useAutoRefresh';
 
+import { 
+  detectPoTMode, 
+  getModelDisplayName, 
+  getLinearIcons, 
+  getPoTBubbleStyles 
+} from '../utils/aigcDisplayUtils';
+import '../styles/potMode.css'; // 确保引入PoT样式
+
 const ViewSubmission = () => {
   const { taskId } = useParams();
   const navigate = useNavigate();
@@ -294,7 +302,7 @@ const ViewSubmission = () => {
                   imageIds={submission.imageIds}
                   title="提交图片"
                   gridClassName="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-4"
-                  imageClassName="w-full h-24 sm:h-32 rounded-lg overflow-hidden cursor-pointer border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-shadow duration-200"
+                  imageClassName="w-24 h-24 sm:w-32 sm:h-32 rounded-lg overflow-hidden cursor-pointer border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-shadow duration-200 object-cover"
                 />
               </div>
             )}
@@ -328,7 +336,10 @@ const ViewSubmission = () => {
               <div>
                 <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-2">
                   <h3 className="font-semibold text-gray-700 dark:text-gray-300">
-                    🤖 AIGC 对话记录
+                    <div className="flex items-center gap-2">
+                      {getLinearIcons().conversation}
+                      <span>AIGC交互原始记录</span>
+                    </div>
                   </h3>
                   <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                     <Button
@@ -356,46 +367,79 @@ const ViewSubmission = () => {
                     animate={{ opacity: 1, height: 'auto' }}
                     className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 sm:p-4 max-h-80 sm:max-h-96 overflow-y-auto space-y-3"
                   >
-                    {aigcContent.map((entry, idx) => (
-                      <motion.div
-                        key={idx}
-                        initial={{ opacity: 0, x: entry.role === 'user' ? -20 : 20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        className={`max-w-[90%] sm:max-w-[85%] px-3 sm:px-4 py-2 rounded-xl text-sm whitespace-pre-wrap break-words ${
-                          entry.role === 'user' 
-                            ? 'bg-blue-100 dark:bg-blue-900/40 self-start ml-1 sm:ml-2' 
-                            : 'bg-green-100 dark:bg-green-900/40 self-end mr-1 sm:mr-2'
-                        }`}
-                      >
-                        <div className="text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">
-                          {entry.role === 'user' ? '🧑 我的提问' : '🤖 AI 回复'}
-                        </div>
-                        <ReactMarkdown
-                          components={{
-                            code({ inline, className, children, ...props }) {
-                              const match = /language-(\w+)/.exec(className || '');
-                              return !inline ? (
-                                <SyntaxHighlighter
-                                  style={github}
-                                  language={match ? match[1] : 'text'}
-                                  PreTag="div"
-                                  className="rounded-lg my-1 overflow-x-auto text-xs"
-                                  {...props}
-                                >
-                                  {String(children).replace(/\n$/, '')}
-                                </SyntaxHighlighter>
-                              ) : (
-                                <code className="bg-gray-200 dark:bg-gray-800 px-1 rounded text-xs break-all">
-                                  {children}
-                                </code>
-                              );
-                            },
-                          }}
-                        >
-                          {entry.content}
-                        </ReactMarkdown>
-                      </motion.div>
-                    ))}
+                    {(() => {
+                      const isPoTMode = detectPoTMode(aigcContent);
+                      
+                      return (
+                        <>
+                          {/* PoT Mode 标识 */}
+                          {isPoTMode && (
+                            <div className="flex items-center justify-center mb-4 p-2 rounded-lg bg-gradient-to-r from-amber-100/50 to-rose-100/50 dark:from-purple-800/30 dark:to-indigo-800/30 border border-amber-200/50 dark:border-purple-500/30">
+                              <span className="text-sm font-medium text-amber-700 dark:text-purple-300 flex items-center gap-2">
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                </svg>
+                                PoT Mode ON
+                              </span>
+                            </div>
+                          )}
+                          
+                          {/* 对话记录 */}
+                          {aigcContent.map((entry, idx) => (
+                            <motion.div
+                              key={idx}
+                              initial={{ opacity: 0, x: entry.role === 'user' ? -20 : 20 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              className={`max-w-[90%] sm:max-w-[85%] px-3 sm:px-4 py-2 rounded-xl text-sm whitespace-pre-wrap break-words ${
+                                getPoTBubbleStyles(entry.role, isPoTMode)
+                              } ${
+                                entry.role === 'user' 
+                                  ? 'self-start ml-1 sm:ml-2' 
+                                  : 'self-end mr-1 sm:mr-2'
+                              }`}
+                            >
+                              <div className="text-xs font-medium text-gray-600 dark:text-gray-300 mb-1 flex items-center gap-1">
+                                {entry.role === 'user' ? (
+                                  <>
+                                    {getLinearIcons().user}
+                                    <span>我的提问</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    {getLinearIcons().ai}
+                                    <span>{getModelDisplayName(entry.model, entry.potMode || isPoTMode)}</span>
+                                  </>
+                                )}
+                              </div>
+                              <ReactMarkdown
+                                components={{
+                                  code({ inline, className, children, ...props }) {
+                                    const match = /language-(\w+)/.exec(className || '');
+                                    return !inline ? (
+                                      <SyntaxHighlighter
+                                        style={github}
+                                        language={match ? match[1] : 'text'}
+                                        PreTag="div"
+                                        className="rounded-lg my-1 overflow-x-auto text-xs"
+                                        {...props}
+                                      >
+                                        {String(children).replace(/\n$/, '')}
+                                      </SyntaxHighlighter>
+                                    ) : (
+                                      <code className="bg-gray-200 dark:bg-gray-800 px-1 rounded text-xs break-all">
+                                        {children}
+                                      </code>
+                                    );
+                                  },
+                                }}
+                              >
+                                {entry.content}
+                              </ReactMarkdown>
+                            </motion.div>
+                          ))}
+                        </>
+                      );
+                    })()}
                   </motion.div>
                 )}
               </div>

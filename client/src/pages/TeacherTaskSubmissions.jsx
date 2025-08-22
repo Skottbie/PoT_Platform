@@ -10,6 +10,14 @@ import toast from 'react-hot-toast';
 import PullToRefreshContainer from '../components/PullToRefreshContainer';
 import useAutoRefresh from '../hooks/useAutoRefresh';
 
+import { 
+  detectPoTMode, 
+  getModelDisplayName, 
+  getLinearIcons, 
+  getPoTBubbleStyles 
+} from '../utils/aigcDisplayUtils';
+import '../styles/potMode.css'; // 确保引入PoT样式
+
 const TeacherTaskSubmissions = () => {
   const { taskId } = useParams();
   const [submissions, setSubmissions] = useState([]);
@@ -355,19 +363,56 @@ const TeacherTaskSubmissions = () => {
               exit={{ opacity: 0, height: 0 }}
               className="mt-3 border rounded-xl p-4 bg-gray-50/70 dark:bg-gray-900/50 max-h-96 overflow-y-auto space-y-3 backdrop-blur-sm"
             >
-              {isExpanded.map((entry, idx) => (
-                <motion.div
-                  key={idx}
-                  initial={{ opacity: 0, x: entry.role === 'user' ? -20 : 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  className={`max-w-[75%] px-4 py-2 rounded-xl shadow-sm text-sm whitespace-pre-wrap ${entry.role === 'user' ? 'bg-blue-100/80 dark:bg-blue-900/40 self-start text-left ml-2' : 'bg-green-100/80 dark:bg-green-900/40 self-end text-right mr-2'}`}
-                >
-                  <div className="text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">
-                    {entry.role === 'user' ? '🧑 学生提问' : '🤖 AI 回复'}
-                  </div>
-                  {entry.content}
-                </motion.div>
-              ))}
+              {(() => {
+                const isPoTMode = detectPoTMode(isExpanded);
+                
+                return (
+                  <>
+                    {/* PoT Mode 标识 */}
+                    {isPoTMode && (
+                      <div className="flex items-center justify-center mb-4 p-2 rounded-lg bg-gradient-to-r from-amber-100/50 to-rose-100/50 dark:from-purple-800/30 dark:to-indigo-800/30 border border-amber-200/50 dark:border-purple-500/30">
+                        <span className="text-sm font-medium text-amber-700 dark:text-purple-300 flex items-center gap-2">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                          </svg>
+                          PoT Mode ON
+                        </span>
+                      </div>
+                    )}
+                    
+                    {/* 对话记录 */}
+                    {isExpanded.map((entry, idx) => (
+                      <motion.div
+                        key={idx}
+                        initial={{ opacity: 0, x: entry.role === 'user' ? -20 : 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        className={`max-w-[75%] px-4 py-2 rounded-xl shadow-sm text-sm whitespace-pre-wrap ${
+                          getPoTBubbleStyles(entry.role, isPoTMode)
+                        } ${
+                          entry.role === 'user' 
+                            ? 'self-start text-left ml-2' 
+                            : 'self-end text-right mr-2'
+                        }`}
+                      >
+                        <div className="text-xs font-medium text-gray-600 dark:text-gray-300 mb-1 flex items-center gap-1">
+                          {entry.role === 'user' ? (
+                            <>
+                              {getLinearIcons().user}
+                              <span>学生提问</span>
+                            </>
+                          ) : (
+                            <>
+                              {getLinearIcons().ai}
+                              <span>{getModelDisplayName(entry.model, entry.potMode || isPoTMode)}</span>
+                            </>
+                          )}
+                        </div>
+                        {entry.content}
+                      </motion.div>
+                    ))}
+                  </>
+                );
+              })()}
             </motion.div>
           )}
         </AnimatePresence>
@@ -508,7 +553,10 @@ const TeacherTaskSubmissions = () => {
                   {s.aigcLogId && (
                     <div>
                       <p className="font-semibold text-gray-700 dark:text-gray-300 mt-4 mb-1">
-                        🤖 AIGC 原始记录:
+                        <div className="flex items-center gap-2">
+                          {getLinearIcons().conversation}
+                          <span>AIGC交互原始记录</span>
+                        </div>
                       </p>
                       {renderAIGCLog(s.aigcLogId)}
                     </div>
