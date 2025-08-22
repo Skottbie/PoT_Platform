@@ -46,7 +46,7 @@
   --pot-texture-opacity: 0.06;
 }
 
-/* 🌙 系统深色模式偏好检测（回退方案） */
+/* 🌙 系统深色模式偏好检测（回退方案） 
 @media (prefers-color-scheme: dark) {
   :root {
     --pot-primary: #A78BFA;
@@ -61,6 +61,7 @@
     --pot-texture-opacity: 0.06;
   }
 }
+  */
 
 /* ========================================
    PoT Mode 聊天容器样式
@@ -442,7 +443,7 @@
 }
 
 .pot-first-guide-feature-text {
-  color: rgba(212, 165, 116, 0.8) !important;
+  color: rgba(73, 33, 14, 0.8) !important;
 }
 
 .dark .pot-first-guide-feature-text {
@@ -923,4 +924,258 @@
 
 .pot-first-guide-container.loaded {
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+}
+
+/* ========================================
+   PoT Mode 关键问题修复补丁
+   请将此代码追加到 potMode.css 文件末尾
+   ======================================== */
+
+/* 🔧 修复1: 解决PoTFirstTimeGuide闪烁问题 */
+/* 核心原因：移除冲突的媒体查询，使用更精确的选择器 */
+
+/* 重新定义CSS变量 - 移除媒体查询冲突 */
+:root {
+  /* Light Mode - 淡玫瑰金色系（保持原有） */
+  --pot-primary: #D4A574;
+  --pot-primary-dark: #B8956A;
+  --pot-primary-light: #E8C4A0;
+  --pot-border-color: rgba(212, 165, 116, 0.25);
+  --pot-glow-color: rgba(212, 165, 116, 0.15);
+  --pot-bg-texture: rgba(212, 165, 116, 0.12); /* 增加透明度 */
+  --pot-bg-gradient-start: rgba(248, 245, 240, 0.7);
+  --pot-bg-gradient-mid: rgba(252, 248, 242, 0.5);
+  --pot-bg-gradient-end: rgba(250, 246, 240, 0.7);
+  --pot-glow-duration: 2.5s;
+  --pot-texture-opacity: 0.08; /* 增加透明度 */
+}
+
+/* Dark Mode - 仅在.dark类存在时应用 */
+.dark {
+  --pot-primary: #A78BFA;
+  --pot-primary-dark: #8B5CF6;
+  --pot-primary-light: #C4B5FD;
+  --pot-border-color: rgba(167, 139, 250, 0.3);
+  --pot-glow-color: rgba(167, 139, 250, 0.2);
+  --pot-bg-texture: rgba(167, 139, 250, 0.12);
+  --pot-bg-gradient-start: rgba(30, 27, 75, 0.4);
+  --pot-bg-gradient-mid: rgba(24, 24, 27, 0.2);
+  --pot-bg-gradient-end: rgba(39, 39, 42, 0.4);
+  --pot-texture-opacity: 0.10;
+}
+
+/* 🚫 完全移除系统媒体查询 - 这是冲突的根源 */
+/* 注释掉或删除这段代码：
+@media (prefers-color-scheme: dark) {
+  :root { ... }
+}
+*/
+
+/* 🔧 修复2: PoTFirstTimeGuide初始状态强制修复 */
+.pot-first-guide-container {
+  /* 强制使用具体颜色值，避免变量延迟 */
+  background-color: rgba(248, 245, 240, 0.95) !important;
+  border: 2px solid rgba(212, 165, 116, 0.25) !important;
+  backdrop-filter: blur(8px) !important;
+  
+  /* 完全禁用过渡直到loaded */
+  transition: none !important;
+  animation: none !important;
+}
+
+.dark .pot-first-guide-container {
+  background-color: rgba(17, 24, 39, 0.95) !important;
+  border: 2px solid rgba(167, 139, 250, 0.3) !important;
+}
+
+/* 强制按钮初始颜色 */
+.pot-first-guide-container .pot-first-guide-button {
+  background: linear-gradient(135deg, #D4A574, #B8956A) !important;
+  color: white !important;
+  border: none !important;
+  transition: none !important;
+}
+
+.dark .pot-first-guide-container .pot-first-guide-button {
+  background: linear-gradient(135deg, #A78BFA, #8B5CF6) !important;
+}
+
+/* 特性区域强制颜色 */
+.pot-first-guide-feature-bg {
+  background: rgba(212, 165, 116, 0.08) !important;
+  border-color: rgba(212, 165, 116, 0.15) !important;
+  transition: none !important;
+}
+
+.dark .pot-first-guide-feature-bg {
+  background: rgba(167, 139, 250, 0.08) !important;
+  border-color: rgba(167, 139, 250, 0.15) !important;
+}
+
+.pot-first-guide-feature-text {
+  color: rgba(212, 165, 116, 0.85) !important;
+}
+
+.dark .pot-first-guide-feature-text {
+  color: rgba(167, 139, 250, 0.85) !important;
+}
+
+/* 发光边框强制初始状态 */
+.pot-first-guide-container .absolute.inset-0 {
+  background: linear-gradient(
+    45deg, 
+    rgba(212, 165, 116, 0.15) 0%, 
+    rgba(251, 146, 60, 0.15) 50%, 
+    rgba(212, 165, 116, 0.15) 100%
+  ) !important;
+  filter: blur(4px) !important;
+  transition: none !important;
+}
+
+.dark .pot-first-guide-container .absolute.inset-0 {
+  background: linear-gradient(
+    45deg, 
+    rgba(167, 139, 250, 0.15) 0%, 
+    rgba(196, 181, 253, 0.15) 50%, 
+    rgba(167, 139, 250, 0.15) 100%
+  ) !important;
+}
+
+/* 🔧 修复3: 增强背景纹理显示 */
+.pot-mode-active::before {
+  /* 强制显示并增强可见性 */
+  content: '' !important;
+  display: block !important;
+  position: absolute !important;
+  inset: 0 !important;
+  pointer-events: none !important;
+  z-index: -1 !important;
+  border-radius: inherit !important;
+  
+  /* 增强的神经网络纹理 */
+  background-image: 
+    /* 神经元节点 - 增大尺寸提高可见性 */
+    radial-gradient(circle at 20% 20%, var(--pot-bg-texture) 2px, transparent 3px),
+    radial-gradient(circle at 80% 20%, var(--pot-bg-texture) 1.5px, transparent 2.5px),
+    radial-gradient(circle at 40% 40%, var(--pot-bg-texture) 1.8px, transparent 2.8px),
+    radial-gradient(circle at 70% 70%, var(--pot-bg-texture) 1.3px, transparent 2.3px),
+    radial-gradient(circle at 80% 80%, var(--pot-bg-texture) 2.2px, transparent 3.2px),
+    radial-gradient(circle at 20% 80%, var(--pot-bg-texture) 1.2px, transparent 2.2px),
+    
+    /* 连接线 - 增强可见性 */
+    linear-gradient(135deg, transparent 47%, var(--pot-bg-texture) 48%, var(--pot-bg-texture) 52%, transparent 53%),
+    linear-gradient(45deg, transparent 47%, var(--pot-bg-texture) 48%, var(--pot-bg-texture) 52%, transparent 53%),
+    linear-gradient(90deg, transparent 48%, var(--pot-bg-texture) 49%, var(--pot-bg-texture) 51%, transparent 52%),
+    linear-gradient(0deg, transparent 48%, var(--pot-bg-texture) 49%, var(--pot-bg-texture) 51%, transparent 52%) !important;
+  
+  background-size: 
+    /* 调整大小增强显示 */
+    70px 70px, 50px 50px, 60px 60px, 80px 80px, 65px 65px, 75px 75px,
+    40px 40px, 45px 45px, 30px 30px, 35px 35px !important;
+  
+  background-position: 
+    0 0, 25px 15px, 40px 25px, 15px 50px, 30px 65px, 55px 80px,
+    0 0, 20px 20px, 8px 35px, 28px 8px !important;
+  
+  /* 增加透明度 - Light Mode */
+  opacity: var(--pot-texture-opacity) !important;
+  
+  /* 微妙动画 */
+  animation: potTextureShiftEnhanced 25s ease-in-out infinite !important;
+}
+
+/* Dark Mode 特别增强 */
+.dark .pot-mode-active::before {
+  opacity: calc(var(--pot-texture-opacity) * 1.2) !important;
+}
+
+/* 强制桌面端显示 */
+@media (min-width: 768px) {
+  .pot-mode-active::before {
+    display: block !important;
+    visibility: visible !important;
+    opacity: var(--pot-texture-opacity) !important;
+  }
+  
+  .dark .pot-mode-active::before {
+    opacity: calc(var(--pot-texture-opacity) * 1.2) !important;
+  }
+}
+
+/* 移动端也要显示 */
+@media (max-width: 767px) {
+  .pot-mode-active::before {
+    opacity: calc(var(--pot-texture-opacity) * 1.5) !important;
+    background-size: 
+      50px 50px, 35px 35px, 40px 40px, 55px 55px, 45px 45px, 52px 52px,
+      25px 25px, 30px 30px, 20px 20px, 22px 22px !important;
+  }
+  
+  .dark .pot-mode-active::before {
+    opacity: calc(var(--pot-texture-opacity) * 1.8) !important;
+  }
+}
+
+/* 增强动画 */
+@keyframes potTextureShiftEnhanced {
+  0%, 100% {
+    transform: translate(0, 0);
+    opacity: var(--pot-texture-opacity);
+  }
+  33% {
+    transform: translate(1px, -1px);
+    opacity: calc(var(--pot-texture-opacity) * 0.8);
+  }
+  66% {
+    transform: translate(-1px, 1px);
+    opacity: calc(var(--pot-texture-opacity) * 1.2);
+  }
+}
+
+/* 🔧 修复4: 确保组件加载完成后的过渡效果 */
+.pot-first-guide-container.loaded {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.pot-first-guide-container.loaded *,
+.pot-first-guide-container.loaded::before,
+.pot-first-guide-container.loaded::after {
+  transition: all 0.2s ease !important;
+}
+
+.pot-first-guide-container.loaded .pot-first-guide-button:hover {
+  transform: translateY(-1px) scale(1.02) !important;
+  box-shadow: 0 6px 20px rgba(212, 165, 116, 0.4) !important;
+}
+
+.dark .pot-first-guide-container.loaded .pot-first-guide-button:hover {
+  box-shadow: 0 6px 20px rgba(167, 139, 250, 0.4) !important;
+}
+
+/* 🔧 修复5: 防御性样式 - 确保所有情况下都正确显示 */
+.pot-mode-active {
+  /* 确保容器本身正确显示 */
+  isolation: isolate !important;
+  position: relative !important;
+}
+
+/* 强制覆盖任何可能的冲突样式 */
+.pot-mode-active::before {
+  will-change: opacity, transform !important;
+  backface-visibility: hidden !important;
+  transform: translateZ(0) !important;
+}
+
+/* 高对比度模式适配 */
+@media (prefers-contrast: high) {
+  .pot-mode-active::before {
+    opacity: calc(var(--pot-texture-opacity) * 2) !important;
+  }
+}
+
+/* 减少动画偏好适配 */
+@media (prefers-reduced-motion: reduce) {
+  .pot-mode-active::before {
+    animation: none !important;
+  }
 }
