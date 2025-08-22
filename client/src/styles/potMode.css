@@ -367,12 +367,18 @@
   background: linear-gradient(135deg, var(--pot-primary), var(--pot-primary-dark)) !important;
   border-color: var(--pot-primary) !important;
   box-shadow: 0 4px 12px rgba(212, 165, 116, 0.3) !important;
+  box-shadow: 
+  0 4px 12px rgba(212, 165, 116, 0.3),
+  inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
 }
 
 .pot-power-button-off {
-  /* 统一的OFF状态 */
-  background: #9CA3AF !important;
-  border-color: #9CA3AF !important;
+  /* 提升版OFF状态 - 更有质感 */
+  background: linear-gradient(135deg, #E5E7EB, #D1D5DB) !important;
+  border-color: #D1D5DB !important;
+  box-shadow: 
+    inset 0 2px 4px rgba(0, 0, 0, 0.1),
+    0 1px 2px rgba(0, 0, 0, 0.05) !important;
 }
 
 .dark .pot-power-button-on {
@@ -380,6 +386,9 @@
   background: linear-gradient(135deg, var(--pot-primary), var(--pot-primary-dark)) !important;
   border-color: var(--pot-primary) !important;
   box-shadow: 0 4px 12px rgba(167, 139, 250, 0.4) !important;
+  box-shadow: 
+  0 4px 12px rgba(212, 165, 116, 0.3),
+  inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
 }
 
 .dark .pot-power-button-off {
@@ -911,6 +920,7 @@
   --pot-bg-gradient-end: rgba(250, 246, 240, 0.7);
   --pot-glow-duration: 2.5s;
   --pot-texture-opacity: 0.08; /* 增加透明度 */
+
 }
 
 /* Dark Mode - 仅在.dark类存在时应用 */
@@ -925,6 +935,7 @@
   --pot-bg-gradient-mid: rgba(24, 24, 27, 0.2);
   --pot-bg-gradient-end: rgba(39, 39, 42, 0.4);
   --pot-texture-opacity: 0.10;
+
 }
 
 /* 🚫 完全移除系统媒体查询 - 这是冲突的根源 */

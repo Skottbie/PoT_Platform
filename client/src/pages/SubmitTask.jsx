@@ -23,12 +23,12 @@ import DraftSaveIndicator from '../components/DraftSaveIndicator';
 import BeforeUnloadDialog from '../components/BeforeUnloadDialog';
 import ReasoningDisplay from '../components/ReasoningDisplay';
 import ReasoningToggle from '../components/ReasoningToggle';
-// ===== 1. 新增导入语句 =====
 import { usePoTMode } from '../hooks/usePoTMode';
 import PoTPowerButton from '../components/PoTPowerButton';
 import PoTModeDialog from '../components/PoTModeDialog';
 import PoTFirstTimeGuide from '../components/PoTFirstTimeGuide';
 import '../styles/potMode.css';
+import { Lightbulb, BrainCircuit, BotMessageSquare, UserRound, Send } from 'lucide-react';
 
 SyntaxHighlighter.registerLanguage('javascript', javascript);
 SyntaxHighlighter.registerLanguage('python', python);
@@ -1811,7 +1811,7 @@ const getModelDisplayName = useCallback((modelValue, isPotMode = false) => {
                       // 🎯 用户消息 - 移动端和桌面端不同样式
                       <div className={isMobile ? 'max-w-[70%] min-w-0' : 'max-w-3xl min-w-0'}>
                         <div className={`text-xs text-gray-500 dark:text-gray-400 mb-1 flex items-center gap-1 justify-end`}>
-                          <span>👤</span>
+                          <span><UserRound className="w-4 h-4 text-blue-600 dark:text-blue-400" strokeWidth={1.5} /></span>
                           <span>你</span>
                         </div>
                                                 
@@ -1835,7 +1835,9 @@ const getModelDisplayName = useCallback((modelValue, isPotMode = false) => {
                       <div className={isMobile ? 'w-full' : 'max-w-3xl'}>
                         {!isMobile && (
                           <div className="text-xs text-gray-500 dark:text-gray-400 mb-1 flex items-center gap-1">
-                            <span>{msg.potMode ? '🧠' : '🤖'}</span>
+                            <span>{msg.potMode ? <BrainCircuit className={`${isMobile ? 'w-12 h-12' : 'w-16 h-16'} text-purple-600 dark:text-purple-400`} strokeWidth={1.5} />
+ :   <BotMessageSquare className="w-4 h-4 text-gray-600 dark:text-gray-400" strokeWidth={1.5} />
+}</span>
                             <span>
                               {getModelDisplayName(msg.model, msg.potMode)}
                             </span>
@@ -1871,7 +1873,9 @@ const getModelDisplayName = useCallback((modelValue, isPotMode = false) => {
                     <div className={isMobile ? 'py-2' : 'max-w-3xl'}>
                       {!isMobile && (
                         <div className="text-xs text-gray-500 dark:text-gray-400 mb-1 flex items-center gap-1">
-                        <span>{potEnabled ? '🧠' : '🤖'}</span>
+                        <span>{potEnabled ? <BrainCircuit className={`${isMobile ? 'w-12 h-12' : 'w-16 h-16'} text-purple-600 dark:text-purple-400`} strokeWidth={1.5} />
+ :   <BotMessageSquare className="w-4 h-4 text-gray-600 dark:text-gray-400" strokeWidth={1.5} />
+}</span>
                         <span>
                           {getModelDisplayName(model, potEnabled)}
                         </span>
@@ -2266,7 +2270,9 @@ const getModelDisplayName = useCallback((modelValue, isPotMode = false) => {
                   <div className="flex justify-between items-center mb-4">
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-lg flex items-center justify-center">
-                        <span className="text-white text-sm font-bold">💡</span>
+                        <span className="text-white text-sm font-bold">
+                          <Lightbulb className="w-5 h-5 text-purple-100 dark:text-purple-400" strokeWidth={1.5} />
+                        </span>
                       </div>
                       <div>
                         <label className="font-semibold text-gray-700 dark:text-gray-200">
@@ -2369,9 +2375,13 @@ const getModelDisplayName = useCallback((modelValue, isPotMode = false) => {
                             <div className={`text-xs text-gray-500 dark:text-gray-400 mb-1 flex items-center gap-1 ${
                               msg.role === 'user' ? 'justify-end' : 'justify-start'
                             }`}>
-                              <span>
-                                {msg.role === 'user' ? '👤' : '🤖'}
-                              </span>
+                              <div className="w-4 h-4 flex items-center justify-center">
+                                {msg.role === 'user' ? (
+                                  <UserRound className="w-4 h-4 text-blue-600 dark:text-blue-400" strokeWidth={1.5} />
+                                ) : (
+                                  <BotMessageSquare className="w-4 h-4 text-gray-600 dark:text-gray-400" strokeWidth={1.5} />
+                                )}
+                              </div>
                               <span>
                                 {msg.role === 'user' ? '你' : getModelDisplayName(msg.model, msg.potMode)}
                               </span>
@@ -2409,7 +2419,9 @@ const getModelDisplayName = useCallback((modelValue, isPotMode = false) => {
                           <div className="flex justify-start">
                             <div className="max-w-[80%]">
                               <div className="text-xs text-gray-500 dark:text-gray-400 mb-1 flex items-center gap-1">
-                            <span>{potEnabled ? '🧠' : '🤖'}</span>
+                            <span>{potEnabled ? <BrainCircuit className={`${isMobile ? 'w-12 h-12' : 'w-16 h-16'} text-purple-600 dark:text-purple-400`} strokeWidth={1.5} />
+ :   <BotMessageSquare className="w-4 h-4 text-gray-600 dark:text-gray-400" strokeWidth={1.5} />
+}</span>
                             <span>
                               {getModelDisplayName(model, potEnabled)}
                               </span>
@@ -2425,7 +2437,7 @@ const getModelDisplayName = useCallback((modelValue, isPotMode = false) => {
                                               {/* 🆕 DeepSeek延迟提示 */}
                                 {showDeepSeekTip && model === 'deepseek-r1-distill' && (
                                   <div className="text-xs text-blue-600 dark:text-blue-400 animate-fade-in">
-                                    🧠 DeepSeek思考模式正在深度分析，请稍候...
+                                    DeepSeek思考模式正在深度分析，请稍候...
                                   </div>
                                 )}
                                 </div>
