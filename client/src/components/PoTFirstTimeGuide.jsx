@@ -107,7 +107,7 @@ const PoTFirstTimeGuide = ({
                 💡
               </motion.div>
               <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 text-center">
-                PoT Mode ON.
+                PoT-Mode ON.
               </h3>
             </div>
 
@@ -177,7 +177,7 @@ const PoTFirstTimeGuide = ({
                 size={isMobile ? "md" : "md"}
                 className="pot-first-guide-button px-8"
                 >
-                开始使用 PoT Mode
+                开始使用 PoT-Mode.
                 </PrimaryButton>
             </div>
           </div>

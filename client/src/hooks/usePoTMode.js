@@ -203,14 +203,14 @@ export const usePoTMode = () => {
    * 获取输入框占位符文本
    */
   const getInputPlaceholder = useCallback(() => {
-    return potEnabled ? 'PoT Mode ON.' : '请输入消息...';
+    return potEnabled ? 'PoT-Mode ON.' : '请输入消息...';
   }, [potEnabled]);
 
   /**
    * 获取PoT状态显示文本
    */
   const getPoTStatusText = useCallback(() => {
-    return potEnabled ? 'PoT Mode ON' : '';
+    return potEnabled ? 'PoT-Mode beta ON.' : '';
   }, [potEnabled]);
 
   // 组件挂载时加载状态

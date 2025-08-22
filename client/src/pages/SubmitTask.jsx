@@ -1835,9 +1835,8 @@ const getModelDisplayName = useCallback((modelValue, isPotMode = false) => {
                       <div className={isMobile ? 'w-full' : 'max-w-3xl'}>
                         {!isMobile && (
                           <div className="text-xs text-gray-500 dark:text-gray-400 mb-1 flex items-center gap-1">
-                            <span>{msg.potMode ? <BrainCircuit className={`${isMobile ? 'w-12 h-12' : 'w-16 h-16'} text-purple-600 dark:text-purple-400`} strokeWidth={1.5} />
- :   <BotMessageSquare className="w-4 h-4 text-gray-600 dark:text-gray-400" strokeWidth={1.5} />
-}</span>
+<span><BotMessageSquare className="w-4 h-4 text-gray-600 dark:text-gray-400" strokeWidth={1.5} /></span>
+
                             <span>
                               {getModelDisplayName(msg.model, msg.potMode)}
                             </span>
@@ -1873,9 +1872,8 @@ const getModelDisplayName = useCallback((modelValue, isPotMode = false) => {
                     <div className={isMobile ? 'py-2' : 'max-w-3xl'}>
                       {!isMobile && (
                         <div className="text-xs text-gray-500 dark:text-gray-400 mb-1 flex items-center gap-1">
-                        <span>{potEnabled ? <BrainCircuit className={`${isMobile ? 'w-12 h-12' : 'w-16 h-16'} text-purple-600 dark:text-purple-400`} strokeWidth={1.5} />
- :   <BotMessageSquare className="w-4 h-4 text-gray-600 dark:text-gray-400" strokeWidth={1.5} />
-}</span>
+                          <span><BotMessageSquare className="w-4 h-4 text-gray-600 dark:text-gray-400" strokeWidth={1.5} /></span>
+
                         <span>
                           {getModelDisplayName(model, potEnabled)}
                         </span>
@@ -2419,9 +2417,8 @@ const getModelDisplayName = useCallback((modelValue, isPotMode = false) => {
                           <div className="flex justify-start">
                             <div className="max-w-[80%]">
                               <div className="text-xs text-gray-500 dark:text-gray-400 mb-1 flex items-center gap-1">
-                            <span>{potEnabled ? <BrainCircuit className={`${isMobile ? 'w-12 h-12' : 'w-16 h-16'} text-purple-600 dark:text-purple-400`} strokeWidth={1.5} />
- :   <BotMessageSquare className="w-4 h-4 text-gray-600 dark:text-gray-400" strokeWidth={1.5} />
-}</span>
+                                <span><BotMessageSquare className="w-4 h-4 text-gray-600 dark:text-gray-400" strokeWidth={1.5} /></span>
+
                             <span>
                               {getModelDisplayName(model, potEnabled)}
                               </span>
