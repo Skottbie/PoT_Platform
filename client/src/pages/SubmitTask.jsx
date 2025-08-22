@@ -1871,9 +1871,9 @@ const getModelDisplayName = useCallback((modelValue, isPotMode = false) => {
                     <div className={isMobile ? 'py-2' : 'max-w-3xl'}>
                       {!isMobile && (
                         <div className="text-xs text-gray-500 dark:text-gray-400 mb-1 flex items-center gap-1">
-                        <span>{potMode ? '🧠' : '🤖'}</span>
+                        <span>{potEnabled ? '🧠' : '🤖'}</span>
                         <span>
-                          {getModelDisplayName(model, potMode)}
+                          {getModelDisplayName(model, potEnabled)}
                         </span>
                         </div>
                       )}
@@ -2409,9 +2409,9 @@ const getModelDisplayName = useCallback((modelValue, isPotMode = false) => {
                           <div className="flex justify-start">
                             <div className="max-w-[80%]">
                               <div className="text-xs text-gray-500 dark:text-gray-400 mb-1 flex items-center gap-1">
-                            <span>{potMode ? '🧠' : '🤖'}</span>
+                            <span>{potEnabled ? '🧠' : '🤖'}</span>
                             <span>
-                              {getModelDisplayName(model, potMode)}
+                              {getModelDisplayName(model, potEnabled)}
                               </span>
                               </div>
                               <div className="bg-white dark:bg-gray-700 rounded-xl rounded-bl-sm px-3 py-2 border border-gray-200 dark:border-gray-600">
