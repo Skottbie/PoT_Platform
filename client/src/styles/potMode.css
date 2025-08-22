@@ -475,13 +475,7 @@
    纹理显示修复
    ======================================== */
 
-/* 🔧 强制纹理显示 - 解决所有平台显示问题 */
-.pot-mode-active {
-  /* 确保容器层级 */
-  position: relative !important;
-  z-index: 1 !important;
-  isolation: isolate !important;
-}
+
 
 .pot-mode-active::before {
   /* 强制纹理层显示 */
@@ -602,11 +596,6 @@
   box-sizing: border-box !important;
 }
 
-.pot-mode-active * {
-  /* 确保所有子元素不会超出容器 */
-  max-width: 100% !important;
-  box-sizing: border-box !important;
-}
 
 /* 🔧 2. 修复PoTFirstTimeGuide颜色闪烁问题 */
 .pot-first-guide-container {
@@ -758,46 +747,20 @@
   opacity: 0.16 !important;
 }
 
-/* ==========================================
-   PoT Mode 问题修复 - 追加到 potMode.css
-   ========================================== */
-
-/* 🔧 问题1: 桌面端全屏聊天容器POT MODE居中修复 */
-/* 确保POT模式下桌面端的消息布局保持居中 */
-@media (min-width: 1024px) {
-  /* 关键修复：针对全屏模式下的主要消息容器 */
-  .pot-mode-active > div:not(.absolute) {
-    max-width: 56rem !important;  /* 对应 max-w-4xl */
-    margin-left: auto !important;
-    margin-right: auto !important;
-  }
-  
-  /* 更具体的选择器：针对包含消息的div */
-  .pot-mode-active > div[class*="px-4"],
-  .pot-mode-active > div[class*="py-6"] {
-    max-width: 56rem !important;
-    margin-left: auto !important;
-    margin-right: auto !important;
-  }
+.pot-mode-active {
+  /* 只对聊天容器本身防止横向滚动 */
+  overflow-x: hidden !important;
+  box-sizing: border-box !important;
+  position: relative;
 }
 
-/* 🎯 桌面端专用：确保不影响移动端 */
-@media (min-width: 768px) and (max-width: 1023px) {
-  /* 平板端也保持居中 */
-  .pot-mode-active > div:not(.absolute) {
-    max-width: 48rem !important;
-    margin-left: auto !important;
-    margin-right: auto !important;
-  }
-}
-
-/* 🔒 确保移动端不受影响 */
-@media (max-width: 767px) {
-  .pot-mode-active > div {
-    max-width: 100% !important;
-    margin-left: inherit !important;
-    margin-right: inherit !important;
-  }
+/* 只对特定容易导致横向滚动的内容元素限制宽度 */
+.pot-mode-active pre,
+.pot-mode-active table,
+.pot-mode-active img,
+.pot-mode-active iframe,
+.pot-mode-active video {
+  max-width: 100% !important;
 }
 
 /* 🔧 问题2: PoTFirstTimeGuide颜色闪烁修复 */
@@ -1152,12 +1115,6 @@
   box-shadow: 0 6px 20px rgba(167, 139, 250, 0.4) !important;
 }
 
-/* 🔧 修复5: 防御性样式 - 确保所有情况下都正确显示 */
-.pot-mode-active {
-  /* 确保容器本身正确显示 */
-  isolation: isolate !important;
-  position: relative !important;
-}
 
 /* 强制覆盖任何可能的冲突样式 */
 .pot-mode-active::before {
