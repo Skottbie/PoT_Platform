@@ -921,6 +921,16 @@
   --pot-glow-duration: 2.5s;
   --pot-texture-opacity: 0.08; /* 增加透明度 */
 
+  /* 🎨 新增：奢华配色系统 */
+  --luxury-primary: #D4A574;
+  --luxury-dark: #B8956A;
+  --luxury-light: #E8C4A0;
+  --luxury-accent: #C9966B;
+  --luxury-bg-start: rgba(248, 245, 240, 0.8);
+  --luxury-bg-mid: rgba(252, 248, 242, 0.6);
+  --luxury-bg-end: rgba(250, 246, 240, 0.8);
+  --luxury-border: rgba(212, 165, 116, 0.3);
+  --luxury-glow: rgba(212, 165, 116, 0.15);
 }
 
 /* Dark Mode - 仅在.dark类存在时应用 */
@@ -1146,4 +1156,49 @@
   .pot-mode-active::before {
     animation: none !important;
   }
+}
+
+/* ========================================
+   🎨 奢华配色实用类
+   ======================================== */
+
+.luxury-gradient-bg {
+  background: linear-gradient(135deg, var(--luxury-bg-start), var(--luxury-bg-mid), var(--luxury-bg-end)) !important;
+}
+
+.luxury-border {
+  border-color: var(--luxury-border) !important;
+}
+
+.luxury-glow {
+  box-shadow: 0 0 0 0.5px var(--luxury-glow), 0 0 12px var(--luxury-glow) !important;
+}
+
+.luxury-text-gradient {
+  background: linear-gradient(45deg, var(--luxury-primary), var(--luxury-dark));
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  font-weight: 600;
+  letter-spacing: 0.025em;
+}
+
+/* PoT Mode 激活时的特殊配色 */
+.pot-mode-luxury .pot-enhanced-element {
+  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* 🎯 全屏按钮PoT模式配色覆盖 */
+.pot-primary-override {
+  background: linear-gradient(to right, #F59E0B, #D97706) !important;
+  box-shadow: 0 4px 6px -1px rgba(245, 158, 11, 0.25) !important;
+}
+
+.pot-primary-override:hover {
+  box-shadow: 0 10px 15px -3px rgba(245, 158, 11, 0.3) !important;
+}
+
+.pot-primary-override::before {
+  background: linear-gradient(to right, #FBBF24, #F59E0B) !important;
 }

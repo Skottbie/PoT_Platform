@@ -93,7 +93,11 @@ const PoTPowerButton = ({
       {/* 左侧标签文字（仅非全屏模式 + showLabel 时显示） */}
       {mode === 'normal' && showLabel && (
         <div className="flex items-center gap-2">
-          <BrainCircuit className="w-5 h-5 text-purple-600 dark:text-purple-400" strokeWidth={1.5} />
+          <BrainCircuit className={`w-5 h-5 strokeWidth={1.5} ${
+            potEnabled 
+              ? 'text-amber-600 dark:text-purple-400' 
+              : 'text-purple-600 dark:text-purple-400'
+          }`} />
           <span className={`${getLabelClass()} ${potEnabled ? 'pot-mode-label-text' : ''}`}>
             PoT-Mode
           </span>

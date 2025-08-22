@@ -29,6 +29,7 @@ import PoTModeDialog from '../components/PoTModeDialog';
 import PoTFirstTimeGuide from '../components/PoTFirstTimeGuide';
 import '../styles/potMode.css';
 import { Lightbulb, BrainCircuit, BotMessageSquare, UserRound, Send } from 'lucide-react';
+import EnhancedButton from '../components/EnhancedButton';
 
 SyntaxHighlighter.registerLanguage('javascript', javascript);
 SyntaxHighlighter.registerLanguage('python', python);
@@ -1628,7 +1629,11 @@ const getModelDisplayName = useCallback((modelValue, isPotMode = false) => {
                   className={`transition-all duration-200 active:scale-95 ${
                     isMobile 
                       ? 'w-9 h-9 bg-transparent hover:bg-black/5 dark:hover:bg-white/5 active:bg-black/8 dark:active:bg-white/8 rounded-full flex items-center justify-center border-0 outline-none focus:outline-none focus:ring-0 aigc-native-button'
-                      : 'w-12 h-10 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center hover:shadow-lg'
+                      : `w-10 h-10 rounded-full flex items-center justify-center hover:shadow-lg ${
+                          potEnabled && !document.documentElement.classList.contains('dark')
+                            ? 'bg-gradient-to-br from-amber-500 to-orange-600' 
+                            : 'bg-gradient-to-br from-purple-500 to-indigo-600'
+                        }`
                   }`}
                   title="调整字号"
                 >
@@ -2264,12 +2269,24 @@ const getModelDisplayName = useCallback((modelValue, isPotMode = false) => {
 
               {/* AIGC 对话区域 - 非全屏模式 */}
               {task.allowAIGC && (
-                <div className="bg-gradient-to-r from-purple-50 via-indigo-50 to-blue-50 dark:from-purple-900/20 dark:via-indigo-900/20 dark:to-blue-900/20 rounded-xl border border-purple-200/50 dark:border-purple-700/30 p-4">
+                <div className={`rounded-xl p-4 ${
+                  potEnabled 
+                    ? 'bg-gradient-to-r from-amber-50/80 via-orange-50/60 to-rose-50/80 border border-amber-200/40 dark:from-purple-900/20 dark:via-indigo-900/20 dark:to-blue-900/20 dark:border-purple-700/30'
+                    : 'bg-gradient-to-r from-purple-50 via-indigo-50 to-blue-50 dark:from-purple-900/20 dark:via-indigo-900/20 dark:to-blue-900/20 border border-purple-200/50 dark:border-purple-700/30'
+                }`}>
                   <div className="flex justify-between items-center mb-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-lg flex items-center justify-center">
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                        potEnabled && !document.documentElement.classList.contains('dark') 
+                          ? 'bg-gradient-to-br from-amber-500 to-orange-600' 
+                          : 'bg-gradient-to-br from-purple-500 to-indigo-600'
+                      }`}>
                         <span className="text-white text-sm font-bold">
-                          <Lightbulb className="w-5 h-5 text-purple-100 dark:text-purple-400" strokeWidth={1.5} />
+                          <Lightbulb className={`w-5 h-5 strokeWidth={1.5} ${
+                            potEnabled 
+                              ? 'text-amber-100 dark:text-amber-300' 
+                              : 'text-purple-100 dark:text-purple-400'
+                          }`} />
                         </span>
                       </div>
                       <div>
@@ -2281,7 +2298,6 @@ const getModelDisplayName = useCallback((modelValue, isPotMode = false) => {
                         )}
                       </div>
                     </div>
-
                     <PrimaryButton
                       type="button"
                       size="sm"
@@ -2290,6 +2306,7 @@ const getModelDisplayName = useCallback((modelValue, isPotMode = false) => {
                         setIsFullscreen(true);
                       }}
                       icon="⛶"
+                      className={potEnabled && !document.documentElement.classList.contains('dark') ? 'pot-primary-override' : ''}
                     >
                       全屏
                     </PrimaryButton>

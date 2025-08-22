@@ -82,7 +82,7 @@ const EnhancedButton = ({
       focus:ring-blue-500/50 border-0
       hover:shadow-mobile-lg hover:-translate-y-0.5
     `,
-    
+
     secondary: glass ? `
       glass backdrop-blur-xl text-gray-700 dark:text-gray-200 font-medium
       border border-white/20 dark:border-gray-700/30
