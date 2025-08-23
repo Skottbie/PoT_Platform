@@ -1,6 +1,5 @@
-// client/src/components/ProtectedLayout.jsx - 修复主题同步冲突
-
-import { useEffect, useState, useCallback, useRef } from 'react';
+// client/src/components/ProtectedLayout.jsx - 配合修复版本
+import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/axiosInstance';
 import ResponsiveNavbar from './ResponsiveNavbar';
@@ -12,12 +11,8 @@ const ProtectedLayout = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
-  const { syncUserTheme, theme } = useTheme();
-  
-  // 🔧 使用 ref 来标记是否是初始加载，避免重复同步主题
-  const isInitialLoad = useRef(true);
+  const { syncUserTheme } = useTheme();
 
-  // 清理认证数据并跳转
   const clearAuthAndRedirect = useCallback(() => {
     localStorage.removeItem('token');
     localStorage.removeItem('role');
@@ -25,7 +20,6 @@ const ProtectedLayout = ({ children }) => {
     navigate('/', { replace: true });
   }, [navigate]);
 
-  // 获取用户信息
   const fetchUser = useCallback(async () => {
     try {
       setError(null);
@@ -33,21 +27,22 @@ const ProtectedLayout = ({ children }) => {
       const userData = res.data;
       setUser(userData);
       
-      // 🔧 只在初始加载时同步用户主题偏好，避免后续更新冲突
-      if (isInitialLoad.current && userData.preferences?.theme) {
-        console.log('Initial theme sync:', userData.preferences.theme);
+      if (userData.preferences?.theme) {
         syncUserTheme(userData.preferences.theme);
-        isInitialLoad.current = false;
       }
     } catch (err) {
       console.error('获取用户信息失败:', err);
       
       if (err.response?.status === 401) {
-        // 认证失败，清理数据并跳转
+        // 🎯 立即处理401错误，不再等待
         setError('登录已过期，正在跳转到登录页...');
-        setTimeout(clearAuthAndRedirect, 1000);
+        // 减少延迟，立即跳转
+        setTimeout(clearAuthAndRedirect, 500);
+      } else if (err.code === 'ECONNABORTED' || err.message.includes('timeout')) {
+        // 超时错误
+        setError('网络连接超时，请检查网络后重试');
       } else {
-        // 网络错误，允许重试
+        // 其他网络错误
         setError('网络连接失败，请检查网络后重试');
       }
     } finally {
@@ -55,23 +50,17 @@ const ProtectedLayout = ({ children }) => {
     }
   }, [clearAuthAndRedirect, syncUserTheme]);
 
-  // 🔧 用户信息更新回调 - 不触发主题同步
   const handleUserUpdate = useCallback((updatedUser) => {
-    console.log('User updated, but not syncing theme to avoid conflicts');
     setUser(updatedUser);
-    // 🔧 关键：不在这里同步主题，让设置页面自己管理主题状态
   }, []);
 
-  // 重试处理
   const handleRetry = useCallback(() => {
     setLoading(true);
     setError(null);
     fetchUser();
   }, [fetchUser]);
 
-  // 初始化
   useEffect(() => {
-    // 检查是否有token
     const token = localStorage.getItem('token');
     if (!token) {
       clearAuthAndRedirect();
@@ -80,13 +69,13 @@ const ProtectedLayout = ({ children }) => {
 
     fetchUser();
 
-    // 设置5秒超时
+    // 🔧 修复：增加超时时间，但主要依赖axios层面的立即失败
     const timeoutId = setTimeout(() => {
       if (loading) {
         setLoading(false);
         setError('连接超时，请检查网络连接');
       }
-    }, 5000);
+    }, 20000); // 增加到20秒，因为我们现在有立即失败机制
 
     return () => clearTimeout(timeoutId);
   }, [fetchUser, clearAuthAndRedirect, loading]);
@@ -96,7 +85,6 @@ const ProtectedLayout = ({ children }) => {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center space-y-6 p-8">
-          {/* 加载动画 */}
           <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto shadow-lg">
             <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
           </div>
@@ -119,7 +107,6 @@ const ProtectedLayout = ({ children }) => {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4">
         <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 text-center border border-gray-200 dark:border-gray-700">
-          {/* 错误图标 */}
           <div className="w-16 h-16 bg-gradient-to-br from-red-100 to-red-200 dark:from-red-900/30 dark:to-red-800/20 rounded-full flex items-center justify-center mx-auto mb-6">
             <svg className="w-10 h-10 text-red-500 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
@@ -135,7 +122,6 @@ const ProtectedLayout = ({ children }) => {
             </p>
           </div>
           
-          {/* 操作按钮 */}
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             {!error.includes('登录已过期') && (
               <Button
@@ -155,7 +141,6 @@ const ProtectedLayout = ({ children }) => {
             </Button>
           </div>
           
-          {/* 网络错误提示 */}
           {error.includes('网络') && (
             <p className="mt-6 text-xs text-gray-500 dark:text-gray-400">
               💡 提示：请检查网络连接或稍后再试
