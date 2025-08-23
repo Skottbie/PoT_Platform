@@ -6,12 +6,34 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Button from '../components/Button';
 //import MobileCard, { TaskCard } from '../components/MobileCard';
 import { TaskCard } from '../components/EnhancedMobileCard';
-import { PrimaryButton, SecondaryButton, WarningButton, DangerButton } from '../components/EnhancedButton';
+import { PrimaryButton, SecondaryButton, WarningButton, DangerButton, GhostButton  } from '../components/EnhancedButton';
 import PullToRefreshContainer from '../components/PullToRefreshContainer';
 import useAutoRefresh from '../hooks/useAutoRefresh';
 import toast from 'react-hot-toast';
 import { getGreeting } from '../utils/greetings';
 import NicknamePrompt from '../components/NicknamePrompt';
+
+import { 
+  ClipboardList,    // 📋 替换
+  Tag,              // 📂 替换  
+  CloudUpload,      // 📝 替换 (云上传)
+  Bot,              // 🤖 替换
+  Clock,            // ⏰ 替换
+  Archive,          // 📦 替换
+  CheckCircle,      // ✅替换
+  AlertTriangle,    // ⚠️ 替换
+  X,                // ❌ 替换
+  Calendar,         // 📅 替换
+  Timer,            // 🔥 替换 (计时器表示紧急)
+  Eye,              // 👀 替换
+  Send,             // 📤 替换
+  BookOpen,         // 📚 替换
+  MessageCircle,    // 💬 替换
+  Star,             // ⭐ 替换
+  Plus,             // ➕ 替换
+  FileText,         // 📋 在某些上下文中替换
+  Clock3            // 用于开发环境的时间显示
+} from 'lucide-react';
 
 
 
@@ -200,16 +222,18 @@ const StudentDashboard = () => {
       if (task.submitted) {
         return {
           status: 'archived_submitted',
-          text: '📦 已归档（已提交）',
+          text: '已归档（已提交）',
           color: 'text-gray-600 dark:text-gray-400',
-          canSubmit: false
+          canSubmit: false,
+          icon: <Archive className="w-4 h-4" />
         };
       } else {
         return {
           status: 'archived_not_submitted',
-          text: '📦 已归档（未提交）',
+          text: '已归档（未提交）',
           color: 'text-gray-600 dark:text-gray-400',
-          canSubmit: false
+          canSubmit: false,
+          icon: <Archive className="w-4 h-4" />
         };
       }
     }
@@ -217,9 +241,10 @@ const StudentDashboard = () => {
     if (task.submitted) {
       return {
         status: 'submitted',
-        text: '✅ 已提交',
+        text: '已提交',
         color: 'text-green-600 dark:text-green-400',
-        canSubmit: false
+        canSubmit: false,
+        icon: <CheckCircle className="w-4 h-4" />
       };
     }
 
@@ -227,16 +252,18 @@ const StudentDashboard = () => {
       if (task.allowLateSubmission) {
         return {
           status: 'late',
-          text: '⚠️ 已逾期（可提交）',
+          text: '已逾期（可提交）',
           color: 'text-orange-600 dark:text-orange-400',
-          canSubmit: true
+          canSubmit: true,
+          icon: <AlertTriangle className="w-4 h-4" />
         };
       } else {
         return {
           status: 'expired',
-          text: '❌ 已截止',
+          text: '已截止',
           color: 'text-red-600 dark:text-red-400',
-          canSubmit: false
+          canSubmit: false,
+          icon: <X className="w-4 h-4" />
         };
       }
     }
@@ -249,23 +276,26 @@ const StudentDashboard = () => {
     if (days > 1) {
       return {
         status: 'normal',
-        text: `📅 还有${days}天`,
-        color: 'text-blue-600 dark:text-blue-400',
-        canSubmit: true
+        text: `还有${days}天`,
+        color: 'text-green-600 dark:text-green-400',
+        canSubmit: true,
+        icon: <Calendar className="w-4 h-4" />
       };
-    } else if (hours > 2) {
+    } else if (hours > 1) {
       return {
         status: 'warning',
-        text: `⏰ 还有${hours}小时`,
+        text: `还有${hours}小时`,
         color: 'text-yellow-600 dark:text-yellow-400',
-        canSubmit: true
+        canSubmit: true,
+        icon: <Clock className="w-4 h-4" />
       };
     } else {
       return {
         status: 'urgent',
-        text: `🔥 还有${minutes}分钟`,
+        text: `还有${minutes}分钟`,
         color: 'text-red-600 dark:text-red-400',
-        canSubmit: true
+        canSubmit: true,
+        icon: <Timer className="w-4 h-4" />
       };
     }
   }, []);
@@ -303,6 +333,27 @@ const StudentDashboard = () => {
     });
   }, []);
 
+  const formatMobileDeadline = useMemo(() => (deadline) => {
+    const date = new Date(deadline);
+    const now = new Date();
+    const isToday = date.toDateString() === now.toDateString();
+    const isTomorrow = date.toDateString() === new Date(now.getTime() + 86400000).toDateString();
+    
+    if (isToday) {
+      return `今天 ${date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}`;
+    } else if (isTomorrow) {
+      return `明天 ${date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}`;
+    } else {
+      // 移动端显示 MM/DD HH:mm 格式
+      return date.toLocaleString('zh-CN', {
+        month: '2-digit',
+        day: '2-digit', 
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    }
+  }, []);
+
   // 🚀 提前计算当前任务列表，避免在渲染中计算
   const currentTasks = useMemo(() => tasks[currentCategory] || [], [tasks, currentCategory]);
 
@@ -320,55 +371,79 @@ const StudentDashboard = () => {
       return 'default';
     };
 
-    const getActionButton = () => {
-      if (taskStatus.canSubmit && currentCategory === 'active') {
-        const ButtonComponent = taskStatus.status === 'late' ? WarningButton : 
-                              taskStatus.status === 'urgent' ? DangerButton : PrimaryButton;
-        
-        return (
-          <ButtonComponent
-            size="md"
-            fullWidth
-            icon={taskStatus.status === 'late' ? '⚠️' : '📤'}
-            haptic
-            onClick={(e) => {
-              e.stopPropagation();
-              navigate(`/submit/${task._id}`);
-            }}
-          >
-            {taskStatus.status === 'late' ? '逾期提交' : '提交作业'}
-          </ButtonComponent>
-        );
-      }
+  const getActionButton = () => {
+    if (taskStatus.canSubmit && currentCategory === 'active') {
+      const ButtonComponent = taskStatus.status === 'late' ? WarningButton : 
+                            taskStatus.status === 'urgent' ? DangerButton : PrimaryButton;
+      
+      return (
+        <ButtonComponent
+          size="md"
+          fullWidth
+          icon={taskStatus.status === 'late' ? <AlertTriangle className="w-4 h-4" /> : <Send className="w-4 h-4" />}
+          haptic
+          onClick={(e) => {
+            e.stopPropagation();
+            navigate(`/submit/${task._id}`);
+          }}
+        >
+          {taskStatus.status === 'late' ? '逾期提交' : '提交作业'}
+        </ButtonComponent>
+      );
+    }
 
-      if (task.submitted) {
-        return (
-          <SecondaryButton
-            size="md"
-            fullWidth={!taskStatus.canSubmit}
-            icon="👀"
-            onClick={(e) => {
-              e.stopPropagation();
-              navigate(`/view-submission/${task._id}`);
-            }}
-          >
-            查看提交
-          </SecondaryButton>
-        );
-      }
+    if (task.submitted) {
+      return (
+        <SecondaryButton
+          size="md"
+          fullWidth
+          icon={<Eye className="w-4 h-4" />}
+          haptic
+          onClick={(e) => {
+            e.stopPropagation();
+            navigate(`/view-submission/${task._id}`);
+          }}
+        >
+          查看提交
+        </SecondaryButton>
+      );
+    }
 
-      if (!taskStatus.canSubmit && taskStatus.status === 'expired' && currentCategory === 'active') {
-        return (
-          <div className="w-full text-center py-3 bg-gradient-to-r from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800 rounded-mobile-lg border border-gray-300 dark:border-gray-600">
-            <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
-              ❌ 已截止，无法提交
-            </span>
+    if (!taskStatus.canSubmit && taskStatus.status === 'expired' && currentCategory === 'active') {
+      return (
+        <div className="flex items-center justify-center px-4 py-3 rounded-mobile-lg bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 text-center">
+          <X className="w-4 h-4 mr-2" />
+          已截止，无法提交
+        </div>
+      );
+    }
+
+    if (currentCategory === 'archived') {
+      return (
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center justify-center px-4 py-2 rounded-mobile-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 text-center text-sm">
+            <Archive className="w-4 h-4 mr-2" />
+            归档任务，仅供查看
           </div>
-        );
-      }
+          {task.submitted && (
+            <SecondaryButton
+              size="sm"
+              fullWidth
+              icon={<Eye className="w-4 h-4" />}
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate(`/view-submission/${task._id}`);
+              }}
+            >
+              查看提交
+            </SecondaryButton>
+          )}
+        </div>
+      );
+    }
 
-      return null;
-    };
+    return null;
+  };
 
     return (
       <TaskCard
@@ -420,13 +495,13 @@ const StudentDashboard = () => {
           )}
         </div>
 
-        {/* 任务描述 - 优化显示 */}
+        {/* 任务描述 - 优化展示 */}
         {task.description && (
           <div className="mb-4">
-            <div className="bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 dark:from-blue-900/20 dark:via-indigo-900/20 dark:to-purple-900/20 rounded-mobile-lg p-4 border border-blue-200/50 dark:border-blue-700/30">
+            <div className="bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 border border-blue-200 dark:border-blue-700/50 rounded-mobile-lg p-4">
               <div className="flex items-start gap-2">
-                <span className="flex-shrink-0 text-blue-600 dark:text-blue-400 text-lg">📋</span>
-                <p className="text-sm text-blue-800 dark:text-blue-200 line-clamp-3 leading-relaxed">
+                <ClipboardList className="w-4 h-4 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+                <p className="text-sm text-blue-800 dark:text-blue-200 whitespace-pre-wrap leading-relaxed">
                   {task.description}
                 </p>
               </div>
@@ -434,84 +509,58 @@ const StudentDashboard = () => {
           </div>
         )}
 
-        {/* 任务信息网格 - 重新设计 */}
-        <div className="grid grid-cols-2 gap-3 mb-4">
-          <div className="bg-gray-50/80 dark:bg-gray-800/50 rounded-mobile-lg p-3 space-y-2">
-            <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
-              <span>📂</span>
-              <span className="font-medium">类型</span>
-            </div>
-            <p className="text-sm font-medium text-gray-800 dark:text-gray-200">{task.category}</p>
-            
-            <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400 mt-2">
-              <span>📝</span>
-              <span className="font-medium">文件</span>
-            </div>
-            <p className="text-sm text-gray-700 dark:text-gray-300">
-              {task.needsFile ? '必交' : '可选'}
-            </p>
-
-            <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400 mt-2">
-              <span>🤖</span>
-              <span className="font-medium">AIGC</span>
-            </div>
-            <p className="text-sm text-gray-700 dark:text-gray-300">
-              {task.allowAIGC ? '允许' : '禁止'}
-            </p>
+        {/* 信息网格 - 折叠设计 */}
+        <div className="grid grid-cols-2 gap-2 mb-4 text-xs">
+          <div className="flex items-center gap-1.5 text-gray-600 dark:text-gray-400">
+            <Tag className="w-3.5 h-3.5 flex-shrink-0" />
+            <span className="truncate">类型: {task.category}</span>
+          </div>
+          <div className="flex items-center gap-1.5 text-gray-600 dark:text-gray-400">
+            <CloudUpload className="w-3.5 h-3.5 flex-shrink-0" />
+            <span className="truncate">文件: {task.needsFile ? '必交' : '可选'}</span>
+          </div>
+          <div className="flex items-center gap-1.5 text-gray-600 dark:text-gray-400">
+            <Bot className="w-3.5 h-3.5 flex-shrink-0" />
+            <span className="truncate">AIGC: {task.allowAIGC ? '允许' : '禁止'}</span>
+          </div>
+          <div className="flex items-center gap-1.5 text-gray-600 dark:text-gray-400">
+            <Clock className="w-3.5 h-3.5 flex-shrink-0" />
+            <span className="truncate">截止: {formatMobileDeadline(task.deadline)}</span>
           </div>
 
-          <div className="bg-gray-50/80 dark:bg-gray-800/50 rounded-mobile-lg p-3 space-y-2">
-            <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
-              <span>⏰</span>
-              <span className="font-medium">截止</span>
-            </div>
-            <p className="text-sm font-medium text-gray-800 dark:text-gray-200 leading-tight">
-              {formatDeadline(task.deadline)}
-            </p>
-
-            <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400 mt-2">
-              <span>📚</span>
-              <span className="font-medium">班级</span>
-            </div>
-            <p className="text-sm text-gray-700 dark:text-gray-300 line-clamp-2">
-              {task.classIds && task.classIds.length > 0
+          <div className="flex items-center gap-1.5 text-gray-600 dark:text-gray-400 col-span-2">
+            <BookOpen className="w-3.5 h-3.5 flex-shrink-0" />
+            <span className="truncate">
+              班级: {task.classIds && task.classIds.length > 0
                 ? task.classIds.map(cls => cls.name).join('，')
                 : '未绑定'}
-            </p>
-
-            <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400 mt-2">
-              <span>📋</span>
-              <span className="font-medium">逾期</span>
-            </div>
-            <p className="text-sm text-gray-700 dark:text-gray-300">
-              {task.allowLateSubmission ? '允许' : '不允许'}
-            </p>
+            </span>
+          </div>
+          <div className="flex items-center gap-1.5 text-gray-600 dark:text-gray-400 col-span-2">
+            <ClipboardList className="w-3.5 h-3.5 flex-shrink-0" />
+            <span className="truncate">逾期: {task.allowLateSubmission ? '允许' : '不允许'}</span>
           </div>
         </div>
 
-        {/* 特殊状态提示 - 重新设计 */}
+        {/* 特殊状态提示 */}
         {taskStatus.status === 'late' && (
           <div className="mb-4">
-            <div className="bg-gradient-to-r from-orange-50 to-amber-50 dark:from-orange-900/20 dark:to-amber-900/20 border border-orange-200 dark:border-orange-700/50 rounded-mobile-lg p-3">
-              <div className="flex items-start gap-2">
-                <span className="flex-shrink-0 text-orange-600 dark:text-orange-400 text-lg">⚠️</span>
-                <p className="text-sm text-orange-700 dark:text-orange-300 leading-relaxed">
-                  此任务已逾期，提交后将被标注为逾期作业
-                </p>
-              </div>
+            <div className="flex items-center gap-2 px-3 py-2 rounded-mobile-lg bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-700/50">
+              <AlertTriangle className="w-4 h-4 text-orange-600 dark:text-orange-400 flex-shrink-0" />
+              <span className="text-sm text-orange-700 dark:text-orange-300 font-medium">
+                此任务已逾期，提交后将被标注为逾期作业
+              </span>
             </div>
           </div>
         )}
 
         {task.isArchived && (
           <div className="mb-4">
-            <div className="bg-gradient-to-r from-gray-50 to-slate-50 dark:from-gray-800/50 dark:to-slate-800/50 border border-gray-200 dark:border-gray-700/50 rounded-mobile-lg p-3">
-              <div className="flex items-start gap-2">
-                <span className="flex-shrink-0 text-gray-600 dark:text-gray-400 text-lg">📦</span>
-                <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
-                  此任务已归档，仅供查看
-                </p>
-              </div>
+            <div className="flex items-center gap-2 px-3 py-2 rounded-mobile-lg bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700/50">
+              <Archive className="w-4 h-4 text-gray-600 dark:text-gray-400 flex-shrink-0" />
+              <span className="text-sm text-gray-700 dark:text-gray-300 font-medium">
+                此任务已归档，仅供查看
+              </span>
             </div>
           </div>
         )}
@@ -521,13 +570,14 @@ const StudentDashboard = () => {
           <div className="mb-4">
             <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border border-green-200 dark:border-green-700/50 rounded-mobile-lg p-4">
               <div className="flex items-center gap-2 mb-2">
+                <MessageCircle className="w-4 h-4 text-green-600 dark:text-green-400" />
                 <span className="text-green-600 dark:text-green-400 font-medium text-sm">
-                  💬 教师已反馈
+                  教师已反馈
                 </span>
                 {task.submissionInfo.feedbackRating && (
                   <div className="flex items-center gap-1">
                     {Array.from({ length: task.submissionInfo.feedbackRating }, (_, i) => (
-                      <span key={i} className="text-yellow-500 text-sm">⭐</span>
+                      <Star key={i} className="w-3.5 h-3.5 text-yellow-500 fill-current" />
                     ))}
                   </div>
                 )}
@@ -544,7 +594,7 @@ const StudentDashboard = () => {
           <div className="mb-4">
             <div className="bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 border border-blue-200 dark:border-blue-700/50 rounded-mobile-lg p-3">
               <div className="flex items-start gap-2">
-                <span className="flex-shrink-0 text-blue-600 dark:text-blue-400 text-lg">✅</span>
+                <CheckCircle className="w-4 h-4 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm text-blue-700 dark:text-blue-300 font-medium mb-1">
                     已于 {new Date(task.submissionInfo.submittedAt).toLocaleString()} 提交
@@ -629,7 +679,8 @@ const StudentDashboard = () => {
                 {/* 🆕 添加时间段显示（可选，用于调试） */}
                 {process.env.NODE_ENV === 'development' && (
                   <p className="text-xs text-gray-400 mb-2">
-                    🕐 {new Date().toLocaleTimeString()} - 当前时段
+                    <Clock3 className="w-3 h-3 inline mr-1" /> 
+                    {new Date().toLocaleTimeString()} - 当前时段
                   </p>
                 )}
                 
@@ -653,7 +704,7 @@ const StudentDashboard = () => {
               <div className="flex-shrink-0">
                 <PrimaryButton
                   size={isMobile ? "md" : "md"}
-                  icon="➕"
+                  icon={<Plus className="w-4 h-4" />}
                   haptic
                   onClick={() => navigate('/join-class')}
                   gradient
@@ -672,8 +723,20 @@ const StudentDashboard = () => {
               isMobile ? 'gap-1' : 'gap-1'
             }`}>
               {[
-                { key: 'active', label: '📋 当前任务', count: tasks.active.length, icon: '📋', color: 'blue' },
-                { key: 'archived', label: '📦 已归档', count: tasks.archived.length, icon: '📦', color: 'gray' }
+                { 
+                  key: 'active', 
+                  label: '当前任务', 
+                  count: tasks.active.length, 
+                  icon: <ClipboardList className="w-4 h-4" />, 
+                  color: 'blue' 
+                },
+                { 
+                  key: 'archived', 
+                  label: '已归档', 
+                  count: tasks.archived.length, 
+                  icon: <Archive className="w-4 h-4" />, 
+                  color: 'gray' 
+                }
               ].map(({ key, label, count, icon, color }) => (
                 <button
                   key={key}
@@ -682,30 +745,22 @@ const StudentDashboard = () => {
                     currentCategory === key
                       ? `bg-gradient-to-r ${
                           color === 'blue' 
-                            ? 'from-blue-500 to-cyan-500 text-white shadow-mobile-lg transform scale-[1.02]' 
-                            : 'from-gray-500 to-slate-500 text-white shadow-mobile-lg transform scale-[1.02]'
+                            ? 'from-blue-500 to-cyan-500 text-white shadow-lg'
+                            : 'from-gray-500 to-gray-600 text-white shadow-lg'
                         }`
-                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100/50 dark:hover:bg-gray-700/50'
+                      : 'text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-700/50'
                   }`}
                 >
                   <div className="flex items-center justify-center gap-2">
-                    {isMobile ? (
-                      <div className="flex flex-col items-center gap-1">
-                        <span className="text-lg">{icon}</span>
-                        <span className="text-xs font-semibold">({count})</span>
-                      </div>
-                    ) : (
-                      <>
-                        <span>{label}</span>
-                        <span className={`inline-flex items-center justify-center w-6 h-6 text-xs font-bold rounded-full ${
-                          currentCategory === key
-                            ? 'bg-white/20 text-white'
-                            : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
-                        }`}>
-                          {count}
-                        </span>
-                      </>
-                    )}
+                    {icon}
+                    <span className="font-medium">{label}</span>
+                    <span className={`text-xs px-1.5 py-0.5 rounded-full ${
+                      currentCategory === key
+                        ? 'bg-white/20 text-white'
+                        : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
+                    }`}>
+                      {count}
+                    </span>
                   </div>
                 </button>
               ))}
@@ -717,13 +772,15 @@ const StudentDashboard = () => {
             {currentTasks.length === 0 ? (
               <motion.div
                 key="empty"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="text-center py-10"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="text-center py-12"
               >
-                <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center">
-                  <span className="text-gray-400 dark:text-gray-500 text-2xl">📋</span>
+                <div className="mb-4 flex justify-center">
+                  <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center">
+                    <ClipboardList className="w-8 h-8 text-gray-400 dark:text-gray-500" />
+                  </div>
                 </div>
                 <p className="text-gray-500 dark:text-gray-400">
                   {currentCategory === 'active' ? '暂无当前任务' : '暂无归档任务'}
@@ -762,9 +819,12 @@ const StudentDashboard = () => {
                           </h3>
                           {task.description && (
                             <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 mb-3 border border-blue-200 dark:border-blue-700">
-                              <p className="text-sm text-blue-800 dark:text-blue-200 whitespace-pre-wrap">
-                                📋 {task.description}
-                              </p>
+                              <div className="flex items-start gap-2">
+                                <ClipboardList className="w-4 h-4 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+                                <p className="text-sm text-blue-800 dark:text-blue-200 whitespace-pre-wrap">
+                                  {task.description}
+                                </p>
+                              </div>
                             </div>
                           )}
                         </div>
@@ -775,48 +835,58 @@ const StudentDashboard = () => {
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                         <div className="space-y-2">
-                          <p className="text-sm text-gray-500 dark:text-gray-400">
-                            📂 分类：{task.category}
+                          <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-2">
+                            <Tag className="w-4 h-4" />
+                            分类：{task.category}
                           </p>
-                          <p className="text-sm text-gray-500 dark:text-gray-400">
-                            📝 作业文件：{task.needsFile ? '必交' : '可选'}
+                          <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-2">
+                            <CloudUpload className="w-4 h-4" />
+                            作业文件：{task.needsFile ? '必交' : '可选'}
                           </p>
-                          <p className="text-sm text-gray-500 dark:text-gray-400">
-                            🤖 AIGC 使用：{task.allowAIGC ? '允许' : '禁止'}
+                          <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-2">
+                            <Bot className="w-4 h-4" />
+                            AIGC 使用：{task.allowAIGC ? '允许' : '禁止'}
                           </p>
                           {task.allowAIGC && (
-                            <p className="text-sm text-gray-500 dark:text-gray-400">
-                              📋 AIGC 日志：{task.requireAIGCLog ? '必交' : '可选'}
+                            <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-2">
+                              <ClipboardList className="w-4 h-4" />
+                              AIGC 日志：{task.requireAIGCLog ? '必交' : '可选'}
                             </p>
                           )}
                         </div>
 
                         <div className="space-y-2">
-                          <p className="text-sm text-gray-500 dark:text-gray-400">
-                            ⏰ 截止时间：{formatDeadline(task.deadline)}
+                          <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-2">
+                            <Clock className="w-4 h-4" />
+                            截止时间：{formatDeadline(task.deadline)}
                           </p>
-                          <p className="text-sm text-gray-500 dark:text-gray-400">
-                            📚 所属班级：
+                          <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-2">
+                            <BookOpen className="w-4 h-4" />
+                            所属班级：
                             {task.classIds && task.classIds.length > 0
                               ? task.classIds.map(cls => cls.name).join('，')
                               : '未绑定'}
                           </p>
-                          <p className="text-sm text-gray-500 dark:text-gray-400">
-                            📋 逾期提交：{task.allowLateSubmission ? '允许' : '不允许'}
+                          <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-2">
+                            <ClipboardList className="w-4 h-4" />
+                            逾期提交：{task.allowLateSubmission ? '允许' : '不允许'}
                           </p>
                           {getTaskStatus(task).status === 'late' && (
-                            <p className="text-sm text-orange-600 dark:text-orange-400 font-medium">
-                              ⚠️ 此任务已逾期，提交后将被标注为逾期作业
+                            <p className="text-sm text-orange-600 dark:text-orange-400 font-medium flex items-center gap-2">
+                              <AlertTriangle className="w-4 h-4" />
+                              此任务已逾期，提交后将被标注为逾期作业
                             </p>
                           )}
                           {task.isArchived && (
-                            <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">
-                              📦 此任务已归档，仅供查看
+                            <p className="text-sm text-gray-600 dark:text-gray-400 font-medium flex items-center gap-2">
+                              <Archive className="w-4 h-4" />
+                              此任务已归档，仅供查看
                             </p>
                           )}
                           {task.submissionInfo && (
-                            <p className="text-sm text-green-600 dark:text-green-400 font-medium">
-                              ✅ 已于 {new Date(task.submissionInfo.submittedAt).toLocaleString()} 提交
+                            <p className="text-sm text-green-600 dark:text-green-400 font-medium flex items-center gap-2">
+                              <CheckCircle className="w-4 h-4" />
+                              已于 {new Date(task.submissionInfo.submittedAt).toLocaleString()} 提交
                               {task.submissionInfo.isLateSubmission && ' (逾期提交)'}
                             </p>
                           )}
@@ -825,70 +895,94 @@ const StudentDashboard = () => {
 
                       <div className="flex gap-2 flex-wrap">
                         {getTaskStatus(task).canSubmit && currentCategory === 'active' && (
-                          <Button
-                            variant={getTaskStatus(task).status === 'late' ? "warning" :
-                              getTaskStatus(task).status === 'urgent' ? "danger" : "primary"}
-                            onClick={() => navigate(`/submit/${task._id}`)}
-                          >
-                            {getTaskStatus(task).status === 'late' ? '⚠️ 逾期提交' : '📤 提交作业'}
-                          </Button>
+                          getTaskStatus(task).status === 'late' ? (
+                            <WarningButton
+                              onClick={() => navigate(`/submit/${task._id}`)}
+                              icon={<AlertTriangle className="w-4 h-4" />}
+                            >
+                              逾期提交
+                            </WarningButton>
+                          ) : getTaskStatus(task).status === 'urgent' ? (
+                            <DangerButton
+                              onClick={() => navigate(`/submit/${task._id}`)}
+                              icon={<Send className="w-4 h-4" />}
+                            >
+                              提交作业
+                            </DangerButton>
+                          ) : (
+                            <PrimaryButton
+                              onClick={() => navigate(`/submit/${task._id}`)}
+                              icon={<Send className="w-4 h-4" />}
+                            >
+                              提交作业
+                            </PrimaryButton>
+                          )
                         )}
 
                         {task.submitted && (
-                          <Button
-                            variant="secondary"
+                          <SecondaryButton
                             onClick={() => navigate(`/view-submission/${task._id}`)}
+                            icon={<Eye className="w-4 h-4" />}
                           >
-                            👀 查看我的提交
-                          </Button>
+                            查看我的提交
+                          </SecondaryButton>
                         )}
 
                         {!getTaskStatus(task).canSubmit && getTaskStatus(task).status === 'expired' && currentCategory === 'active' && (
-                          <div className="px-5 py-2 rounded-xl bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 text-center">
-                            ❌ 已截止，无法提交
+                          <div className="px-5 py-2 rounded-xl bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400">
+                            <div className="flex items-center justify-center gap-2">
+                              <X className="w-4 h-4" />
+                              <span>已截止，无法提交</span>
+                            </div>
                           </div>
                         )}
 
                         {currentCategory === 'archived' && (
-                          <div className="px-5 py-2 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 text-center text-sm">
-                            📦 归档任务，仅供查看
+                          <div className="px-5 py-2 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 text-sm">
+                            <div className="flex items-center justify-center gap-2">
+                              <Archive className="w-4 h-4" />
+                              <span>归档任务，仅供查看</span>
+                            </div>
                             {task.submitted && (
-                              <Button
-                                variant="ghost"
+                              <SecondaryButton
                                 size="sm"
                                 onClick={() => navigate(`/view-submission/${task._id}`)}
-                                className="ml-2"
+                                icon={<Eye className="w-3 h-3" />}
+                                className="mt-2"
                               >
-                                👀 查看提交
-                              </Button>
+                                查看提交
+                              </SecondaryButton>
                             )}
                           </div>
                         )}
                       </div>
 
+
                       {task.submitted && task.submissionInfo?.hasFeedback && (
                         <div className="mt-4 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-lg">
                           <div className="flex items-center gap-2 mb-1">
+                            <MessageCircle className="w-4 h-4 text-green-600 dark:text-green-400" />
                             <span className="text-green-600 dark:text-green-400 font-medium text-sm">
-                              💬 教师已反馈
+                              教师已反馈
                             </span>
                             {task.submissionInfo.feedbackRating && (
-                              <span className="text-yellow-500">
-                                {'⭐'.repeat(task.submissionInfo.feedbackRating)}
+                              <span className="flex items-center gap-1">
+                                {Array.from({ length: task.submissionInfo.feedbackRating }, (_, i) => (
+                                  <Star key={i} className="w-4 h-4 text-yellow-500 fill-current" />
+                                ))}
                               </span>
                             )}
                           </div>
                           <p className="text-sm text-green-700 dark:text-green-300 line-clamp-2">
                             {task.submissionInfo.feedbackPreview}
                           </p>
-                          <Button
-                            variant="ghost"
+                          <GhostButton
                             size="sm"
                             onClick={() => navigate(`/view-submission/${task._id}`)}
                             className="mt-2 text-xs"
                           >
                             查看完整反馈 →
-                          </Button>
+                          </GhostButton>
                         </div>
                       )}
 
