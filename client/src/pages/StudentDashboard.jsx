@@ -40,6 +40,67 @@ import {
 
 
 
+const CollapsibleSection = React.memo(({ title, count, type, isCollapsed, onToggle, children }) => {
+  // 根据类型选择图标和颜色主题
+  const getTheme = () => {
+    if (type === 'incomplete') {
+      return {
+        icon: <Clock className="w-4 h-4 text-blue-600 dark:text-blue-400" />,
+        bgColor: 'bg-blue-50 dark:bg-gray-800/50 border border-blue-100 dark:border-gray-700',
+        hoverBg: 'hover:bg-blue-100 dark:hover:bg-gray-700/50'
+      };
+    } else {
+      return {
+        icon: <CheckCircle className="w-4 h-4 text-green-600 dark:text-green-400" />,
+        bgColor: 'bg-green-50 dark:bg-gray-800/50 border border-green-100 dark:border-gray-700', 
+        hoverBg: 'hover:bg-green-100 dark:hover:bg-gray-700/50'
+      };
+    }
+  };
+
+  const theme = getTheme();
+
+  return (
+    <div className="space-y-3">
+      <button
+        onClick={() => onToggle(type)}
+        className={`w-full flex items-center justify-between p-3 rounded-xl transition-all duration-200 ${theme.bgColor} ${theme.hoverBg}`}
+      >
+        <div className="flex items-center gap-3">
+          {theme.icon}
+          <span className="font-medium text-gray-800 dark:text-gray-200">
+            {title} ({count})
+          </span>
+        </div>
+        <motion.div
+          animate={{ rotate: isCollapsed ? 0 : 180 }}
+          transition={{ duration: 0.2 }}
+        >
+          <ChevronDown className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+        </motion.div>
+      </button>
+      
+      <AnimatePresence>
+        {!isCollapsed && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+            style={{ overflow: "hidden" }}
+          >
+            <div className="space-y-4 pl-2">
+              {children}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+});
+
+
+
 const StudentDashboard = () => {
   const [user, setUser] = useState(null);
   const [tasks, setTasks] = useState({
@@ -392,65 +453,7 @@ const StudentDashboard = () => {
   }, [currentTasks, currentCategory]);
 
 
-  // 🆕 新增：折叠标题组件
-  const CollapsibleSection = ({ title, count, type, isCollapsed, onToggle, children }) => {
-    // 根据类型选择图标和颜色主题
-    const getTheme = () => {
-      if (type === 'incomplete') {
-        return {
-          icon: <Clock className="w-4 h-4 text-blue-600 dark:text-blue-400" />,
-          bgColor: 'bg-blue-50 dark:bg-gray-800/50 border border-blue-100 dark:border-gray-700',
-          hoverBg: 'hover:bg-blue-100 dark:hover:bg-gray-700/50'
-        };
-      } else {
-        return {
-          icon: <CheckCircle className="w-4 h-4 text-green-600 dark:text-green-400" />,
-          bgColor: 'bg-green-50 dark:bg-gray-800/50 border border-green-100 dark:border-gray-700', 
-          hoverBg: 'hover:bg-green-100 dark:hover:bg-gray-700/50'
-        };
-      }
-    };
 
-    const theme = getTheme();
-
-    return (
-      <div className="space-y-3">
-        <button
-          onClick={() => onToggle(type)}
-          className={`w-full flex items-center justify-between p-3 rounded-xl transition-all duration-200 ${theme.bgColor} ${theme.hoverBg}`}
-        >
-          <div className="flex items-center gap-3">
-            {theme.icon}
-            <span className="font-medium text-gray-800 dark:text-gray-200">
-              {title} ({count})
-            </span>
-          </div>
-          <motion.div
-            animate={{ rotate: isCollapsed ? 0 : 180 }}
-            transition={{ duration: 0.2 }}
-          >
-            <ChevronDown className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-          </motion.div>
-        </button>
-        
-        <AnimatePresence>
-          {!isCollapsed && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.3, ease: "easeInOut" }}
-              style={{ overflow: "hidden" }}
-            >
-              <div className="space-y-4 pl-2">
-                {children}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-    );
-  };
 
 
   // 📌 新增：移动端任务卡片渲染函数
@@ -863,7 +866,6 @@ const StudentDashboard = () => {
             </div>
           </div>
 
-          {/* 任务列表 */}
           
           {/* 任务列表 */}
         <AnimatePresence mode="wait">
@@ -898,6 +900,7 @@ const StudentDashboard = () => {
                   {/* 未完成任务区域 */}
                   {groupedActiveTasks.incomplete.length > 0 && (
                     <CollapsibleSection
+                      key="incomplete-section"
                       title="未完成任务"
                       count={groupedActiveTasks.incomplete.length}
                       type="incomplete"
@@ -907,19 +910,21 @@ const StudentDashboard = () => {
                       {groupedActiveTasks.incomplete.map((task, index) =>
                         isMobile ? (
                           <motion.div
-                            key={task._id}
+                            key={`incomplete-${task._id}`}
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: index * 0.05 }}
+                            layout
                           >
                             {renderMobileTaskCard(task)}
                           </motion.div>
                         ) : (
                           <motion.div
-                            key={task._id}
+                            key={`incomplete-${task._id}`}
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
                             className={getTaskCardStyle(getTaskStatus(task))}
+                            layout
                           >
                             {/* 这里保持原有的桌面端任务卡片渲染逻辑 */}
                             <div className="flex justify-between items-start mb-3">
@@ -1104,6 +1109,7 @@ const StudentDashboard = () => {
                   {/* 已完成任务区域 */}
                   {groupedActiveTasks.completed.length > 0 && (
                     <CollapsibleSection
+                      key="completed-section"
                       title="已完成任务"
                       count={groupedActiveTasks.completed.length}
                       type="completed"
@@ -1113,19 +1119,21 @@ const StudentDashboard = () => {
                       {groupedActiveTasks.completed.map((task, index) =>
                         isMobile ? (
                           <motion.div
-                            key={task._id}
+                            key={`completed-${task._id}`}
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: index * 0.05 }}
+                            layout
                           >
                             {renderMobileTaskCard(task)}
                           </motion.div>
                         ) : (
                           <motion.div
-                            key={task._id}
+                            key={`completed-${task._id}`}
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
                             className={getTaskCardStyle(getTaskStatus(task))}
+                            layout
                           >
                             {/* 同样保持原有的桌面端任务卡片渲染逻辑 */}
                             <div className="flex justify-between items-start mb-3">
@@ -1312,7 +1320,7 @@ const StudentDashboard = () => {
                 currentTasks.map((task, index) =>
                   isMobile ? (
                     <motion.div
-                      key={task._id}
+                      key={`archived-${task._id}`}
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.05 }}
@@ -1322,7 +1330,7 @@ const StudentDashboard = () => {
                   ) : (
                     // 保持原有的桌面端渲染逻辑
                     <motion.div
-                      key={task._id}
+                      key={`archived-${task._id}`}
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       className={getTaskCardStyle(getTaskStatus(task))}
