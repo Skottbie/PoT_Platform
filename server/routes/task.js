@@ -97,7 +97,9 @@ router.get('/mine', verifyToken, async (req, res) => {
         filter.isDeleted = false;
     }
 
-    const tasks = await Task.find(filter).sort({ createdAt: -1 });
+    const tasks = await Task.find(filter)
+      .sort({ createdAt: -1 })
+      .populate('classIds', 'name');  // 添加这行populate班级名称
     
     // 📌 新增：为已删除任务计算剩余天数
     if (category === 'deleted') {
