@@ -28,7 +28,11 @@ import PoTPowerButton from '../components/PoTPowerButton';
 import PoTModeDialog from '../components/PoTModeDialog';
 import PoTFirstTimeGuide from '../components/PoTFirstTimeGuide';
 import '../styles/potMode.css';
-import { Lightbulb, BrainCircuit, BotMessageSquare, UserRound, Send } from 'lucide-react';
+import { Lightbulb, BrainCircuit, BotMessageSquare, UserRound, Send, 
+    Upload, FileText, ArrowLeft, Info, CheckCircle2, AlertTriangle, 
+    XCircle, BarChart3, FolderOpen, Bot, Clock, MessageSquare, 
+    ImageIcon, Paperclip, BrainCog 
+ } from 'lucide-react';
 import EnhancedButton from '../components/EnhancedButton';
 
 SyntaxHighlighter.registerLanguage('javascript', javascript);
@@ -914,7 +918,7 @@ const getModelDisplayName = useCallback((modelValue, isPotMode = false) => {
     return (
       <div className="mt-4">
         <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
-          <span>📷</span>
+          <ImageIcon className="w-4 h-4" />
           即将上传的图片预览 ({images.length} 张)
         </p>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
@@ -1529,7 +1533,7 @@ const getModelDisplayName = useCallback((modelValue, isPotMode = false) => {
           </p>
           <SecondaryButton
             onClick={() => navigate('/student')}
-            icon="👈"
+            icon={<ArrowLeft className="w-4 h-4" />}
             fullWidth
           >
             返回任务列表
@@ -1549,32 +1553,33 @@ const getModelDisplayName = useCallback((modelValue, isPotMode = false) => {
               animate={{ opacity: 1, y: 0 }}
               className="flex items-center justify-between mb-6"
             >
-              <div className="flex-1 min-w-0">
-                <h1 className="text-xl sm:text-2xl font-bold text-gray-800 dark:text-gray-100">
-                  📤 提交作业
-                </h1>
-                <p className="text-gray-600 dark:text-gray-400 mt-1">
-                  {task.title}
-                </p>
-              </div>
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center shadow-md flex-shrink-0">
-                <span className="text-white text-xl">📝</span>
-              </div>
+            <div className="flex-1 min-w-0">
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2">
+                <Upload className="w-6 h-6" />
+                提交作业
+              </h1>
+              <p className="text-gray-600 dark:text-gray-400 mt-1 truncate">
+                {task.title}
+              </p>
+            </div>
+            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center shadow-md flex-shrink-0">
+              <FileText className="w-6 h-6 text-white" />
+            </div>
             </motion.div>
 
             {task.description && (
               <NotificationCard type="info" className="mb-6">
-                <div className="flex items-start gap-3">
-                  <span className="flex-shrink-0 text-blue-600 dark:text-blue-400 text-lg">📋</span>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-sm font-semibold text-blue-800 dark:text-blue-200 mb-2">
-                      任务说明
-                    </h3>
-                    <p className="text-blue-700 dark:text-blue-300 text-sm leading-relaxed whitespace-pre-wrap break-words">
-                      {task.description}
-                    </p>
-                  </div>
+              <div className="flex items-start gap-3">
+                <Info className="w-5 h-5 flex-shrink-0 text-blue-600 dark:text-blue-400 mt-0.5" />
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-sm font-semibold text-blue-800 dark:text-blue-200 mb-2">
+                    任务说明
+                  </h3>
+                  <p className="text-blue-700 dark:text-blue-300 text-sm leading-relaxed whitespace-pre-wrap break-words">
+                    {task.description}
+                  </p>
                 </div>
+              </div>
               </NotificationCard>
             )}
   
@@ -1595,7 +1600,7 @@ const getModelDisplayName = useCallback((modelValue, isPotMode = false) => {
                 haptic.light();
                 navigate('/student');
               }}
-              icon="👈"
+              icon={<ArrowLeft className="w-4 h-4" />}
               fullWidth
             >
               返回任务列表
@@ -1791,14 +1796,21 @@ const getModelDisplayName = useCallback((modelValue, isPotMode = false) => {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                 >
-                  <div className={`${isMobile ? 'w-16 h-16' : 'w-20 h-20'} bg-gradient-to-br from-purple-100 to-indigo-100 dark:from-purple-900/30 dark:to-indigo-900/30 rounded-full flex items-center justify-center mb-4`}>
-                    <span className={`${isMobile ? 'text-3xl' : 'text-4xl'}`}>🧠</span>
-                  </div>
+                <div className="flex items-center justify-center mb-4">
+                  <BrainCircuit
+                    className={`${isMobile ? 'h-7 w-7' : 'h-8 w-8'}`}
+                    stroke="var(--neon-color)"
+                    strokeWidth="1.5"
+                    style={{
+                      filter: 'drop-shadow(0 0 5px var(--neon-shadow)) drop-shadow(0 0 10px var(--neon-shadow))',
+                    }}
+                  />
+                </div>
                   <h3 className={`${isMobile ? 'text-xl' : 'text-2xl'} font-medium text-gray-900 dark:text-gray-100 mb-3`}>
                     开始Thinking.
                   </h3>
                   <p className={`text-gray-500 dark:text-gray-400 ${isMobile ? 'text-sm' : 'max-w-md'} leading-relaxed`}>
-                    构建你的Thinking Chain。
+                    构建你的[Proof of Thought].<br/> AI友情客串。
                   </p>
                 </motion.div>
               )}
@@ -1954,14 +1966,15 @@ const getModelDisplayName = useCallback((modelValue, isPotMode = false) => {
                     disabled={loading || !input.trim()}
                     className={`absolute right-2 w-10 h-10 rounded-full transition-all duration-200 flex items-center justify-center aigc-native-button ${
                       !loading && input.trim()
-                        ? `${potEnabled ? 'pot-send-button' : 'bg-gradient-to-br from-purple-500 to-indigo-600 text-white hover:from-purple-600 hover:to-indigo-700 active:scale-95'}`
+                        ? `${potEnabled ? 'pot-send-button' : 'bg-gradient-to-br from-purple-500 to-pink-300 text-white hover:from-purple-600 hover:to-pink-400 active:scale-95'}` 
                         : isMobile 
                           ? 'bg-white/5 dark:bg-white/5 text-gray-400 dark:text-gray-500 cursor-not-allowed border border-gray-600/20 dark:border-gray-600/20'
                           : 'bg-gray-200 dark:bg-gray-600 text-gray-400 dark:text-gray-500 cursor-not-allowed'
                     }`}
                     style={{
                       top: '50%',
-                      transform: 'translateY(-50%)'
+                      transform: 'translateY(-50%)',
+                      marginTop: '-3.2px'
                     }}
                   >
                     {loading ? (
@@ -2048,8 +2061,8 @@ const getModelDisplayName = useCallback((modelValue, isPotMode = false) => {
         >
           {/* 使用现有的 SecondaryButton 组件保持样式一致 */}
           <SecondaryButton
-            onClick={handleBackClick} // 使用新的处理函数
-            icon="👈"
+            onClick={handleBackClick}
+            icon={<ArrowLeft className="w-4 h-4" />}
             className="flex-shrink-0"
           >
             返回
@@ -2070,17 +2083,18 @@ const getModelDisplayName = useCallback((modelValue, isPotMode = false) => {
             animate={{ opacity: 1, y: 0 }}
             className="flex items-center justify-between mb-6"
           >
-            <div className="flex-1 min-w-0">
-              <h1 className="text-xl sm:text-2xl font-bold text-gray-800 dark:text-gray-100">
-                📤 提交作业
-              </h1>
-              <p className="text-gray-600 dark:text-gray-400 mt-1 truncate">
-                {task.title}
-              </p>
-            </div>
-            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center shadow-md flex-shrink-0">
-              <span className="text-white text-xl">📝</span>
-            </div>
+          <div className="flex-1 min-w-0">
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2">
+              <Upload className="w-6 h-6" />
+              提交作业
+            </h1>
+            <p className="text-gray-600 dark:text-gray-400 mt-1 truncate">
+              {task.title}
+            </p>
+          </div>
+          <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center shadow-md flex-shrink-0">
+            <FileText className="w-6 h-6 text-white" />
+          </div>
           </motion.div>
 
           {/* 任务描述 */}
@@ -2091,17 +2105,17 @@ const getModelDisplayName = useCallback((modelValue, isPotMode = false) => {
               transition={{ delay: 0.1 }}
             >
               <NotificationCard type="info" className="mb-6">
-                <div className="flex items-start gap-3">
-                  <span className="flex-shrink-0 text-blue-600 dark:text-blue-400 text-lg">📋</span>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-sm font-semibold text-blue-800 dark:text-blue-200 mb-2">
-                      任务说明
-                    </h3>
-                    <p className="text-blue-700 dark:text-blue-300 text-sm leading-relaxed whitespace-pre-wrap break-words">
-                      {task.description}
-                    </p>
-                  </div>
+              <div className="flex items-start gap-3">
+                <Info className="w-5 h-5 flex-shrink-0 text-blue-600 dark:text-blue-400 mt-0.5" />
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-sm font-semibold text-blue-800 dark:text-blue-200 mb-2">
+                    任务说明
+                  </h3>
+                  <p className="text-blue-700 dark:text-blue-300 text-sm leading-relaxed whitespace-pre-wrap break-words">
+                    {task.description}
+                  </p>
                 </div>
+              </div>
               </NotificationCard>
             </motion.div>
           )}
@@ -2121,14 +2135,14 @@ const getModelDisplayName = useCallback((modelValue, isPotMode = false) => {
                 } 
                 className="mb-6"
               >
-                <div className="flex items-start gap-3">
-                  <span className="flex-shrink-0 text-lg">
-                    {taskStatus.isLate
-                      ? taskStatus.canSubmit ? '⚠️' : '❌'
-                      : '✅'
-                    }
-                  </span>
-                  <div className="flex-1 min-w-0">
+              <div className="flex items-start gap-3">
+                {taskStatus.isLate
+                  ? taskStatus.canSubmit 
+                    ? <AlertTriangle className="w-5 h-5 flex-shrink-0 text-orange-600 dark:text-orange-400" />
+                    : <XCircle className="w-5 h-5 flex-shrink-0 text-red-600 dark:text-red-400" />
+                  : <CheckCircle2 className="w-5 h-5 flex-shrink-0 text-green-600 dark:text-green-400" />
+                }
+                <div className="flex-1 min-w-0">
                     <p className="font-medium text-sm mb-1">
                       {taskStatus.isLate
                         ? taskStatus.canSubmit
@@ -2158,48 +2172,66 @@ const getModelDisplayName = useCallback((modelValue, isPotMode = false) => {
             transition={{ delay: 0.3 }}
             className="bg-gradient-to-r from-gray-50 to-slate-50 dark:from-gray-800/50 dark:to-slate-800/50 rounded-xl p-4 mb-6 border border-gray-200/50 dark:border-gray-700/50"
           >
-            <h3 className="font-semibold text-gray-800 dark:text-gray-100 mb-3 flex items-center gap-2">
-              <span>📊</span>
-              任务要求
-            </h3>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
-              <div className="text-center p-3 bg-white/60 dark:bg-gray-700/60 rounded-lg">
-                <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">📁 类型</div>
-                <div className="font-medium text-gray-800 dark:text-gray-200">{task.category}</div>
+          <h3 className="font-semibold text-gray-800 dark:text-gray-100 mb-3 flex items-center gap-2">
+            <BarChart3 className="w-5 h-5" />
+            任务要求
+          </h3>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
+            <div className="text-center p-3 bg-white/60 dark:bg-gray-700/60 rounded-lg">
+              <div className="text-xs text-gray-500 dark:text-gray-400 mb-1 flex items-center justify-center gap-1">
+                <FolderOpen className="w-3 h-3" />
+                类型
               </div>
-              <div className="text-center p-3 bg-white/60 dark:bg-gray-700/60 rounded-lg">
-                <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">📝 文件</div>
-                <div className="font-medium text-gray-800 dark:text-gray-200">{task.needsFile ? '必交' : '无'}</div>
-              </div>
-              <div className="text-center p-3 bg-white/60 dark:bg-gray-700/60 rounded-lg">
-                <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">🤖 AIGC</div>
-                <div className="font-medium text-gray-800 dark:text-gray-200">{task.allowAIGC ? '允许' : '禁止'}</div>
-              </div>
-              <div className="text-center p-3 bg-white/60 dark:bg-gray-700/60 rounded-lg">
-                <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">⏰ 截止</div>
-                <div className="font-medium text-gray-800 dark:text-gray-200 text-xs">{formatDeadline}</div>
-              </div>
+              <div className="font-medium text-gray-800 dark:text-gray-200">{task.category}</div>
             </div>
+            <div className="text-center p-3 bg-white/60 dark:bg-gray-700/60 rounded-lg">
+              <div className="text-xs text-gray-500 dark:text-gray-400 mb-1 flex items-center justify-center gap-1">
+                <FileText className="w-3 h-3" />
+                文件
+              </div>
+              <div className="font-medium text-gray-800 dark:text-gray-200">{task.needsFile ? '必交' : '无'}</div>
+            </div>
+            <div className="text-center p-3 bg-white/60 dark:bg-gray-700/60 rounded-lg">
+              <div className="text-xs text-gray-500 dark:text-gray-400 mb-1 flex items-center justify-center gap-1">
+                <Bot className="w-3 h-3" />
+                AIGC
+              </div>
+              <div className="font-medium text-gray-800 dark:text-gray-200">{task.allowAIGC ? '允许' : '禁止'}</div>
+            </div>
+            <div className="text-center p-3 bg-white/60 dark:bg-gray-700/60 rounded-lg">
+              <div className="text-xs text-gray-500 dark:text-gray-400 mb-1 flex items-center justify-center gap-1">
+                <Clock className="w-3 h-3" />
+                截止
+              </div>
+              <div className="font-medium text-gray-800 dark:text-gray-200 text-xs">{formatDeadline}</div>
+            </div>
+          </div>
             
             {/* 额外信息 */}
-            {task.allowAIGC && (
-              <div className="mt-3 pt-3 border-t border-gray-200/50 dark:border-gray-700/50">
-                <div className="flex items-center gap-2 text-sm">
-                  <span className="text-gray-600 dark:text-gray-400">📝 AIGC 记录：</span>
-                  <span className={`font-medium ${task.requireAIGCLog ? 'text-red-600 dark:text-red-400' : 'text-gray-600 dark:text-gray-400'}`}>
-                    {task.requireAIGCLog ? '必交' : '可选'}
-                  </span>
-                </div>
-              </div>
-            )}
+          {task.allowAIGC && (
             <div className="mt-3 pt-3 border-t border-gray-200/50 dark:border-gray-700/50">
               <div className="flex items-center gap-2 text-sm">
-                <span className="text-gray-600 dark:text-gray-400">📋 逾期提交：</span>
-                <span className={`font-medium ${task.allowLateSubmission ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-                  {task.allowLateSubmission ? '允许' : '不允许'}
+                <span className="text-gray-600 dark:text-gray-400 flex items-center gap-1">
+                  <FileText className="w-4 h-4" />
+                  AIGC 记录：
+                </span>
+                <span className={`font-medium ${task.requireAIGCLog ? 'text-red-600 dark:text-red-400' : 'text-gray-600 dark:text-gray-400'}`}>
+                  {task.requireAIGCLog ? '必交' : '可选'}
                 </span>
               </div>
             </div>
+          )}
+          <div className="mt-3 pt-3 border-t border-gray-200/50 dark:border-gray-700/50">
+            <div className="flex items-center gap-2 text-sm">
+              <span className="text-gray-600 dark:text-gray-400 flex items-center gap-1">
+                <FileText className="w-4 h-4" />
+                逾期提交：
+              </span>
+              <span className={`font-medium ${task.allowLateSubmission ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                {task.allowLateSubmission ? '允许' : '不允许'}
+              </span>
+            </div>
+          </div>
           </motion.div>
 
           {/* 表单内容 */}
@@ -2213,9 +2245,10 @@ const getModelDisplayName = useCallback((modelValue, isPotMode = false) => {
             >
               {/* 文本内容 */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  💬 文字内容
-                </label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
+                <MessageSquare className="w-4 h-4" />
+                文字内容
+              </label>
                 <textarea
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
@@ -2230,9 +2263,10 @@ const getModelDisplayName = useCallback((modelValue, isPotMode = false) => {
 
               {/* 图片上传 */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  📷 上传图片 <span className="text-gray-500">(可选，支持多选)</span>
-                </label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
+                <ImageIcon className="w-4 h-4" />
+                上传图片 <span className="text-gray-500">(可选，支持多选)</span>
+              </label>
                 <input
                   type="file"
                   multiple
@@ -2249,9 +2283,10 @@ const getModelDisplayName = useCallback((modelValue, isPotMode = false) => {
               {/* 文件上传 */}
               {task.needsFile && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    📎 作业文件 <span className="text-red-500">*必交</span>
-                  </label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
+                  <Paperclip className="w-4 h-4" />
+                  作业文件 <span className="text-red-500">*必交</span>
+                </label>
                   <input
                     type="file"
                     onChange={(e) => {
@@ -2375,8 +2410,8 @@ const getModelDisplayName = useCallback((modelValue, isPotMode = false) => {
                     {aigcLog.length === 0 ? (
                       <div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">
                         <div className="text-center">
-                          <div className="text-3xl mb-2">🧠</div>
-                          <p className="text-sm">开始构建你的Thinking</p>
+                          <div className="mb-2"><BrainCog className="h-7 w-7" /></div>
+                          <p className="text-sm">开始你的思考。</p>
                         </div>
                       </div>
                     ) : (
@@ -2501,19 +2536,19 @@ const getModelDisplayName = useCallback((modelValue, isPotMode = false) => {
                         disabled={loading || !input.trim()}
                         className={`absolute right-2 w-8 h-8 rounded-full transition-all duration-200 flex items-center justify-center ${
                           !loading && input.trim()
-                            ? `${potEnabled ? 'pot-send-button' : 'bg-gradient-to-br from-purple-500 to-indigo-600 text-white hover:from-purple-600 hover:to-indigo-700'}` 
+                            ? `${potEnabled ? 'pot-send-button' : 'bg-gradient-to-br from-purple-500 to-pink-300 text-white hover:from-purple-600 hover:to-pink-400 active:scale-95'}` 
                             : 'bg-gray-200 dark:bg-gray-600 text-gray-400 dark:text-gray-500 cursor-not-allowed'
                         }`}
                         style={{
                           top: '50%',
                           transform: 'translateY(-50%)',
-                          marginTop: '0'
+                          marginTop: '-3.2px'
                         }}
                       >
                         {loading ? (
-                          <div className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                          <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
                         ) : (
-                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
                           </svg>
                         )}
@@ -2555,7 +2590,7 @@ const getModelDisplayName = useCallback((modelValue, isPotMode = false) => {
                     type="submit"
                     size="lg"
                     fullWidth
-                    icon="⚠️"
+                    icon={<AlertTriangle className="w-4 h-4" />}
                     haptic
                     disabled={loading}
                   >
@@ -2566,7 +2601,7 @@ const getModelDisplayName = useCallback((modelValue, isPotMode = false) => {
                     type="submit"
                     size="lg"
                     fullWidth
-                    icon="📤"
+                    icon={<Upload className="w-4 h-4" />}
                     haptic
                     disabled={loading}
                   >
@@ -2614,7 +2649,7 @@ const getModelDisplayName = useCallback((modelValue, isPotMode = false) => {
                   haptic.light();
                   navigate('/student');
                 }}
-                icon="👈"
+                icon={<ArrowLeft className="w-4 h-4" />}
               >
                 返回任务列表
               </SecondaryButton>

@@ -423,3 +423,13 @@
 .animate-fade-in {
   animation: fade-in 0.3s ease-out forwards;
 }
+
+:root {
+  --neon-color: hsl(340, 70%, 80%);
+  --neon-shadow: hsl(340, 70%, 80%);
+}
+
+.dark {
+  --neon-color: hsl(330, 95%, 70%);
+  --neon-shadow: hsl(330, 95%, 70%);
+}
