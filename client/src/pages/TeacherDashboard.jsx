@@ -34,7 +34,8 @@ import {
   X,                // 💀 替换 (永久删除)
   FolderOpen,       // 📂 替换 (任务信息)
   Pin,              // 📌 替换 (发布新任务)
-  GraduationCap     // 🏫 替换 (关联班级)
+  GraduationCap,     // 🏫 替换 (关联班级)
+  CalendarOff
 } from 'lucide-react';
 
 
@@ -43,7 +44,7 @@ import {
     const getTheme = () => {
       if (type === 'expired') {
         return {
-          icon: <X className="w-4 h-4 text-red-600 dark:text-red-400" />,
+          icon: <CalendarOff className="w-4 h-4 text-red-600 dark:text-red-400" />,
           bgColor: 'bg-red-50 dark:bg-gray-800/50 border border-red-100 dark:border-gray-700',
           hoverBg: 'hover:bg-red-100 dark:hover:bg-gray-700/50'
         };
