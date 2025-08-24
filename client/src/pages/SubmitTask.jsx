@@ -2169,7 +2169,7 @@ const getModelDisplayName = useCallback((modelValue, isPotMode = false) => {
               </div>
               <div className="text-center p-3 bg-white/60 dark:bg-gray-700/60 rounded-lg">
                 <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">📝 文件</div>
-                <div className="font-medium text-gray-800 dark:text-gray-200">{task.needsFile ? '必交' : '可选'}</div>
+                <div className="font-medium text-gray-800 dark:text-gray-200">{task.needsFile ? '必交' : '无'}</div>
               </div>
               <div className="text-center p-3 bg-white/60 dark:bg-gray-700/60 rounded-lg">
                 <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">🤖 AIGC</div>

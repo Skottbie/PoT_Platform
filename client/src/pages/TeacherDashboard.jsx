@@ -709,8 +709,13 @@ const TeacherDashboard = () => {
             </div>
             <div className="space-y-1 text-sm">
               <p><span className="font-medium">类型:</span> {task.category}</p>
-              <p><span className="font-medium">文件:</span> {task.needsFile ? '必交' : '可选'}</p>
+              <p><span className="font-medium">文件:</span> {task.needsFile ? '必交' : '无'}</p>
               <p><span className="font-medium">AIGC:</span> {task.allowAIGC ? '允许' : '禁止'}</p>
+              <p><span className="font-medium">班级:</span> {
+                                                task.classIds && task.classIds.length > 0
+                                                  ? task.classIds.map(cls => cls.name).join('，')
+                                                  : '未绑定班级'
+                                              }</p>
             </div>
           </div>
 
@@ -1311,14 +1316,14 @@ const TeacherDashboard = () => {
                           </div>
 
                           <div className="flex-1 min-w-0">
-                            <div className="flex flex-col lg:flex-row lg:justify-between lg:items-start gap-4 mb-4">
+                            <div className="flex flex-col lg:flex-row lg:justify-between lg:items-start gap-4">
                               <div className="flex-1 min-w-0">
                                 <h3 className="font-bold text-xl text-gray-800 dark:text-gray-100 mb-2 line-clamp-2">
                                   {task.title}
                                 </h3>
                                 
                                 {/* 状态标签 */}
-                                <div className="flex items-center gap-2 flex-wrap mb-3">
+                                <div className="flex items-center gap-2 flex-wrap mb-2">
                                   <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getTaskStatus(task.deadline).color} ${
                                     getTaskStatus(task.deadline).status === 'expired' 
                                       ? 'bg-red-100 dark:bg-red-900/30 border border-red-200 dark:border-red-700/50'
@@ -1350,7 +1355,7 @@ const TeacherDashboard = () => {
 
                                 {/* 任务描述 */}
                                 {task.description && (
-                                  <div className="mb-4">
+                                  <div className="mb-2">
                                     <div className="bg-blue-50/60 dark:bg-blue-900/20 rounded-mobile-lg p-3 border border-blue-200/50 dark:border-blue-700/30">
                                       <div className="flex items-start gap-2">
                                         <ClipboardList className="w-4 h-4 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
@@ -1365,7 +1370,7 @@ const TeacherDashboard = () => {
                             </div>
                             
                             {/* 任务详情网格 */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
                               <div className="bg-gray-50/80 dark:bg-gray-800/50 rounded-mobile-lg p-3">
                                 <div className="text-xs text-gray-500 dark:text-gray-400 mb-1 flex items-center gap-1">
                                   <FolderOpen className="w-3.5 h-3.5" />
@@ -1373,8 +1378,12 @@ const TeacherDashboard = () => {
                                 </div>
                                 <div className="space-y-1 text-sm">
                                   <p><span className="font-medium">类型:</span> {task.category}</p>
-                                  <p><span className="font-medium">文件:</span> {task.needsFile ? '必交' : '可选'}</p>
+                                  <p><span className="font-medium">文件:</span> {task.needsFile ? '必交' : '无'}</p>
                                   <p><span className="font-medium">AIGC:</span> {task.allowAIGC ? '允许' : '禁止'}</p>
+                                  <p><span className="font-medium">班级:</span>  {task.classIds && task.classIds.length > 0
+                                    ? task.classIds.map(cls => cls.name).join('，')
+                                    : '未绑定'}
+                                </p>
                                 </div>
                               </div>
 

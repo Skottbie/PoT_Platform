@@ -616,7 +616,7 @@ const StudentDashboard = () => {
           </div>
           <div className="flex items-center gap-1.5 text-gray-600 dark:text-gray-400">
             <CloudUpload className="w-3.5 h-3.5 flex-shrink-0" />
-            <span className="truncate">文件: {task.needsFile ? '必交' : '可选'}</span>
+            <span className="truncate">文件: {task.needsFile ? '必交' : '无'}</span>
           </div>
           <div className="flex items-center gap-1.5 text-gray-600 dark:text-gray-400">
             <Bot className="w-3.5 h-3.5 flex-shrink-0" />
@@ -956,7 +956,7 @@ const StudentDashboard = () => {
                                 </p>
                                 <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-2">
                                   <CloudUpload className="w-4 h-4" />
-                                  作业文件：{task.needsFile ? '必交' : '可选'}
+                                  作业文件：{task.needsFile ? '必交' : '无'}
                                 </p>
                                 <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-2">
                                   <Bot className="w-4 h-4" />
@@ -1165,7 +1165,7 @@ const StudentDashboard = () => {
                                 </p>
                                 <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-2">
                                   <CloudUpload className="w-4 h-4" />
-                                  作业文件：{task.needsFile ? '必交' : '可选'}
+                                  作业文件：{task.needsFile ? '必交' : '无'}
                                 </p>
                                 <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-2">
                                   <Bot className="w-4 h-4" />
@@ -1364,7 +1364,7 @@ const StudentDashboard = () => {
                           </p>
                           <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-2">
                             <CloudUpload className="w-4 h-4" />
-                            作业文件：{task.needsFile ? '必交' : '可选'}
+                            作业文件：{task.needsFile ? '必交' : '无'}
                           </p>
                           <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-2">
                             <Bot className="w-4 h-4" />
