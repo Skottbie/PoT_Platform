@@ -11,6 +11,20 @@ import { github } from 'react-syntax-highlighter/dist/esm/styles/hljs';
 import toast from 'react-hot-toast';
 import PullToRefreshContainer from '../components/PullToRefreshContainer';
 import useAutoRefresh from '../hooks/useAutoRefresh';
+import { 
+  CheckCircle, 
+  AlertTriangle, 
+  MessageCircle, 
+  Star, 
+  FileText, 
+  Paperclip, 
+  Download,
+  FileUp,
+  ChevronDown,
+  ChevronUp,
+  BookOpen,
+  ArrowLeft 
+} from 'lucide-react';
 
 import { 
   detectPoTMode, 
@@ -194,7 +208,7 @@ const ViewSubmission = () => {
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-6">
             <div className="flex-1 min-w-0">
               <h1 className="text-xl sm:text-2xl font-bold text-gray-800 dark:text-gray-100 mb-2 break-words">
-                📄 我的提交记录
+                <FileUp className="w-4 h-4" /> 我的提交记录
               </h1>
               <p className="text-sm text-gray-600 dark:text-gray-400 break-words">
                 任务：{task?.title}
@@ -202,7 +216,7 @@ const ViewSubmission = () => {
               {task?.description && (
                 <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg">
                   <h3 className="text-sm font-semibold text-blue-800 dark:text-blue-200 mb-1">
-                    📋 任务说明
+                    <FileText className="w-4 h-4" /> 任务说明
                   </h3>
                   <p className="text-blue-700 dark:text-blue-300 text-sm leading-relaxed whitespace-pre-wrap break-words">
                     {task.description}
@@ -217,7 +231,7 @@ const ViewSubmission = () => {
                 onClick={() => navigate('/student')}
                 className="w-full sm:w-auto"
               >
-                👈 返回任务列表
+                <ArrowLeft className="w-4 h-4" />返回任务列表
               </Button>
             </div>
           </div>
@@ -238,13 +252,15 @@ const ViewSubmission = () => {
               <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
                 <div className="space-y-2 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300">
-                      ✅ 已提交
+                    <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300 gap-1">
+                      <CheckCircle className="w-4 h-4" />
+                      已提交
                     </span>
                     {submission.isLateSubmission && (
-                      <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-orange-100 text-orange-800 dark:bg-orange-900/50 dark:text-orange-300">
-                        ⚠️ 逾期提交
-                      </span>
+                    <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-orange-100 text-orange-800 dark:bg-orange-900/50 dark:text-orange-300 gap-1">
+                      <AlertTriangle className="w-4 h-4" />
+                      逾期提交
+                    </span>
                     )}
                   </div>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -263,12 +279,15 @@ const ViewSubmission = () => {
                 <div className="w-full">
                   <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-4">
                     <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-2">
-                      <span className="text-blue-600 dark:text-blue-400 font-medium text-sm">
-                        💬 教师反馈
+                      <span className="text-blue-600 dark:text-blue-400 font-medium text-sm flex items-center gap-1">
+                        <MessageCircle className="w-4 h-4" />
+                        教师反馈
                       </span>
                       {submission.feedback.rating && (
-                        <span className="text-yellow-500">
-                          {'⭐'.repeat(submission.feedback.rating)}
+                        <span className="text-yellow-500 flex items-center gap-0.5">
+                          {Array.from({ length: submission.feedback.rating }, (_, i) => (
+                            <Star key={i} className="w-4 h-4 fill-current" />
+                          ))}
                         </span>
                       )}
                     </div>
@@ -286,8 +305,9 @@ const ViewSubmission = () => {
             {/* 提交内容 */}
             {submission.content && (
               <div>
-                <h3 className="font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                  📝 文字内容
+                <h3 className="font-semibold text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
+                  <FileText className="w-4 h-4" />
+                  文字内容
                 </h3>
                 <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 text-sm text-gray-800 dark:text-gray-200 whitespace-pre-wrap break-words">
                   {submission.content}
@@ -310,22 +330,24 @@ const ViewSubmission = () => {
             {/* 作业文件 */}
             {submission.fileId && (
               <div>
-                <h3 className="font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                  📎 作业文件
+                <h3 className="font-semibold text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
+                  <Paperclip className="w-4 h-4" />
+                  作业文件
                 </h3>
                 <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <span className="text-sm text-gray-800 dark:text-gray-200 break-all">
                       {submission.fileName}
                     </span>
-                    <Button
-                      size="sm"
-                      variant="primary"
-                      onClick={() => handleDownload(submission.fileId, submission.fileName)}
-                      className="w-full sm:w-auto flex-shrink-0"
-                    >
-                      ⬇️ 下载
-                    </Button>
+                      <Button
+                        size="sm"
+                        variant="primary"
+                        onClick={() => handleDownload(submission.fileId, submission.fileName)}
+                        className="w-full sm:w-auto flex-shrink-0 flex items-center gap-2"
+                      >
+                        <Download className="w-4 h-4" />
+                        下载
+                      </Button>
                   </div>
                 </div>
               </div>
@@ -346,9 +368,19 @@ const ViewSubmission = () => {
                       size="sm"
                       variant="secondary"
                       onClick={toggleAigcContent}
-                      className="w-full sm:w-auto"
+                      className="w-full sm:w-auto flex items-center gap-2"
                     >
-                      {expandedAigc ? '🔽 收起内容' : '📖 展开查看'}
+                      {expandedAigc ? (
+                        <>
+                          <ChevronUp className="w-4 h-4" />
+                          收起内容
+                        </>
+                      ) : (
+                        <>
+                          <BookOpen className="w-4 h-4" />
+                          展开查看
+                        </>
+                      )}
                     </Button>
                     <Button
                       size="sm"
@@ -356,7 +388,7 @@ const ViewSubmission = () => {
                       onClick={() => handleDownload(submission.aigcLogId, 'aigc_log.json')}
                       className="w-full sm:w-auto"
                     >
-                      ⬇️ 下载记录
+                      <Download className="w-4 h-4" /> 下载记录
                     </Button>
                   </div>
                 </div>
