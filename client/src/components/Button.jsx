@@ -98,7 +98,10 @@ export default function Button({
           <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin" />
         </div>
       )}
-      <span className={loading ? 'opacity-0' : 'opacity-100'}>
+      <span className={clsx(
+        'flex items-center gap-2',
+        loading ? 'opacity-0' : 'opacity-100'
+      )}>
         {children}
       </span>
     </button>

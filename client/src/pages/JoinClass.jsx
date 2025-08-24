@@ -66,13 +66,15 @@ return (
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.2, duration: 0.3 }}
         >
-          <SecondaryButton
+          <Button
+            variant="secondary"
+            size="sm"
             onClick={() => navigate('/student')}
-            icon={<ArrowLeft className="w-4 h-4" />}
-            className="flex-shrink-0"
+            className="w-full sm:w-auto flex items-center gap-2"
           >
-            返回
-          </SecondaryButton>
+            <ArrowLeft className="w-4 h-4" />
+            返回首页
+          </Button>
         </motion.div>
 
         {/* 主卡片 */}

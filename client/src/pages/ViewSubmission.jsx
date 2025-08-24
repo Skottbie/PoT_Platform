@@ -188,9 +188,15 @@ const ViewSubmission = () => {
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
           <p className="text-gray-600 dark:text-gray-400 mb-4">您还没有提交此任务</p>
-          <Button variant="primary" onClick={() => navigate('/student')}>
-            返回任务列表
-          </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => navigate('/student')}
+              className="w-full sm:w-auto"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span>返回任务列表</span>
+            </Button>
         </div>
       </div>
     );
@@ -207,16 +213,18 @@ const ViewSubmission = () => {
           {/* 页面头部 */}
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-6">
             <div className="flex-1 min-w-0">
-              <h1 className="text-xl sm:text-2xl font-bold text-gray-800 dark:text-gray-100 mb-2 break-words">
-                <FileUp className="w-4 h-4" /> 我的提交记录
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-800 dark:text-gray-100 mb-2 break-words flex items-center gap-2">
+                <FileUp className="w-4 h-4" />
+                <span>我的提交记录</span>
               </h1>
               <p className="text-sm text-gray-600 dark:text-gray-400 break-words">
                 任务：{task?.title}
               </p>
               {task?.description && (
                 <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg">
-                  <h3 className="text-sm font-semibold text-blue-800 dark:text-blue-200 mb-1">
-                    <FileText className="w-4 h-4" /> 任务说明
+                  <h3 className="text-sm font-semibold text-blue-800 dark:text-blue-200 mb-1 flex items-center gap-2">
+                    <FileText className="w-4 h-4" /> 
+                    <span>任务说明</span>
                   </h3>
                   <p className="text-blue-700 dark:text-blue-300 text-sm leading-relaxed whitespace-pre-wrap break-words">
                     {task.description}
@@ -225,14 +233,15 @@ const ViewSubmission = () => {
               )}
             </div>
             <div className="flex-shrink-0">
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => navigate('/student')}
-                className="w-full sm:w-auto"
-              >
-                <ArrowLeft className="w-4 h-4" />返回任务列表
-              </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => navigate('/student')}
+              className="w-full sm:w-auto"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span>返回任务列表</span>
+            </Button>
             </div>
           </div>
 
@@ -388,7 +397,8 @@ const ViewSubmission = () => {
                       onClick={() => handleDownload(submission.aigcLogId, 'aigc_log.json')}
                       className="w-full sm:w-auto"
                     >
-                      <Download className="w-4 h-4" /> 下载记录
+                      <Download className="w-4 h-4" /> 
+                      <span>下载记录</span>
                     </Button>
                   </div>
                 </div>

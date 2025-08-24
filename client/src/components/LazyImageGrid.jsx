@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import LazyImage from './LazyImage';
 import Modal from 'react-modal';
+import { ImageUp } from 'lucide-react';
 
 const LazyImageGrid = ({ 
   imageIds = [], 
@@ -35,9 +36,9 @@ const LazyImageGrid = ({
 
   return (
     <div className="mt-4">
-      <p className="font-semibold text-gray-700 dark:text-gray-300 mb-2">
-        📸 {title} ({imageIds.length})
-      </p>
+    <p className="font-semibold text-gray-700 dark:text-gray-300 mb-2 flex items-center whitespace-nowrap">
+      <ImageUp className="w-4 h-4 mr-2" /> {title} ({imageIds.length})
+    </p>
       
       <div className={gridClassName}>
         {imageIds.map((imageId, index) => (
