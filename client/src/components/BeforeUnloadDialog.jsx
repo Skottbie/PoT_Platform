@@ -7,6 +7,7 @@ import { useHapticFeedback } from '../hooks/useDeviceDetetion';
 const BeforeUnloadDialog = ({
   isOpen,
   hasFile,
+  hasImages, // 🆕 新增图片检测参数
   onSaveAndLeave,
   onLeaveWithoutSave,
   onCancel
@@ -14,7 +15,6 @@ const BeforeUnloadDialog = ({
   const haptic = useHapticFeedback();
 
   const handleSaveAndLeave = () => {
-    // 🔧 修复：安全调用 haptic 方法
     try {
       if (haptic && typeof haptic.success === 'function') {
         haptic.success();
@@ -26,12 +26,11 @@ const BeforeUnloadDialog = ({
   };
 
   const handleLeaveWithoutSave = () => {
-    // 🔧 修复：完全移除对 warning 方法的调用，使用替代方案
     try {
       if (haptic && typeof haptic.medium === 'function') {
-        haptic.medium(); // 使用 medium 作为警告替代
+        haptic.medium();
       } else if (haptic && typeof haptic.light === 'function') {
-        haptic.light(); // 退而求其次使用 light
+        haptic.light();
       }
     } catch (error) {
       console.warn('Haptic feedback failed:', error);
@@ -40,7 +39,6 @@ const BeforeUnloadDialog = ({
   };
 
   const handleCancel = () => {
-    // 🔧 修复：安全调用 haptic 方法
     try {
       if (haptic && typeof haptic.light === 'function') {
         haptic.light();
@@ -81,21 +79,34 @@ const BeforeUnloadDialog = ({
                     退出任务界面
                   </h3>
                   <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                    {hasFile 
-                      ? '是否保存为草稿？文件需要重新上传。'
+                    {(hasFile || hasImages)
+                      ? '是否保存为草稿？文件/图片需要重新上传。'
                       : '是否保存为草稿？'
                     }
                   </p>
                 </div>
               </div>
 
+              {/* 🔧 修复：文件提示（保持原有逻辑） */}
               {hasFile && (
-                <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-3">
+                <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-3 mb-3">
                   <div className="flex items-center gap-2 text-sm text-orange-700 dark:text-orange-300">
                     <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                     <span>文件不会保存到草稿中，下次需要重新上传</span>
+                  </div>
+                </div>
+              )}
+
+              {/* 🆕 新增：图片提示 */}
+              {hasImages && (
+                <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-3">
+                  <div className="flex items-center gap-2 text-sm text-orange-700 dark:text-orange-300">
+                    <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    <span>图片不会保存到草稿中，下次需要重新上传</span>
                   </div>
                 </div>
               )}

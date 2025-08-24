@@ -1052,7 +1052,7 @@ const StudentDashboard = () => {
                                 </div>
                               )}
 
-                              {currentCategory === 'archived' && (
+{/*                               {currentCategory === 'archived' && (
                                 <div className="px-5 py-2 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 text-sm">
                                   <div className="flex items-center justify-center gap-2">
                                     <Archive className="w-4 h-4" />
@@ -1069,7 +1069,7 @@ const StudentDashboard = () => {
                                     </SecondaryButton>
                                   )}
                                 </div>
-                              )}
+                              )} */}
                             </div>
 
 
@@ -1260,7 +1260,7 @@ const StudentDashboard = () => {
                                   </div>
                                 </div>
                               )}
-
+                              {/*
                               {currentCategory === 'archived' && (
                                 <div className="px-5 py-2 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 text-sm">
                                   <div className="flex items-center justify-center gap-2">
@@ -1279,6 +1279,7 @@ const StudentDashboard = () => {
                                   )}
                                 </div>
                               )}
+                                */}
                             </div>
 
 
@@ -1459,7 +1460,7 @@ const StudentDashboard = () => {
                             </div>
                           </div>
                         )}
-
+                        {/*
                         {currentCategory === 'archived' && (
                           <div className="px-5 py-2 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 text-sm">
                             <div className="flex items-center justify-center gap-2">
@@ -1478,6 +1479,7 @@ const StudentDashboard = () => {
                             )}
                           </div>
                         )}
+                          */}
                       </div>
 
 

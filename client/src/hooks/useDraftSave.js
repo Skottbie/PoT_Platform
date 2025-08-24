@@ -180,7 +180,7 @@ export const useDraftSave = (taskId, isFullscreen = false) => {
   const hasActualContent = useCallback((data) => {
     return !!(
       data.content?.trim() ||
-      data.images?.length > 0 ||
+      //data.images?.length > 0 ||
       data.file ||
       // 🔧 修复：统一使用 > 1 的判断标准（第一条通常是系统消息）
       data.aigcLog?.length > 1
@@ -272,8 +272,8 @@ export const useDraftSave = (taskId, isFullscreen = false) => {
     setSaveStatus('saving');
     
     try {
-      // 处理图片数据 - 转换为可存储的格式
-      const processedImages = await Promise.all(
+      // 处理图片数据 
+      /*const processedImages = await Promise.all(
         (normalizedData.images || []).map(async (image) => {
           if (image instanceof File) {
             return {
@@ -287,10 +287,11 @@ export const useDraftSave = (taskId, isFullscreen = false) => {
           return image;
         })
       );
+      */
 
       const draftPayload = {
         content: normalizedData.content,
-        images: processedImages,
+        //images: processedImages,
         fileInfo: normalizedData.fileInfo,
         aigcLog: normalizedData.aigcLog,
         model: normalizedData.model,

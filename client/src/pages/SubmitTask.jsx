@@ -31,7 +31,7 @@ import '../styles/potMode.css';
 import { Lightbulb, BrainCircuit, BotMessageSquare, UserRound, Send, 
     Upload, FileText, ArrowLeft, Info, CheckCircle2, AlertTriangle, 
     XCircle, BarChart3, FolderOpen, Bot, Clock, MessageSquare, 
-    ImageIcon, Paperclip, BrainCog 
+    ImageIcon, Paperclip, BrainCog, ImageUp 
  } from 'lucide-react';
 import EnhancedButton from '../components/EnhancedButton';
 
@@ -937,13 +937,39 @@ const getModelDisplayName = useCallback((modelValue, isPotMode = false) => {
               />
               <button
                 type="button"
-                className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center text-xs font-bold shadow-sm hover:shadow-md active:scale-90 transition-all duration-200"
+                className="absolute -top-2 -right-2 w-6 h-6 bg-red-800 text-white rounded-full flex items-center justify-center text-xs font-bold shadow-sm hover:shadow-md active:scale-90 transition-all duration-200"
                 onClick={() => {
                   haptic.light();
                   const newImages = images.filter((_, i) => i !== index);
                   setImages(newImages);
                   const newPreviewIds = imagePreviewIds.filter((_, i) => i !== index);
                   setImagePreviewIds(newPreviewIds);
+                  
+                  // 🔧 修复：同步文件输入框（非iOS平台）
+                  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+                                (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+                  
+                  if (!isIOS) {
+                    // 非iOS平台：同步原生文件输入框
+                    const fileInput = document.querySelector('input[type="file"][accept="image/*"]:not([style*="opacity: 0"])');
+                    if (fileInput) {
+                      if (newImages.length === 0) {
+                        fileInput.value = '';
+                      } else {
+                        try {
+                          const dataTransfer = new DataTransfer();
+                          newImages.forEach(file => {
+                            dataTransfer.items.add(file);
+                          });
+                          fileInput.files = dataTransfer.files;
+                        } catch (error) {
+                          console.warn('更新文件输入框失败:', error);
+                          fileInput.value = '';
+                        }
+                      }
+                    }
+                  }
+                  // iOS平台：自定义按钮会通过React状态自动更新显示
                 }}
               >
                 ×
@@ -1041,7 +1067,8 @@ const getModelDisplayName = useCallback((modelValue, isPotMode = false) => {
       const restored = restoreDraft();
       if (restored) {
           setContent(restored.content || '');
-          setImages(restored.images || []);
+          //setImages(restored.images || []);
+          setImages([]);
           setAigcLog(restored.aigcLog || []);
           setModel(restored.model || 'qwen-flash');
           setShouldUploadAIGC(restored.shouldUploadAIGC || false);
@@ -1050,13 +1077,22 @@ const getModelDisplayName = useCallback((modelValue, isPotMode = false) => {
               enablePoTMode(restored.model || 'qwen-flash');
           }
   
-          // 如果有文件信息，显示提示
-          if (restored.fileInfo?.hasFile) {
-              setMessage(`📋 草稿已恢复！请重新上传文件：${restored.fileInfo.fileName}`);
-              setTimeout(() => setMessage(''), 5000);
+          // 添加图片和文件的提示逻辑
+          const hasFileInfo = restored.fileInfo?.hasFile;
+          const hasImageInfo = restored.images?.length > 0;
+
+          if (hasFileInfo && hasImageInfo) {
+            setMessage(`📋 草稿已恢复！请重新上传文件：${restored.fileInfo.fileName} 和 ${restored.images.length} 张图片`);
+            setTimeout(() => setMessage(''), 5000);
+          } else if (hasFileInfo) {
+            setMessage(`📋 草稿已恢复！请重新上传文件：${restored.fileInfo.fileName}`);
+            setTimeout(() => setMessage(''), 5000);
+          } else if (hasImageInfo) {
+            setMessage(`📋 草稿已恢复！请重新上传 ${restored.images.length} 张图片`);
+            setTimeout(() => setMessage(''), 5000);
           } else {
-              setMessage('📋 草稿已恢复！');
-              setTimeout(() => setMessage(''), 3000);
+            setMessage('📋 草稿已恢复！');
+            setTimeout(() => setMessage(''), 3000);
           }
       }
   }, [draftData, restoreDraft, enablePoTMode]);
@@ -2047,6 +2083,7 @@ const getModelDisplayName = useCallback((modelValue, isPotMode = false) => {
       <BeforeUnloadDialog
         isOpen={showBeforeUnloadDialog}
         hasFile={!!file}
+        hasImages={!!(images && images.length > 0)}
         onSaveAndLeave={handleSaveAndLeave}
         onLeaveWithoutSave={handleLeaveWithoutSave}
         onCancel={handleCancelLeave}
@@ -2264,16 +2301,63 @@ const getModelDisplayName = useCallback((modelValue, isPotMode = false) => {
               {/* 图片上传 */}
               <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
-                <ImageIcon className="w-4 h-4" />
+                <ImageUp className="w-4 h-4" />
                 上传图片 <span className="text-gray-500">(可选，支持多选)</span>
               </label>
-                <input
-                  type="file"
-                  multiple
-                  accept="image/*"
-                  onChange={handleImageChange}
-                  className="w-full border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-4 py-3 text-base focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500"
-                />
+
+                {/* 🔧 检测iOS并使用不同的UI */}
+                {(() => {
+                  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+                                (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+                  
+                  if (isIOS) {
+                    return (
+                      <div className="relative">
+                        {/* iOS: 隐藏的原生输入框 */}
+                        <input
+                          ref={(ref) => {
+                            if (ref) {
+                              // 存储ref供自定义按钮使用
+                              window._imageInputRef = ref;
+                            }
+                          }}
+                          type="file"
+                          multiple
+                          accept="image/*"
+                          onChange={handleImageChange}
+                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                        />
+                        {/* iOS: 自定义显示按钮 */}
+                        <button
+                          type="button"
+                          onClick={() => window._imageInputRef?.click()}
+                          className="w-full border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-4 py-3 text-base focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 text-left flex items-center gap-2"
+                        >
+                          <ImageIcon className="w-4 h-4 text-gray-500" />
+                          <span>
+                            {images && images.length > 0 ? '已选择图片' : '未选择图片'}
+                          </span>
+                          {images && images.length > 0 && (
+                            <span className="text-gray-500 text-sm ml-auto">
+                              ({images.length} 张)
+                            </span>
+                          )}
+                        </button>
+                      </div>
+                    );
+                  } else {
+                    return (
+                      <input
+                        type="file"
+                        multiple
+                        accept="image/*"
+                        onChange={handleImageChange}
+                        className="w-full border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-4 py-3 text-base focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500"
+                      />
+                    );
+                  }
+                })()}
+
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                   支持 JPG、PNG、GIF 等图片格式，可同时选择多张图片
                 </p>
