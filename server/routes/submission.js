@@ -217,9 +217,37 @@ router.get('/by-task/:taskId', verifyToken, async (req, res) => {
 
     const submissions = await Submission.find({ task: req.params.taskId })
       .populate('student', 'email')
+      .populate('task', 'classIds')
       .sort({ submittedAt: -1 });
-    
-    res.json(submissions);
+
+    // 然后获取所有相关班级的学生信息
+    const task = await Task.findById(req.params.taskId).populate('classIds');
+    const studentNameMap = {};
+
+    // 构建学生姓名映射表
+    if (task && task.classIds) {
+      for (const classDoc of task.classIds) {
+        if (classDoc.studentList) {
+          classDoc.studentList.forEach(student => {
+            if (student.userId) {
+              studentNameMap[student.userId.toString()] = student.name;
+            }
+          });
+        }
+      }
+    }
+
+    // 为每个提交记录添加学生姓名
+    const enrichedSubmissions = submissions.map(submission => {
+      const submissionObj = submission.toObject();
+      if (submissionObj.student && submissionObj.student._id) {
+        const studentName = studentNameMap[submissionObj.student._id.toString()];
+        submissionObj.student.name = studentName || null;
+      }
+      return submissionObj;
+    });
+
+    res.json(enrichedSubmissions);
   } catch (err) {
     res.status(500).json({ message: '获取提交失败', error: err.message });
   }

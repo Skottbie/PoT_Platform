@@ -9,6 +9,7 @@ import LazyImageGrid from '../components/LazyImageGrid';
 import toast from 'react-hot-toast';
 import PullToRefreshContainer from '../components/PullToRefreshContainer';
 import useAutoRefresh from '../hooks/useAutoRefresh';
+import { createPortal } from 'react-dom';
 
 import { 
   FileText,
@@ -25,7 +26,8 @@ import {
   ArrowLeft,
   ChevronDown,
   ChevronUp,
-  MessageSquareText 
+  MessageSquareText,
+  Type 
 } from 'lucide-react';
 
 import { 
@@ -46,7 +48,7 @@ const TeacherTaskSubmissions = () => {
   const [feedbackModal, setFeedbackModal] = useState({
     isOpen: false,
     submissionId: null,
-    studentEmail: '',
+    studentDisplay: '',
     currentFeedback: null
   });
   const [feedbackForm, setFeedbackForm] = useState({
@@ -54,6 +56,22 @@ const TeacherTaskSubmissions = () => {
     rating: 0
   });
   const [submittingFeedback, setSubmittingFeedback] = useState(false);
+
+  // 格式化学生显示信息
+  const formatStudentDisplay = (student) => {
+    if (!student) return '未知';
+    
+    const name = student.name;
+    const email = student.email;
+    
+    if (name && email) {
+      return `${name}(${email})`;
+    } else if (email) {
+      return email; // 如果没有姓名，显示邮箱
+    } else {
+      return '未知';
+    }
+  };
 
   // 🔧 修复：将 refreshData 函数定义提前，避免初始化错误
   const refreshData = async () => {
@@ -90,6 +108,13 @@ const TeacherTaskSubmissions = () => {
     fetchTaskAndSubmissions();
   }, [taskId, navigate]);
 
+  // 在现有的useEffect后面添加：
+  useEffect(() => {
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, []);
+
   // 🔄 下拉刷新处理函数 - 现在可以安全使用 refreshData
   const handlePullRefresh = async () => {
     try {
@@ -118,10 +143,13 @@ const TeacherTaskSubmissions = () => {
 
   // 反馈处理函数 - 保持原有逻辑
   const openFeedbackModal = (submission) => {
+    // 阻止背景滚动
+    document.body.style.overflow = 'hidden';
+    
     setFeedbackModal({
       isOpen: true,
       submissionId: submission._id,
-      studentEmail: submission.student?.email || '未知',
+      studentDisplay: formatStudentDisplay(submission.student),
       currentFeedback: submission.feedback,
     });
 
@@ -132,6 +160,9 @@ const TeacherTaskSubmissions = () => {
   };
 
   const closeFeedbackModal = () => {
+    // 恢复背景滚动
+    document.body.style.overflow = 'unset';
+    
     setFeedbackModal({
       isOpen: false,
       submissionId: null,
@@ -143,6 +174,8 @@ const TeacherTaskSubmissions = () => {
       rating: 0,
     });
   };
+
+  
 
   const handleFeedbackSubmit = async (e) => {
     e.preventDefault();
@@ -185,7 +218,7 @@ const TeacherTaskSubmissions = () => {
             <p>确定要删除这条反馈吗？</p>
             <div className="flex gap-2 justify-end">
               <button
-                className="px-3 py-1 bg-gray-200 rounded text-sm"
+                className="px-3 py-1 bg-gray-500 rounded-lg text-sm aigc-native-button"
                 onClick={() => {
                   toast.dismiss(t.id);
                   resolve(false);
@@ -194,7 +227,7 @@ const TeacherTaskSubmissions = () => {
                 取消
               </button>
               <button
-                className="px-3 py-1 bg-red-500 text-white rounded text-sm"
+                className="px-3 py-1 bg-red-500 text-white rounded-lg text-sm aigc-native-button"
                 onClick={() => {
                   toast.dismiss(t.id);
                   resolve(true);
@@ -469,8 +502,8 @@ const TeacherTaskSubmissions = () => {
       disabled={loading}
     >
       <div className="max-w-4xl mx-auto relative">
-        <div className="flex justify-between items-start mb-6">
-          <div>
+        <div className="flex flex-col space-y-4 mb-6 sm:flex-row sm:justify-between sm:items-start sm:space-y-0">
+          <div className="flex-1">
             <div className="flex items-center gap-3 mb-2">
               <FileText className="w-6 h-6 text-blue-600 dark:text-blue-400" strokeWidth={1.5} />
               <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">提交记录</h1>
@@ -497,23 +530,29 @@ const TeacherTaskSubmissions = () => {
             )}
           </div>
           
-          <div className="flex gap-2">
-            {/* 班级提交情况按钮 */}
+          <div className="flex flex-col gap-3 w-full sm:w-auto sm:flex-row sm:gap-2">
+            {/* 总览按钮 */}
             <Button
               variant="primary"
               size="sm"
               onClick={() => navigate(`/task/${taskId}/class-status`)}
+              className="w-full sm:w-auto"  // 移动端全宽，桌面端自适应
             >
               <BarChart3 className="w-4 h-4 mr-1.5" strokeWidth={1.5} />
-              班级提交情况
+              <span className="hidden sm:inline">提交情况总览</span>
+              <span className="sm:hidden">提交情况总览</span>
             </Button>
+            
+            {/* 返回按钮 */}
             <Button
-              variant="secondary"
+              variant="secondary" 
               size="sm"
               onClick={() => navigate('/teacher')}
+              className="w-full sm:w-auto"  // 移动端全宽，桌面端自适应
             >
               <ArrowLeft className="w-4 h-4 mr-1.5" strokeWidth={1.5} />
-              返回教师首页
+              <span className="hidden sm:inline">返回教师首页</span>
+              <span className="sm:hidden">返回教师首页</span>
             </Button>
           </div>
         </div>
@@ -543,12 +582,12 @@ const TeacherTaskSubmissions = () => {
                       : "bg-white/80 dark:bg-gray-800/80 border-gray-200 dark:border-gray-700"
                   }`}
                 >
-                  <div className="flex justify-between items-start">
+                  <div className="flex flex-col space-y-3 sm:flex-row sm:justify-between sm:items-start sm:space-y-0">
                     <div>
                       <div className="flex items-center gap-2 text-sm text-gray-800 dark:text-gray-200">
                         <User className="w-4 h-4 text-gray-500 dark:text-gray-400" strokeWidth={1.5} />
                         <strong>学生:</strong>
-                        <span>{s.student?.email || '未知'}</span>
+                        <span>{formatStudentDisplay(s.student)}</span>
                       </div>
                       <div className="flex items-center gap-2 text-sm text-gray-800 dark:text-gray-200">
                         <Clock className="w-4 h-4 text-gray-500 dark:text-gray-400" strokeWidth={1.5} />
@@ -574,7 +613,7 @@ const TeacherTaskSubmissions = () => {
                   {s.content && (
                     <div className="mt-4">
                       <div className="flex items-center gap-2 font-semibold text-gray-700 dark:text-gray-300 mb-1">
-                        <FileText className="w-4 h-4 text-gray-500 dark:text-gray-400" strokeWidth={1.5} />
+                        <Type className="w-4 h-4 text-gray-500 dark:text-gray-400" strokeWidth={1.5} />
                         <span>提交文本:</span>
                       </div>
                       <div className="bg-gray-100/70 dark:bg-gray-900/50 p-3 rounded-lg text-sm text-gray-800 dark:text-gray-200 whitespace-pre-wrap">
@@ -619,8 +658,8 @@ const TeacherTaskSubmissions = () => {
                   )}
                   {/* 教师反馈区域 */}
                   <div className="mt-4 border-t border-gray-200 dark:border-gray-600 pt-4">
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
+                    <div className="flex flex-col space-y-3 sm:flex-row sm:justify-between sm:items-start sm:space-y-0">
+                      <div className="flex-1 w-full sm:w-auto">  {/* 移动端全宽，桌面端自适应 */}
                         {s.feedback && s.feedback.content ? (
                           <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-3">
                             <div className="flex items-center justify-between mb-2">
@@ -645,7 +684,7 @@ const TeacherTaskSubmissions = () => {
                                 </div>
                               <button
                                 onClick={() => handleDeleteFeedback(s._id)}
-                                className="text-red-500 hover:text-red-700 text-xs"
+                                className="text-red-500 hover:text-red-700 text-xs aigc-native-button"
                               >
                                 删除反馈
                               </button>
@@ -667,7 +706,7 @@ const TeacherTaskSubmissions = () => {
                         )}
                       </div>
                       
-                      <div className="ml-4 flex gap-2">
+                      <div className="flex justify-end sm:ml-4 sm:flex sm:gap-2">  {/* 移动端右对齐，桌面端保持原样 */}
                         <Button
                           size="sm"
                           variant="primary"
@@ -685,13 +724,15 @@ const TeacherTaskSubmissions = () => {
           </ul>
         )}
       </div>
-      <AnimatePresence>
-        {feedbackModal.isOpen && (
+      {/* 原来的代码是直接在return中渲染，现在改为使用Portal */}
+      {feedbackModal.isOpen && createPortal(
+        <AnimatePresence>
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] p-4"
+            style={{ position: 'fixed' }}
             onClick={(e) => e.target === e.currentTarget && closeFeedbackModal()}
           >
             <motion.div
@@ -707,7 +748,7 @@ const TeacherTaskSubmissions = () => {
                 </h3>
               </div>
               <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                学生：{feedbackModal.studentEmail}
+                学生：{feedbackModal.studentDisplay}
               </p>
 
               <form onSubmit={handleFeedbackSubmit} className="space-y-4">
@@ -727,7 +768,7 @@ const TeacherTaskSubmissions = () => {
                             rating: prev.rating === star ? 0 : star,
                           }));
                         }}
-                        className={`transition-all duration-200 hover:scale-110 ${
+                        className={`transition-all duration-200 hover:scale-110 aigc-native-button ${
                           feedbackForm.rating >= star && feedbackForm.rating !== 0
                             ? 'text-yellow-500'
                             : 'text-gray-300 hover:text-yellow-400'
@@ -741,7 +782,6 @@ const TeacherTaskSubmissions = () => {
                       </button>
                     ))}
                   </div>
-                  {/* 📌 添加评分状态显示 */}
                   <p className="text-xs text-gray-500 mt-1 flex items-center gap-1">
                     {feedbackForm.rating === 0 ? (
                       <span>未评分</span>
@@ -793,11 +833,12 @@ const TeacherTaskSubmissions = () => {
               </form>
             </motion.div>
           </motion.div>
-        )}
-      </AnimatePresence>
-    
-    </PullToRefreshContainer>
-  );
-};
+        </AnimatePresence>,
+        document.body
+      )}
+          
+          </PullToRefreshContainer>
+        );
+      };
 
 export default TeacherTaskSubmissions;
