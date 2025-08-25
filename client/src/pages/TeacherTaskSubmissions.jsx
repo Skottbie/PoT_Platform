@@ -56,6 +56,7 @@ const TeacherTaskSubmissions = () => {
     rating: 0
   });
   const [submittingFeedback, setSubmittingFeedback] = useState(false);
+  const [collapsedSubmissions, setCollapsedSubmissions] = useState({});
 
   // 格式化学生显示信息
   const formatStudentDisplay = (student) => {
@@ -71,6 +72,14 @@ const TeacherTaskSubmissions = () => {
     } else {
       return '未知';
     }
+  };
+
+  // 切换折叠状态
+  const toggleSubmissionCollapse = (submissionId) => {
+    setCollapsedSubmissions(prev => ({
+      ...prev,
+      [submissionId]: !prev[submissionId]
+    }));
   };
 
   // 🔧 修复：将 refreshData 函数定义提前，避免初始化错误
@@ -567,160 +576,253 @@ const TeacherTaskSubmissions = () => {
           </motion.p>
         ) : (
           <ul className="space-y-6">
-            {submissions.map((s) => {
-              const isMissingFile = !s.fileId && !s.content && (!s.imageIds || s.imageIds.length === 0);
-              return (
-                <motion.li
-                  key={s._id}
-                  initial={{ opacity: 0, y: 15 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className={`p-5 rounded-2xl shadow-md space-y-3 border transition hover:shadow-lg backdrop-blur-sm ${
-                    s.isLateSubmission
-                      ? "bg-orange-50/70 dark:bg-orange-900/20 border-orange-200 dark:border-orange-700"
-                      : isMissingFile 
-                      ? "bg-red-50/70 dark:bg-red-900/20 border-red-200 dark:border-red-700" 
-                      : "bg-white/80 dark:bg-gray-800/80 border-gray-200 dark:border-gray-700"
-                  }`}
-                >
-                  <div className="flex flex-col space-y-3 sm:flex-row sm:justify-between sm:items-start sm:space-y-0">
-                    <div>
-                      <div className="flex items-center gap-2 text-sm text-gray-800 dark:text-gray-200">
-                        <User className="w-4 h-4 text-gray-500 dark:text-gray-400" strokeWidth={1.5} />
-                        <strong>学生:</strong>
-                        <span>{formatStudentDisplay(s.student)}</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-sm text-gray-800 dark:text-gray-200">
-                        <Clock className="w-4 h-4 text-gray-500 dark:text-gray-400" strokeWidth={1.5} />
-                        <strong>提交时间:</strong>
-                        <span>{new Date(s.submittedAt).toLocaleString()}</span>
-                      </div>
+      {submissions.map((s) => {
+        const isMissingFile = !s.fileId && !s.content && (!s.imageIds || s.imageIds.length === 0);
+        const isCollapsed = collapsedSubmissions[s._id] !== false; // 默认折叠
+        const hasFeedback = s.feedback && s.feedback.content;
+        
+        return (
+          <motion.li
+            key={s._id}
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            className={`rounded-2xl shadow-md border transition hover:shadow-lg backdrop-blur-sm overflow-hidden ${
+              s.isLateSubmission
+                ? "bg-orange-50/70 dark:bg-orange-900/20 border-orange-200 dark:border-orange-700"
+                : isMissingFile 
+                ? "bg-red-50/70 dark:bg-red-900/20 border-red-200 dark:border-red-700" 
+                : "bg-white/80 dark:bg-gray-800/80 border-gray-200 dark:border-gray-700"
+            }`}
+          >
+            {/* 折叠状态的紧凑头部 */}
+            <div 
+              className="p-4 cursor-pointer select-none"
+              onClick={() => toggleSubmissionCollapse(s._id)}
+            >
+              <div className="flex items-center justify-between">
+                {/* 左侧：学生信息和状态 */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                      <User className="w-4 h-4 text-gray-500 dark:text-gray-400 flex-shrink-0" strokeWidth={1.5} />
+                      <span className="font-medium text-gray-900 dark:text-gray-100 truncate">
+                        {formatStudentDisplay(s.student)}
+                      </span>
                     </div>
                     
-                    {/* 逾期提交标识 */}
-                    {s.isLateSubmission && (
-                      <div className="flex flex-col items-end">
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800 dark:bg-orange-900/50 dark:text-orange-300">
-                          <AlertTriangle className="w-3 h-3" strokeWidth={1.5} />
-                          逾期提交
+                    {/* 反馈状态标识 */}
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      {hasFeedback ? (
+                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300">
+                          <MessageCircle className="w-3 h-3" />
+                          已反馈
                         </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400">
+                          <MessageCircle className="w-3 h-3" />
+                          未反馈
+                        </span>
+                      )}
+                      
+                      {s.isLateSubmission && (
+                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-700 dark:bg-orange-900/50 dark:text-orange-300">
+                          <AlertTriangle className="w-3 h-3" />
+                          逾期
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  
+                  {/* 折叠状态下的简要操作按钮 */}
+                  {isCollapsed && (
+                    <div className="flex items-center gap-2">
+{/*                       <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/view-submission/${taskId}?student=${s.student._id}`);
+                        }}
+                        className="text-xs px-3 py-1"
+                      >
+                        <Eye className="w-3 h-3 mr-1" />
+                        查看
+                      </Button> */}
+                      
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openFeedbackModal(s);
+                        }}
+                        className="text-xs px-3 py-1"
+                      >
+                        <MessageCircle className="w-3 h-3 mr-1" />
+                        反馈
+                      </Button>
+                    </div>
+                  )}
+                </div>
+                
+                {/* 右侧：折叠图标 */}
+                <motion.div
+                  animate={{ rotate: isCollapsed ? 0 : 180 }}
+                  transition={{ duration: 0.2 }}
+                  className="ml-3 p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                >
+                  <ChevronDown className="w-4 h-4 text-gray-500 dark:text-gray-400" strokeWidth={1.5} />
+                </motion.div>
+              </div>
+            </div>
+            
+            {/* 展开状态的详细内容 */}
+            <AnimatePresence>
+              {!isCollapsed && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.3, ease: "easeInOut" }}
+                  className="border-t border-gray-200 dark:border-gray-600"
+                >
+                  <div className="p-5 space-y-3">
+                    {/* 详细时间信息 */}
+                    <div className="flex items-center gap-2 text-sm text-gray-800 dark:text-gray-200">
+                      <Clock className="w-4 h-4 text-gray-500 dark:text-gray-400" strokeWidth={1.5} />
+                      <strong>提交时间:</strong>
+                      <span>{new Date(s.submittedAt).toLocaleString()}</span>
+                    </div>
+                    
+                    {/* 逾期详细信息 */}
+                    {s.isLateSubmission && (
+                      <div className="flex flex-col items-start">
                         <span className="text-xs text-orange-600 dark:text-orange-400 mt-1">
                           {formatLateTime(s.lateMinutes)}
                         </span>
                       </div>
                     )}
-                  </div>
-                  
-                  {s.content && (
-                    <div className="mt-4">
-                      <div className="flex items-center gap-2 font-semibold text-gray-700 dark:text-gray-300 mb-1">
-                        <Type className="w-4 h-4 text-gray-500 dark:text-gray-400" strokeWidth={1.5} />
-                        <span>提交文本:</span>
-                      </div>
-                      <div className="bg-gray-100/70 dark:bg-gray-900/50 p-3 rounded-lg text-sm text-gray-800 dark:text-gray-200 whitespace-pre-wrap">
-                        {s.content}
-                      </div>
-                    </div>
-                  )}
 
-                  {s.imageIds && s.imageIds.length > 0 && (
-                    <div>
-                      {renderImageLinks(s.imageIds)}
-                    </div>
-                  )}
-
-                  {s.fileId && (
-                    <div>
-                      <div className="flex items-center gap-2 font-semibold text-gray-700 dark:text-gray-300 mt-4 mb-1">
-                        <Paperclip className="w-4 h-4 text-gray-500 dark:text-gray-400" strokeWidth={1.5} />
-                        <span>作业文件:</span>
-                      </div>
-                      {renderFileLinks(s.fileId, s.fileName)}
-                    </div>
-                  )}
-
-                  {!s.fileId && !s.content && (!s.imageIds || s.imageIds.length === 0) && (
-                    <div className="flex items-center gap-2 text-red-600 dark:text-red-400 font-medium">
-                      <X className="w-4 h-4" strokeWidth={1.5} />
-                      <span>学生未提交作业文件或图片</span>
-                    </div>
-                  )}
-
-                  {s.aigcLogId && (
-                    <div>
-                      <p className="font-semibold text-gray-700 dark:text-gray-300 mt-4 mb-1">
-                        <div className="flex items-center gap-2">
-                          {getLinearIcons().conversation}
-                          <span>AIGC交互原始记录</span>
+                    {/* 提交内容 */}
+                    {s.content && (
+                      <div className="mt-4">
+                        <div className="flex items-center gap-2 font-semibold text-gray-700 dark:text-gray-300 mb-1">
+                          <Type className="w-4 h-4 text-gray-500 dark:text-gray-400" strokeWidth={1.5} />
+                          <span>提交文本:</span>
                         </div>
-                      </p>
-                      {renderAIGCLog(s.aigcLogId)}
-                    </div>
-                  )}
-                  {/* 教师反馈区域 */}
-                  <div className="mt-4 border-t border-gray-200 dark:border-gray-600 pt-4">
-                    <div className="flex flex-col space-y-3 sm:flex-row sm:justify-between sm:items-start sm:space-y-0">
-                      <div className="flex-1 w-full sm:w-auto">  {/* 移动端全宽，桌面端自适应 */}
-                        {s.feedback && s.feedback.content ? (
-                          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-3">
-                            <div className="flex items-center justify-between mb-2">
-                                <div className="flex items-center gap-2">
-                                  <div className="flex items-center gap-1.5">
-                                    <MessageCircle className="w-4 h-4 text-blue-600 dark:text-blue-400" strokeWidth={1.5} />
-                                    <span className="text-blue-600 dark:text-blue-400 font-medium text-sm">
-                                      我的反馈
-                                    </span>
+                        <div className="bg-gray-100/70 dark:bg-gray-900/50 p-3 rounded-lg text-sm text-gray-800 dark:text-gray-200 whitespace-pre-wrap">
+                          {s.content}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* 图片内容 */}
+                    {s.imageIds && s.imageIds.length > 0 && (
+                      <div>
+                        {renderImageLinks(s.imageIds)}
+                      </div>
+                    )}
+
+                    {/* 文件内容 */}
+                    {s.fileId && (
+                      <div>
+                        <div className="flex items-center gap-2 font-semibold text-gray-700 dark:text-gray-300 mt-4 mb-1">
+                          <Paperclip className="w-4 h-4 text-gray-500 dark:text-gray-400" strokeWidth={1.5} />
+                          <span>作业文件:</span>
+                        </div>
+                        {renderFileLinks(s.fileId, s.fileName)}
+                      </div>
+                    )}
+
+                    {/* 未提交警告 */}
+                    {!s.fileId && !s.content && (!s.imageIds || s.imageIds.length === 0) && (
+                      <div className="flex items-center gap-2 text-red-600 dark:text-red-400 font-medium">
+                        <X className="w-4 h-4" strokeWidth={1.5} />
+                        <span>学生未提交作业文件或图片</span>
+                      </div>
+                    )}
+
+                    {/* AIGC记录 */}
+                    {s.aigcLogId && (
+                      <div>
+                        <p className="font-semibold text-gray-700 dark:text-gray-300 mt-4 mb-1">
+                          <div className="flex items-center gap-2">
+                            {getLinearIcons().conversation}
+                            <span>AIGC交互原始记录</span>
+                          </div>
+                        </p>
+                        {renderAIGCLog(s.aigcLogId)}
+                      </div>
+                    )}
+                    
+                    {/* 教师反馈区域 */}
+                    <div className="mt-4 border-t border-gray-200 dark:border-gray-600 pt-4">
+                      <div className="flex flex-col space-y-3 sm:flex-row sm:justify-between sm:items-start sm:space-y-0">
+                        <div className="flex-1 w-full sm:w-auto">
+                          {s.feedback && s.feedback.content ? (
+                            <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-lg p-3">
+                              <div className="flex items-start gap-2 mb-2">
+                                <MessageCircle className="w-4 h-4 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" strokeWidth={1.5} />
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <span className="font-medium text-green-800 dark:text-green-200">教师反馈</span>
+                                    {s.feedback.rating && (
+                                      <div className="flex items-center gap-1">
+                                        {Array.from({ length: s.feedback.rating }, (_, i) => (
+                                          <Star key={i} className="w-4 h-4 text-yellow-500 fill-current" />
+                                        ))}
+                                      </div>
+                                    )}
                                   </div>
-                                  {s.feedback.rating && (
-                                    <div className="flex items-center gap-0.5">
-                                      {Array.from({ length: s.feedback.rating }, (_, i) => (
-                                        <Star 
-                                          key={i} 
-                                          className="w-4 h-4 text-yellow-500 fill-current" 
-                                          strokeWidth={1.5}
-                                        />
-                                      ))}
-                                    </div>
+                                  <p className="text-sm text-green-700 dark:text-green-300 whitespace-pre-wrap">
+                                    {s.feedback.content}
+                                  </p>
+                                  {s.feedback.createdAt && (
+                                    <p className="text-xs text-green-600 dark:text-green-400 mt-1">
+                                      {new Date(s.feedback.createdAt).toLocaleString()}
+                                    </p>
                                   )}
                                 </div>
-                              <button
-                                onClick={() => handleDeleteFeedback(s._id)}
-                                className="text-red-500 hover:text-red-700 text-xs aigc-native-button"
-                              >
-                                删除反馈
-                              </button>
+                              </div>
                             </div>
-                            <p className="text-sm text-blue-800 dark:text-blue-200 mb-2">
-                              {s.feedback.content}
-                            </p>
-                            <p className="text-xs text-blue-600 dark:text-blue-400">
-                              反馈时间：{new Date(s.feedback.createdAt).toLocaleString()}
-                              {s.feedback.updatedAt && s.feedback.updatedAt !== s.feedback.createdAt && (
-                                <span> (已编辑)</span>
-                              )}
-                            </p>
-                          </div>
-                        ) : (
-                          <div className="text-sm text-gray-500 dark:text-gray-400">
-                            暂无反馈
-                          </div>
-                        )}
-                      </div>
-                      
-                      <div className="flex justify-end sm:ml-4 sm:flex sm:gap-2">  {/* 移动端右对齐，桌面端保持原样 */}
-                        <Button
-                          size="sm"
-                          variant="primary"
-                          onClick={() => openFeedbackModal(s)}
-                        >
-                          <MessageCircle className="w-4 h-4 mr-1.5" strokeWidth={1.5} />
-                          {s.feedback?.content ? '编辑反馈' : '添加反馈'}
-                        </Button>
+                          ) : (
+                            <div className="text-sm text-gray-500 dark:text-gray-400">
+                              暂无反馈
+                            </div>
+                          )}
+                        </div>
+                        
+                        {/* 操作按钮 */}
+                        <div className="flex flex-col gap-2 w-full sm:w-auto sm:flex-row sm:gap-2">
+{/*                           <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => navigate(`/view-submission/${taskId}?student=${s.student._id}`)}
+                            className="w-full sm:w-auto"
+                          >
+                            <Eye className="w-4 h-4 mr-1.5" strokeWidth={1.5} />
+                            查看详情
+                          </Button> */}
+                          
+                          <Button
+                            variant="primary"
+                            size="sm"
+                            onClick={() => openFeedbackModal(s)}
+                            className="w-full sm:w-auto"
+                          >
+                            <MessageCircle className="w-4 h-4 mr-1.5" strokeWidth={1.5} />
+                            {s.feedback && s.feedback.content ? '编辑反馈' : '添加反馈'}
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </motion.li>
-              );
-            })}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.li>
+        );
+      })}
           </ul>
         )}
       </div>
