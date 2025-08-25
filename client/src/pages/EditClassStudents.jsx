@@ -1,4 +1,4 @@
-// src/pages/EditClassStudents.jsx - 完全修复版本
+// src/pages/EditClassStudents.jsx - 优化版本
 
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -8,6 +8,21 @@ import { motion, AnimatePresence } from 'framer-motion';
 import PullToRefreshContainer from '../components/PullToRefreshContainer';
 import useAutoRefresh from '../hooks/useAutoRefresh';
 import toast from 'react-hot-toast';
+import { 
+  Edit, 
+  Users, 
+  ArrowLeft, 
+  Save, 
+  AlertTriangle, 
+  CheckCircle, 
+  Clock, 
+  Info, 
+  Plus,
+  Trash2,
+  User,
+  Hash,
+  Calendar
+} from 'lucide-react';
 
 const EditClassStudents = () => {
   const { classId } = useParams();
@@ -26,8 +41,6 @@ const EditClassStudents = () => {
   const [pendingAction, setPendingAction] = useState(null);
   const [hasChanges, setHasChanges] = useState(false);
 
-  // 🔧 修复：所有 hooks 必须在组件顶部，任何条件 return 之前
-
   // 核心数据获取函数
   const fetchClassData = useCallback(async () => {
     try {
@@ -38,33 +51,15 @@ const EditClassStudents = () => {
         const activeStudents = cls.studentList.filter(s => !s.isRemoved);
         setStudents(activeStudents.map(s => ({ ...s, isModified: false })));
       } else {
-        setMessage('❌ 获取班级信息失败');
+        setMessage('获取班级信息失败');
       }
     } catch (err) {
       console.error('获取班级失败:', err);
-      setMessage('❌ 网络错误或服务器异常');
+      setMessage('网络错误或服务器异常');
     } finally {
       setLoading(false);
     }
   }, [classId]);
-
-  /* 下拉刷新专用函数（包含toast）
-  const handlePullRefresh = useCallback(async () => {
-    try {
-      const res = await api.get(`/class/${classId}`);
-      if (res.data.success) {
-        const cls = res.data.class;
-        setClassData(cls);
-        const activeStudents = cls.studentList.filter(s => !s.isRemoved);
-        setStudents(activeStudents.map(s => ({ ...s, isModified: false })));
-      }
-      toast.success('刷新成功');
-    } catch (err) {
-      console.error('刷新失败:', err);
-      toast.error('刷新失败，请重试');
-    }
-  }, [classId]);
-  */
 
   // 自动刷新专用函数（静默，无toast）
   const handleAutoRefresh = useCallback(async () => {
@@ -161,7 +156,7 @@ const EditClassStudents = () => {
 
     if (pastedStudents.length > 0) {
       setNewStudents([...newStudents.filter(s => s.name || s.studentId), ...pastedStudents]);
-      setMessage(`✅ 已粘贴 ${pastedStudents.length} 条学生信息`);
+      setMessage(`已粘贴 ${pastedStudents.length} 条学生信息`);
       setHasChanges(true);
       setTimeout(() => setMessage(''), 3000);
     }
@@ -176,13 +171,13 @@ const EditClassStudents = () => {
     
     const duplicates = allIds.filter((id, index) => allIds.indexOf(id) !== index);
     if (duplicates.length > 0) {
-      return { valid: false, message: `❌ 学号重复：${[...new Set(duplicates)].join(', ')}` };
+      return { valid: false, message: `学号重复：${[...new Set(duplicates)].join(', ')}` };
     }
 
     // 检查必填字段
     const invalidStudents = students.filter(s => !s.name.trim() || !s.studentId.trim());
     if (invalidStudents.length > 0) {
-      return { valid: false, message: '❌ 所有学生的姓名和学号都不能为空' };
+      return { valid: false, message: '所有学生的姓名和学号都不能为空' };
     }
 
     return { valid: true };
@@ -237,17 +232,17 @@ const EditClassStudents = () => {
       const res = await api.put(`/class/${classId}/students`, updateData);
       
       if (res.data.success) {
-        setMessage('✅ 学生信息更新成功！');
+        setMessage('学生信息更新成功！');
         setHasChanges(false);
         setTimeout(() => {
           navigate('/my-classes');
         }, 1500);
       } else {
-        setMessage(`❌ 更新失败：${res.data.message}`);
+        setMessage(`更新失败：${res.data.message}`);
       }
     } catch (err) {
       console.error('更新学生信息失败:', err);
-      setMessage(`❌ 更新失败：${err.response?.data?.message || '网络错误'}`);
+      setMessage(`更新失败：${err.response?.data?.message || '网络错误'}`);
     } finally {
       setSaving(false);
     }
@@ -262,7 +257,7 @@ const EditClassStudents = () => {
     try {
       const studentsToRemove = Array.from(selectedStudents).map(index => ({
         studentId: students[index].studentId,
-        hasJoined: !!students[index].userId
+        hasJoined: !students[index].userId
       }));
 
       const res = await api.delete(`/class/${classId}/students`, {
@@ -270,17 +265,17 @@ const EditClassStudents = () => {
       });
       
       if (res.data.success) {
-        setMessage(`✅ 已移除 ${selectedStudents.size} 名学生`);
+        setMessage(`已移除 ${selectedStudents.size} 名学生`);
         setSelectedStudents(new Set());
         setHasChanges(false);
         // 重新获取数据
         await fetchClassData();
       } else {
-        setMessage(`❌ 移除失败：${res.data.message}`);
+        setMessage(`移除失败：${res.data.message}`);
       }
     } catch (err) {
       console.error('移除学生失败:', err);
-      setMessage(`❌ 移除失败：${err.response?.data?.message || '网络错误'}`);
+      setMessage(`移除失败：${err.response?.data?.message || '网络错误'}`);
     } finally {
       setSaving(false);
     }
@@ -298,20 +293,207 @@ const EditClassStudents = () => {
     fetchClassData();
   }, [fetchClassData]);
 
-  // 🔧 现在可以安全地进行条件渲染
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-        <p className="text-gray-600 dark:text-gray-300">加载中...</p>
+  // 🆕 骨架屏加载组件
+  const LoadingSkeleton = () => (
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-10 px-4">
+      <div className="max-w-6xl mx-auto">
+        {/* 头部骨架 */}
+        <div className="flex flex-col lg:flex-row lg:justify-between lg:items-start gap-4 mb-6">
+          <div>
+            <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded-md w-48 mb-2"></div>
+            <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded-md w-64"></div>
+          </div>
+          <div className="flex gap-3">
+            <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded-lg w-24"></div>
+            <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded-lg w-24"></div>
+          </div>
+        </div>
+        
+        {/* 卡片骨架 */}
+        <div className="space-y-6">
+          <div className="h-32 bg-gray-200 dark:bg-gray-700 rounded-xl"></div>
+          <div className="h-64 bg-gray-200 dark:bg-gray-700 rounded-xl"></div>
+          <div className="h-48 bg-gray-200 dark:bg-gray-700 rounded-xl"></div>
+        </div>
       </div>
-    );
+    </div>
+  );
+
+  // 🆕 现有学生卡片组件（移动端）
+  const StudentCard = ({ student, index }) => (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      transition={{ duration: 0.3 }}
+      className={`bg-white dark:bg-gray-700 rounded-xl p-4 shadow-sm border border-gray-200 dark:border-gray-600 ${
+        student.isModified ? 'ring-2 ring-blue-500/50 bg-blue-50 dark:bg-blue-900/20' : ''
+      }`}
+    >
+      {/* 卡片头部 */}
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-3">
+          <input
+            type="checkbox"
+            checked={selectedStudents.has(index)}
+            onChange={() => toggleStudentSelection(index)}
+            className="rounded"
+          />
+          <div className="flex flex-col">
+            <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+              学生 #{index + 1}
+            </span>
+            {student.isModified && (
+              <span className="text-xs text-blue-600 dark:text-blue-400">
+                已修改
+              </span>
+            )}
+          </div>
+        </div>
+        
+        {/* 状态标签 */}
+        <div className="flex items-center">
+          {student.userId ? (
+            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300">
+              <CheckCircle className="w-3 h-3" />
+              已加入
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
+              <Clock className="w-3 h-3" />
+              未加入
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* 表单字段 */}
+      <div className="space-y-3">
+        <div>
+          <label className="flex items-center gap-1 text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <User className="w-3 h-3" />
+            学生姓名
+          </label>
+          <input
+            type="text"
+            value={student.name}
+            onChange={(e) => updateStudent(index, 'name', e.target.value)}
+            className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm
+                      bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100
+                      focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            placeholder="请输入学生姓名"
+          />
+        </div>
+        
+        <div>
+          <label className="flex items-center gap-1 text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <Hash className="w-3 h-3" />
+            学号
+          </label>
+          <input
+            type="text"
+            value={student.studentId}
+            onChange={(e) => updateStudent(index, 'studentId', e.target.value)}
+            className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm
+                      bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100
+                      focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            placeholder="请输入学号"
+          />
+        </div>
+
+        {/* 底部信息 */}
+        <div className="pt-2 border-t border-gray-200 dark:border-gray-600">
+          {student.joinedAt ? (
+            <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
+              <Calendar className="w-3 h-3" />
+              加入时间：{new Date(student.joinedAt).toLocaleDateString()}
+            </div>
+          ) : (
+            <div className="text-xs text-gray-400 dark:text-gray-500">
+              学生尚未加入班级
+            </div>
+          )}
+        </div>
+      </div>
+    </motion.div>
+  );
+
+  // 🆕 新增学生卡片组件（移动端）
+  const NewStudentCard = ({ student, index }) => (
+    <motion.div
+      layout
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      className="bg-white dark:bg-gray-700 rounded-xl p-4 shadow-sm border-2 border-dashed border-gray-300 dark:border-gray-600"
+    >
+      {/* 卡片头部 */}
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <div className="w-6 h-6 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center text-xs font-medium text-gray-600 dark:text-gray-400">
+            {index + 1}
+          </div>
+          <span className="text-sm font-medium text-gray-600 dark:text-gray-400">新学生</span>
+        </div>
+        {newStudents.length > 1 && (
+          <button
+            type="button"
+            onClick={() => removeNewStudentRow(index)}
+            className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 p-1 rounded-md hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors aigc-native-button"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        )}
+      </div>
+
+      {/* 表单字段 */}
+      <div className="space-y-3">
+        <div>
+          <label className="flex items-center gap-1 text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <User className="w-3 h-3" />
+            学生姓名 *
+          </label>
+          <input
+            type="text"
+            value={student.name}
+            onChange={(e) => updateNewStudent(index, 'name', e.target.value)}
+            className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm
+                      bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100
+                      focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            placeholder="请输入学生姓名"
+          />
+        </div>
+        
+        <div>
+          <label className="flex items-center gap-1 text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <Hash className="w-3 h-3" />
+            学号 *
+          </label>
+          <input
+            type="text"
+            value={student.studentId}
+            onChange={(e) => updateNewStudent(index, 'studentId', e.target.value)}
+            className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm
+                      bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100
+                      focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            placeholder="请输入学号"
+          />
+        </div>
+      </div>
+    </motion.div>
+  );
+
+  // 加载状态
+  if (loading) {
+    return <LoadingSkeleton />;
   }
 
+  // 权限检查
   if (!canEdit()) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
-          <p className="text-red-600 dark:text-red-400 mb-4">❌ 您没有权限编辑此班级</p>
+          <p className="text-red-600 dark:text-red-400 mb-4">您没有权限编辑此班级</p>
           <Button variant="secondary" onClick={() => navigate('/teacher')}>
             返回首页
           </Button>
@@ -320,16 +502,54 @@ const EditClassStudents = () => {
     );
   }
 
+  // 🆕 页面容器动画配置
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+        delayChildren: 0.2
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.5,
+        ease: "easeOut"
+      }
+    }
+  };
+
   return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-10 px-4">
+    <PullToRefreshContainer
+      onRefresh={fetchClassData}
+      refreshing={false}
+    >
+      <motion.div 
+        className="min-h-screen bg-gray-50 dark:bg-gray-900 py-10 px-4"
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+      >
         <div className="max-w-6xl mx-auto">
-          {/* 页面头部 */}
-          <div className="flex flex-col lg:flex-row lg:justify-between lg:items-start gap-4 mb-6">
+          {/* 🆕 页面头部 - 优化图标 */}
+          <motion.div 
+            className="flex flex-col lg:flex-row lg:justify-between lg:items-start gap-4 mb-6"
+            variants={itemVariants}
+          >
             <div>
-              <h1 className="text-xl sm:text-2xl font-bold text-gray-800 dark:text-gray-100 mb-2">
-                ✏️ 编辑班级学生
+              <h1 className="flex items-center gap-2 text-xl sm:text-2xl font-bold text-gray-800 dark:text-gray-100 mb-2">
+                <Edit className="w-6 h-6 text-blue-600" />
+                编辑班级学生
               </h1>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
+              <p className="text-sm text-gray-600 dark:text-gray-400 flex items-center gap-2">
+                <Users className="w-4 h-4" />
                 班级：{classData?.name} | 当前学生：{students.length} 人
               </p>
             </div>
@@ -340,8 +560,9 @@ const EditClassStudents = () => {
                 disabled={saving}
                 className="text-xs sm:text-sm px-2 sm:px-4"
               >
-                <span className="hidden sm:inline">👈 取消编辑</span>
-                <span className="sm:hidden">👈 取消</span>
+                <ArrowLeft className="w-4 h-4 mr-1" />
+                <span className="hidden sm:inline">取消编辑</span>
+                <span className="sm:hidden">取消编辑</span>
               </Button>
               <Button
                 variant="primary"
@@ -354,27 +575,38 @@ const EditClassStudents = () => {
                 loading={saving}
                 className="text-xs sm:text-sm px-2 sm:px-4"
               >
-                <span className="hidden sm:inline">💾 保存修改</span>
-                <span className="sm:hidden">💾 保存</span>
+                <Save className="w-4 h-4 mr-1" />
+                <span className="hidden sm:inline">保存修改</span>
+                <span className="sm:hidden">保存修改</span>
               </Button>
             </div>
-          </div>
+          </motion.div>
 
-          {/* 警告提示 */}
-          <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-xl p-4 mb-6">
-            <h3 className="text-yellow-800 dark:text-yellow-200 font-medium mb-2">⚠️ 重要提示</h3>
+          {/* 🆕 警告提示 - 优化图标 */}
+          <motion.div 
+            className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-xl p-4 mb-6"
+            variants={itemVariants}
+          >
+            <h3 className="flex items-center gap-2 text-yellow-800 dark:text-yellow-200 font-medium mb-2">
+              <AlertTriangle className="w-5 h-5" />
+              重要提示
+            </h3>
             <ul className="text-sm text-yellow-700 dark:text-yellow-300 space-y-1">
               <li>• 修改学生姓名或学号将同步更新该学生的所有历史作业提交记录</li>
               <li>• 移除学生将进行30天软删除，期间可恢复，30天后永久删除</li>
               <li>• 已加入班级的学生被移除后，其作业记录将被保留但标记为"学生已移除"</li>
             </ul>
-          </div>
+          </motion.div>
 
-          {/* 现有学生编辑 */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md mb-8 overflow-hidden">
+          {/* 🆕 现有学生编辑 - 响应式布局 */}
+          <motion.div 
+            className="bg-white dark:bg-gray-800 rounded-xl shadow-md mb-8 overflow-hidden"
+            variants={itemVariants}
+          >
             <div className="px-6 py-4 bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
               <div className="flex justify-between items-center">
-                <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
+                <h2 className="flex items-center gap-2 text-lg font-semibold text-gray-800 dark:text-gray-100">
+                  <Users className="w-5 h-5" />
                   现有学生 ({students.length})
                 </h2>
                 <div className="flex items-center gap-3">
@@ -410,150 +642,181 @@ const EditClassStudents = () => {
                 暂无学生，请在下方添加新学生
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-gray-50 dark:bg-gray-700">
-                    <tr>
-                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-200 w-12">选择</th>
-                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-200">姓名</th>
-                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-200">学号</th>
-                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-200">状态</th>
-                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-200">加入时间</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-200 dark:divide-gray-600">
+              <>
+                {/* 🆕 移动端：卡片布局 */}
+                <div className="md:hidden p-4 space-y-3">
+                  <AnimatePresence>
                     {students.map((student, index) => (
-                      <motion.tr
-                        key={student._id || index}
-                        className={`hover:bg-gray-50 dark:hover:bg-gray-700/50 ${
-                          student.isModified ? 'bg-blue-50 dark:bg-blue-900/20' : ''
-                        }`}
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: index * 0.05 }}
-                      >
-                        <td className="px-4 py-3">
-                          <input
-                            type="checkbox"
-                            checked={selectedStudents.has(index)}
-                            onChange={() => toggleStudentSelection(index)}
-                            className="rounded"
-                          />
-                        </td>
-                        <td className="px-4 py-3">
-                          <input
-                            type="text"
-                            value={student.name}
-                            onChange={(e) => updateStudent(index, 'name', e.target.value)}
-                            className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm
-                                      bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100
-                                      focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                          />
-                        </td>
-                        <td className="px-4 py-3">
-                          <input
-                            type="text"
-                            value={student.studentId}
-                            onChange={(e) => updateStudent(index, 'studentId', e.target.value)}
-                            className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm
-                                      bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100
-                                      focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                          />
-                        </td>
-                        <td className="px-4 py-3">
-                          <div className="flex items-center gap-2">
-                            {student.userId ? (
-                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300">
-                                ✅ 已加入
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
-                                ⏳ 未加入
-                              </span>
-                            )}
-                            {student.isModified && (
-                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300">
-                                已修改
-                              </span>
-                            )}
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
-                          {student.joinedAt ? new Date(student.joinedAt).toLocaleDateString() : '-'}
-                        </td>
-                      </motion.tr>
+                      <StudentCard key={student._id || index} student={student} index={index} />
                     ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
+                  </AnimatePresence>
+                </div>
 
-          {/* 添加新学生 */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden">
+                {/* 桌面端：表格布局 */}
+                <div className="hidden md:block overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-gray-50 dark:bg-gray-700">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-200 w-12">选择</th>
+                        <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-200">姓名</th>
+                        <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-200">学号</th>
+                        <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-200">状态</th>
+                        <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-200">加入时间</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200 dark:divide-gray-600">
+                      {students.map((student, index) => (
+                        <motion.tr
+                          key={student._id || index}
+                          className={`hover:bg-gray-50 dark:hover:bg-gray-700/50 ${
+                            student.isModified ? 'bg-blue-50 dark:bg-blue-900/20' : ''
+                          }`}
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          transition={{ delay: index * 0.05 }}
+                        >
+                          <td className="px-4 py-3">
+                            <input
+                              type="checkbox"
+                              checked={selectedStudents.has(index)}
+                              onChange={() => toggleStudentSelection(index)}
+                              className="rounded"
+                            />
+                          </td>
+                          <td className="px-4 py-3">
+                            <input
+                              type="text"
+                              value={student.name}
+                              onChange={(e) => updateStudent(index, 'name', e.target.value)}
+                              className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm
+                                        bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100
+                                        focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            />
+                          </td>
+                          <td className="px-4 py-3">
+                            <input
+                              type="text"
+                              value={student.studentId}
+                              onChange={(e) => updateStudent(index, 'studentId', e.target.value)}
+                              className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm
+                                        bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100
+                                        focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            />
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="flex items-center gap-2">
+                              {student.userId ? (
+                                <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300">
+                                  <CheckCircle className="w-3 h-3" />
+                                  已加入
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
+                                  <Clock className="w-3 h-3" />
+                                  未加入
+                                </span>
+                              )}
+                              {student.isModified && (
+                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300">
+                                  已修改
+                                </span>
+                              )}
+                            </div>
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
+                            {student.joinedAt ? new Date(student.joinedAt).toLocaleDateString() : '-'}
+                          </td>
+                        </motion.tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
+            )}
+          </motion.div>
+
+          {/* 🆕 添加新学生 - 响应式布局 */}
+          <motion.div 
+            className="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden"
+            variants={itemVariants}
+          >
             <div className="px-6 py-4 bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
-              <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
+              <h2 className="flex items-center gap-2 text-lg font-semibold text-gray-800 dark:text-gray-100">
+                <Plus className="w-5 h-5" />
                 添加新学生
               </h2>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                💡 支持从Excel复制粘贴，格式：姓名[Tab]学号，每行一个学生
+              <p className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 mt-1">
+                <Info className="w-4 h-4" />
+                支持从Excel复制粘贴，格式：姓名[Tab]学号，每行一个学生
               </p>
             </div>
 
             <div className="p-6">
               <div onPaste={handleBatchPaste}>
-                <table className="w-full">
-                  <thead className="bg-gray-50 dark:bg-gray-700">
-                    <tr>
-                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-200 w-16">序号</th>
-                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-200">姓名</th>
-                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-200">学号</th>
-                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-200 w-20">操作</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-200 dark:divide-gray-600">
+                {/* 🆕 移动端：卡片布局 */}
+                <div className="md:hidden space-y-3">
+                  <AnimatePresence>
                     {newStudents.map((student, index) => (
-                      <tr key={index} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                        <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
-                          {index + 1}
-                        </td>
-                        <td className="px-4 py-3">
-                          <input
-                            type="text"
-                            value={student.name}
-                            onChange={(e) => updateNewStudent(index, 'name', e.target.value)}
-                            className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm
-                                      bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100
-                                      focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            placeholder="学生姓名"
-                          />
-                        </td>
-                        <td className="px-4 py-3">
-                          <input
-                            type="text"
-                            value={student.studentId}
-                            onChange={(e) => updateNewStudent(index, 'studentId', e.target.value)}
-                            className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm
-                                      bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100
-                                      focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            placeholder="学号"
-                          />
-                        </td>
-                        <td className="px-4 py-3">
-                          {newStudents.length > 1 && (
-                            <button
-                              type="button"
-                              onClick={() => removeNewStudentRow(index)}
-                              className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 text-sm"
-                            >
-                              删除
-                            </button>
-                          )}
-                        </td>
-                      </tr>
+                      <NewStudentCard key={index} student={student} index={index} />
                     ))}
-                  </tbody>
-                </table>
+                  </AnimatePresence>
+                </div>
+
+                {/* 桌面端：表格布局 */}
+                <div className="hidden md:block">
+                  <table className="w-full">
+                    <thead className="bg-gray-50 dark:bg-gray-700">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-200 w-16">序号</th>
+                        <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-200">姓名</th>
+                        <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-200">学号</th>
+                        <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-200 w-20">操作</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200 dark:divide-gray-600">
+                      {newStudents.map((student, index) => (
+                        <tr key={index} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                          <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
+                            {index + 1}
+                          </td>
+                          <td className="px-4 py-3">
+                            <input
+                              type="text"
+                              value={student.name}
+                              onChange={(e) => updateNewStudent(index, 'name', e.target.value)}
+                              className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm
+                                        bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100
+                                        focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                              placeholder="学生姓名"
+                            />
+                          </td>
+                          <td className="px-4 py-3">
+                            <input
+                              type="text"
+                              value={student.studentId}
+                              onChange={(e) => updateNewStudent(index, 'studentId', e.target.value)}
+                              className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm
+                                        bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100
+                                        focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                              placeholder="学号"
+                            />
+                          </td>
+                          <td className="px-4 py-3">
+                            {newStudents.length > 1 && (
+                              <button
+                                type="button"
+                                onClick={() => removeNewStudentRow(index)}
+                                className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 text-sm aigc-native-button"
+                              >
+                                删除
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
 
               <div className="flex justify-between items-center mt-4">
@@ -562,15 +825,17 @@ const EditClassStudents = () => {
                   variant="secondary"
                   size="sm"
                   onClick={addNewStudentRow}
+                  className="flex items-center gap-1"
                 >
-                  ➕ 添加学生
+                  <Plus className="w-4 h-4" />
+                  添加学生
                 </Button>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
                   待添加学生：{newStudents.filter(s => s.name.trim() && s.studentId.trim()).length}
                 </p>
               </div>
             </div>
-          </div>
+          </motion.div>
 
           {/* 消息提示 */}
           <AnimatePresence>
@@ -580,7 +845,7 @@ const EditClassStudents = () => {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
                 className={`fixed bottom-6 right-6 p-4 rounded-xl shadow-lg ${
-                  message.startsWith('✅') 
+                  message.includes('成功') || message.includes('已粘贴') || message.includes('已移除')
                     ? 'bg-green-500 text-white' 
                     : 'bg-red-500 text-white'
                 }`}
@@ -631,7 +896,8 @@ const EditClassStudents = () => {
             )}
           </AnimatePresence>
         </div>
-      </div>
+      </motion.div>
+    </PullToRefreshContainer>
   );
 };
 
