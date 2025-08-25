@@ -1,6 +1,6 @@
-// src/pages/EditClassStudents.jsx - 优化版本
+// src/pages/EditClassStudents.jsx - 修复版本
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, memo } from 'react'; // 修复：导入 memo
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../api/axiosInstance';
 import Button from '../components/Button';
@@ -23,6 +23,172 @@ import {
   Hash,
   Calendar
 } from 'lucide-react';
+
+
+// 修复：将 StudentCard 组件移到外部，并用 React.memo 包裹以优化性能
+const StudentCard = memo(({ student, index, selectedStudents, toggleStudentSelection, updateStudent }) => (
+  <motion.div
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    exit={{ opacity: 0, y: -20 }}
+    transition={{ duration: 0.3 }}
+    className={`bg-white dark:bg-gray-700 rounded-xl p-4 shadow-sm border border-gray-200 dark:border-gray-600 ${
+      student.isModified ? 'ring-2 ring-blue-500/50 bg-blue-50 dark:bg-blue-900/20' : ''
+    }`}
+  >
+    {/* 卡片头部 */}
+    <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center gap-3">
+        <input
+          type="checkbox"
+          checked={selectedStudents.has(index)}
+          onChange={() => toggleStudentSelection(index)}
+          className="rounded"
+        />
+        <div className="flex flex-col">
+          <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+            学生 #{index + 1}
+          </span>
+          {student.isModified && (
+            <span className="text-xs text-blue-600 dark:text-blue-400">
+              已修改
+            </span>
+          )}
+        </div>
+      </div>
+      
+      {/* 状态标签 */}
+      <div className="flex items-center">
+        {student.userId ? (
+          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300">
+            <CheckCircle className="w-3 h-3" />
+            已加入
+          </span>
+        ) : (
+          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
+            <Clock className="w-3 h-3" />
+            未加入
+          </span>
+        )}
+      </div>
+    </div>
+
+    {/* 表单字段 */}
+    <div className="space-y-3">
+      <div>
+        <label className="flex items-center gap-1 text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <User className="w-3 h-3" />
+          学生姓名
+        </label>
+        <input
+          type="text"
+          value={student.name}
+          onChange={(e) => updateStudent(index, 'name', e.target.value)}
+          className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm
+                    bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100
+                    focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          placeholder="请输入学生姓名"
+        />
+      </div>
+      
+      <div>
+        <label className="flex items-center gap-1 text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <Hash className="w-3 h-3" />
+          学号
+        </label>
+        <input
+          type="text"
+          value={student.studentId}
+          onChange={(e) => updateStudent(index, 'studentId', e.target.value)}
+          className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm
+                    bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100
+                    focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          placeholder="请输入学号"
+        />
+      </div>
+
+      {/* 底部信息 */}
+      <div className="pt-2 border-t border-gray-200 dark:border-gray-600">
+        {student.joinedAt ? (
+          <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
+            <Calendar className="w-3 h-3" />
+            加入时间：{new Date(student.joinedAt).toLocaleDateString()}
+          </div>
+        ) : (
+          <div className="text-xs text-gray-400 dark:text-gray-500">
+            学生尚未加入班级
+          </div>
+        )}
+      </div>
+    </div>
+  </motion.div>
+));
+
+// 修复：将 NewStudentCard 组件移到外部，并用 React.memo 包裹以优化性能
+const NewStudentCard = memo(({ student, index, showRemoveButton, updateNewStudent, removeNewStudentRow }) => (
+  <motion.div
+    layout
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    exit={{ opacity: 0, y: -20 }}
+    className="bg-white dark:bg-gray-700 rounded-xl p-4 shadow-sm border-2 border-dashed border-gray-300 dark:border-gray-600"
+  >
+    {/* 卡片头部 */}
+    <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center gap-2">
+        <div className="w-6 h-6 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center text-xs font-medium text-gray-600 dark:text-gray-400">
+          {index + 1}
+        </div>
+        <span className="text-sm font-medium text-gray-600 dark:text-gray-400">新学生</span>
+      </div>
+      {showRemoveButton && (
+        <button
+          type="button"
+          onClick={() => removeNewStudentRow(index)}
+          className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 p-1 rounded-md hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors aigc-native-button"
+        >
+          <Trash2 className="w-4 h-4" />
+        </button>
+      )}
+    </div>
+
+    {/* 表单字段 */}
+    <div className="space-y-3">
+      <div>
+        <label className="flex items-center gap-1 text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <User className="w-3 h-3" />
+          学生姓名 *
+        </label>
+        <input
+          type="text"
+          value={student.name}
+          onChange={(e) => updateNewStudent(index, 'name', e.target.value)}
+          className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm
+                    bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100
+                    focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          placeholder="请输入学生姓名"
+        />
+      </div>
+      
+      <div>
+        <label className="flex items-center gap-1 text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <Hash className="w-3 h-3" />
+          学号 *
+        </label>
+        <input
+          type="text"
+          value={student.studentId}
+          onChange={(e) => updateNewStudent(index, 'studentId', e.target.value)}
+          className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm
+                    bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100
+                    focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          placeholder="请输入学号"
+        />
+      </div>
+    </div>
+  </motion.div>
+));
+
 
 const EditClassStudents = () => {
   const { classId } = useParams();
@@ -293,7 +459,7 @@ const EditClassStudents = () => {
     fetchClassData();
   }, [fetchClassData]);
 
-  // 🆕 骨架屏加载组件
+  // 骨架屏加载组件
   const LoadingSkeleton = () => (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-10 px-4">
       <div className="max-w-6xl mx-auto">
@@ -318,171 +484,7 @@ const EditClassStudents = () => {
       </div>
     </div>
   );
-
-  // 🆕 现有学生卡片组件（移动端）
-  const StudentCard = ({ student, index }) => (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      transition={{ duration: 0.3 }}
-      className={`bg-white dark:bg-gray-700 rounded-xl p-4 shadow-sm border border-gray-200 dark:border-gray-600 ${
-        student.isModified ? 'ring-2 ring-blue-500/50 bg-blue-50 dark:bg-blue-900/20' : ''
-      }`}
-    >
-      {/* 卡片头部 */}
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-3">
-          <input
-            type="checkbox"
-            checked={selectedStudents.has(index)}
-            onChange={() => toggleStudentSelection(index)}
-            className="rounded"
-          />
-          <div className="flex flex-col">
-            <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
-              学生 #{index + 1}
-            </span>
-            {student.isModified && (
-              <span className="text-xs text-blue-600 dark:text-blue-400">
-                已修改
-              </span>
-            )}
-          </div>
-        </div>
-        
-        {/* 状态标签 */}
-        <div className="flex items-center">
-          {student.userId ? (
-            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300">
-              <CheckCircle className="w-3 h-3" />
-              已加入
-            </span>
-          ) : (
-            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
-              <Clock className="w-3 h-3" />
-              未加入
-            </span>
-          )}
-        </div>
-      </div>
-
-      {/* 表单字段 */}
-      <div className="space-y-3">
-        <div>
-          <label className="flex items-center gap-1 text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-            <User className="w-3 h-3" />
-            学生姓名
-          </label>
-          <input
-            type="text"
-            value={student.name}
-            onChange={(e) => updateStudent(index, 'name', e.target.value)}
-            className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm
-                      bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100
-                      focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            placeholder="请输入学生姓名"
-          />
-        </div>
-        
-        <div>
-          <label className="flex items-center gap-1 text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-            <Hash className="w-3 h-3" />
-            学号
-          </label>
-          <input
-            type="text"
-            value={student.studentId}
-            onChange={(e) => updateStudent(index, 'studentId', e.target.value)}
-            className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm
-                      bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100
-                      focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            placeholder="请输入学号"
-          />
-        </div>
-
-        {/* 底部信息 */}
-        <div className="pt-2 border-t border-gray-200 dark:border-gray-600">
-          {student.joinedAt ? (
-            <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
-              <Calendar className="w-3 h-3" />
-              加入时间：{new Date(student.joinedAt).toLocaleDateString()}
-            </div>
-          ) : (
-            <div className="text-xs text-gray-400 dark:text-gray-500">
-              学生尚未加入班级
-            </div>
-          )}
-        </div>
-      </div>
-    </motion.div>
-  );
-
-  // 🆕 新增学生卡片组件（移动端）
-  const NewStudentCard = ({ student, index }) => (
-    <motion.div
-      layout
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      className="bg-white dark:bg-gray-700 rounded-xl p-4 shadow-sm border-2 border-dashed border-gray-300 dark:border-gray-600"
-    >
-      {/* 卡片头部 */}
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2">
-          <div className="w-6 h-6 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center text-xs font-medium text-gray-600 dark:text-gray-400">
-            {index + 1}
-          </div>
-          <span className="text-sm font-medium text-gray-600 dark:text-gray-400">新学生</span>
-        </div>
-        {newStudents.length > 1 && (
-          <button
-            type="button"
-            onClick={() => removeNewStudentRow(index)}
-            className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 p-1 rounded-md hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors aigc-native-button"
-          >
-            <Trash2 className="w-4 h-4" />
-          </button>
-        )}
-      </div>
-
-      {/* 表单字段 */}
-      <div className="space-y-3">
-        <div>
-          <label className="flex items-center gap-1 text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-            <User className="w-3 h-3" />
-            学生姓名 *
-          </label>
-          <input
-            type="text"
-            value={student.name}
-            onChange={(e) => updateNewStudent(index, 'name', e.target.value)}
-            className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm
-                      bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100
-                      focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            placeholder="请输入学生姓名"
-          />
-        </div>
-        
-        <div>
-          <label className="flex items-center gap-1 text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-            <Hash className="w-3 h-3" />
-            学号 *
-          </label>
-          <input
-            type="text"
-            value={student.studentId}
-            onChange={(e) => updateNewStudent(index, 'studentId', e.target.value)}
-            className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm
-                      bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100
-                      focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            placeholder="请输入学号"
-          />
-        </div>
-      </div>
-    </motion.div>
-  );
-
+  
   // 加载状态
   if (loading) {
     return <LoadingSkeleton />;
@@ -502,7 +504,7 @@ const EditClassStudents = () => {
     );
   }
 
-  // 🆕 页面容器动画配置
+  // 页面容器动画配置
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -538,7 +540,7 @@ const EditClassStudents = () => {
         animate="visible"
       >
         <div className="max-w-6xl mx-auto">
-          {/* 🆕 页面头部 - 优化图标 */}
+          {/* 页面头部 - 优化图标 */}
           <motion.div 
             className="flex flex-col lg:flex-row lg:justify-between lg:items-start gap-4 mb-6"
             variants={itemVariants}
@@ -582,7 +584,7 @@ const EditClassStudents = () => {
             </div>
           </motion.div>
 
-          {/* 🆕 警告提示 - 优化图标 */}
+          {/* 警告提示 - 优化图标 */}
           <motion.div 
             className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-xl p-4 mb-6"
             variants={itemVariants}
@@ -598,7 +600,7 @@ const EditClassStudents = () => {
             </ul>
           </motion.div>
 
-          {/* 🆕 现有学生编辑 - 响应式布局 */}
+          {/* 现有学生编辑 - 响应式布局 */}
           <motion.div 
             className="bg-white dark:bg-gray-800 rounded-xl shadow-md mb-8 overflow-hidden"
             variants={itemVariants}
@@ -643,11 +645,19 @@ const EditClassStudents = () => {
               </div>
             ) : (
               <>
-                {/* 🆕 移动端：卡片布局 */}
+                {/* 移动端：卡片布局 */}
                 <div className="md:hidden p-4 space-y-3">
                   <AnimatePresence>
                     {students.map((student, index) => (
-                      <StudentCard key={student._id || index} student={student} index={index} />
+                      // 修复：调用外部组件，并通过 props 传递所需的数据和函数
+                      <StudentCard 
+                        key={student._id || index} 
+                        student={student} 
+                        index={index}
+                        selectedStudents={selectedStudents}
+                        toggleStudentSelection={toggleStudentSelection}
+                        updateStudent={updateStudent}
+                      />
                     ))}
                   </AnimatePresence>
                 </div>
@@ -735,7 +745,7 @@ const EditClassStudents = () => {
             )}
           </motion.div>
 
-          {/* 🆕 添加新学生 - 响应式布局 */}
+          {/* 添加新学生 - 响应式布局 */}
           <motion.div 
             className="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden"
             variants={itemVariants}
@@ -753,11 +763,19 @@ const EditClassStudents = () => {
 
             <div className="p-6">
               <div onPaste={handleBatchPaste}>
-                {/* 🆕 移动端：卡片布局 */}
+                {/* 移动端：卡片布局 */}
                 <div className="md:hidden space-y-3">
                   <AnimatePresence>
                     {newStudents.map((student, index) => (
-                      <NewStudentCard key={index} student={student} index={index} />
+                       // 修复：调用外部组件，并通过 props 传递所需的数据和函数
+                      <NewStudentCard 
+                        key={index} 
+                        student={student} 
+                        index={index}
+                        showRemoveButton={newStudents.length > 1}
+                        updateNewStudent={updateNewStudent}
+                        removeNewStudentRow={removeNewStudentRow}
+                      />
                     ))}
                   </AnimatePresence>
                 </div>
