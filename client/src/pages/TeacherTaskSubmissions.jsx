@@ -510,7 +510,7 @@ const TeacherTaskSubmissions = () => {
       className="min-h-screen bg-gray-50 dark:bg-gray-900 px-4 py-8"
       disabled={loading}
     >
-      <div className="max-w-4xl mx-auto relative">
+      <div className="max-w-6xl mx-auto relative">
         <div className="flex flex-col space-y-4 mb-6 sm:flex-row sm:justify-between sm:items-start sm:space-y-0">
           <div className="flex-1">
             <div className="flex items-center gap-3 mb-2">
@@ -521,22 +521,12 @@ const TeacherTaskSubmissions = () => {
             {task && (
               <div className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
                 <p><strong>任务：</strong>{task.title}</p>
-                {/* 📌 显示任务描述 */}
-                {task.description && (
-                  <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 mt-2">
-                    <div className="flex items-start gap-2">
-                      <MessageSquareText className="w-4 h-4 text-gray-500 dark:text-gray-400 mt-0.5 flex-shrink-0" strokeWidth={1.5} />
-                      <span>任务描述 </span>
-                      <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
-                        {task.description}
-                      </p>
-                    </div>
-                  </div>
-                )}
+
                 <p><strong>截止时间：</strong>{formatDeadline(task.deadline)}</p>
                 <p><strong>逾期提交：</strong>{task.allowLateSubmission ? '允许' : '不允许'}</p>
               </div>
             )}
+
           </div>
           
           <div className="flex flex-col gap-3 w-full sm:w-auto sm:flex-row sm:gap-2">
@@ -565,6 +555,23 @@ const TeacherTaskSubmissions = () => {
             </Button>
           </div>
         </div>
+
+                                    {/* 📌 显示任务描述 */}
+                {task.description && (
+                      <div className="mb-6">
+                        <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-md">
+                          <div className="flex items-start gap-3 mb-3">
+                            <MessageSquareText className="w-5 h-5 text-indigo-600 dark:text-indigo-400 flex-shrink-0 mt-0.5" />
+                            <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100">任务描述</h2>
+                          </div>
+                          <div className="bg-gradient-to-r from-indigo-50 to-blue-50 dark:from-indigo-900/20 dark:to-blue-900/20 rounded-lg p-4 border border-indigo-200 dark:border-indigo-700/50">
+                            <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap leading-relaxed">
+                        {task.description}
+                      </p>
+                    </div>
+                  </div>
+                  </div>
+                )}
 
         {submissions.length === 0 ? (
           <motion.p

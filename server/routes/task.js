@@ -259,6 +259,7 @@ router.get('/:id/class-status', verifyToken, async (req, res) => {
       task: {
         title: task.title,
         deadline: task.deadline,
+        description: task.description,
         allowLateSubmission: task.allowLateSubmission
       },
       classStatus: classStatusList

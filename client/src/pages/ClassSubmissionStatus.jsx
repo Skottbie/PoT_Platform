@@ -17,7 +17,8 @@ import {
   FileText,
   Eye,
   Clock,
-  AlertTriangle
+  AlertTriangle,
+  MessageSquareText
 } from 'lucide-react';
 
 const ClassSubmissionStatus = () => {
@@ -149,6 +150,139 @@ const ClassSubmissionStatus = () => {
     return Math.round((classData.submittedStudents / classData.joinedStudents) * 100);
   };
 
+  // 🚀 移动端检测
+  const isMobile = window.innerWidth < 768;
+
+  // 🚀 移动端时间格式化（更简洁）
+  const formatSubmissionTimeMobile = (submittedAt) => {
+    const date = new Date(submittedAt);
+    return date.toLocaleString('zh-CN', {
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
+
+  // 🚀 获取状态圆点颜色
+  const getStatusDotColor = (student) => {
+    if (!student.hasJoined) return 'bg-gray-400';
+    if (!student.submitted) return 'bg-red-500';
+    if (student.isLateSubmission) return 'bg-orange-500';
+    return 'bg-green-500';
+  };
+
+  // 🚀 获取状态简短文本（移动端用）
+  const getStatusShortText = (student) => {
+    if (!student.hasJoined) return '未加入';
+    if (!student.submitted) return '未交';
+    if (student.isLateSubmission) return '逾期';
+    return '已交';
+  };
+
+  // 🚀 移动端学生卡片组件
+  const renderMobileStudentCard = (student, index) => (
+    <motion.div
+      key={student.studentId}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: index * 0.03 }}
+      className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 border border-gray-200 dark:border-gray-600"
+    >
+      {/* 头部：学号和姓名 */}
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-2">
+          <span className="font-mono text-sm text-gray-600 dark:text-gray-400">
+            {student.studentId}
+          </span>
+          <span className="font-medium text-gray-800 dark:text-gray-200">
+            {student.name}
+          </span>
+        </div>
+        {/* 状态圆点 */}
+        <div className="flex items-center gap-2">
+          <div className={`w-2 h-2 rounded-full ${getStatusDotColor(student)}`}></div>
+          <span className={`text-xs font-medium ${getStatusColor(student)}`}>
+            {getStatusShortText(student)}
+          </span>
+        </div>
+      </div>
+
+      {/* 详细信息 */}
+      <div className="grid grid-cols-2 gap-2 text-xs text-gray-600 dark:text-gray-400">
+        {/* 加入状态 */}
+        <div className="flex items-center gap-1">
+          {student.hasJoined ? (
+            <CheckCircle className="w-3 h-3 text-green-600" />
+          ) : (
+            <XCircle className="w-3 h-3 text-gray-400" />
+          )}
+          <span>{student.hasJoined ? '已加入' : '未加入'}</span>
+        </div>
+
+        {/* 提交时间 */}
+        <div className="flex items-center gap-1 justify-end">
+          {student.submitted && (
+            <>
+              <Clock className="w-3 h-3" />
+              <span>{formatSubmissionTimeMobile(student.submittedAt)}</span>
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* 逾期标识（如果有） */}
+      {student.isLateSubmission && (
+        <div className="mt-2 flex items-center gap-1">
+          <AlertTriangle className="w-3 h-3 text-orange-500" />
+          <span className="text-xs text-orange-600 dark:text-orange-400">
+            {formatLateTime(student.lateMinutes)}
+          </span>
+        </div>
+      )}
+    </motion.div>
+  );
+
+  // 🚀 桌面端学生表格行组件
+  const renderDesktopStudentRow = (student, index) => (
+    <motion.div
+      key={student.studentId}
+      initial={{ opacity: 0, x: -20 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ delay: index * 0.05 }}
+      className="grid grid-cols-6 gap-4 py-2 px-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors text-sm"
+    >
+      <div className="font-mono">{student.studentId}</div>
+      <div className="font-medium">{student.name}</div>
+      <div className={`flex items-center gap-2 ${student.hasJoined ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-gray-400'}`}>
+        {student.hasJoined ? (
+          <>
+            <CheckCircle className="w-4 h-4" />
+            <span>已加入</span>
+          </>
+        ) : (
+          <>
+            <XCircle className="w-4 h-4" />
+            <span>未加入</span>
+          </>
+        )}
+      </div>
+      <div className={getStatusColor(student)}>
+        {getStatusText(student)}
+      </div>
+      <div className="text-gray-600 dark:text-gray-400">
+        {student.submitted ? formatSubmissionTime(student.submittedAt) : '-'}
+      </div>
+      <div className="text-xs">
+        {student.isLateSubmission && (
+          <span className="text-orange-600 dark:text-orange-400">
+            {formatLateTime(student.lateMinutes)}
+          </span>
+        )}
+      </div>
+    </motion.div>
+  );
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-10 px-4">
@@ -194,6 +328,7 @@ const ClassSubmissionStatus = () => {
                     <div className="hidden md:flex items-center gap-3">
                     <Button
                       variant="primary"
+                      size="sm"
                       onClick={() => navigate(`/task/${taskId}/submissions`)}
                       className="flex items-center gap-2"
                     >
@@ -202,6 +337,7 @@ const ClassSubmissionStatus = () => {
                     </Button>
                     <Button
                       variant="secondary"
+                      size="sm"
                       onClick={() => navigate('/teacher')}
                       className="flex items-center gap-2"
                     >
@@ -238,7 +374,7 @@ const ClassSubmissionStatus = () => {
                       <div className="mb-6">
                         <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-md">
                           <div className="flex items-start gap-3 mb-3">
-                            <FileText className="w-5 h-5 text-indigo-600 dark:text-indigo-400 flex-shrink-0 mt-0.5" />
+                            <MessageSquareText className="w-5 h-5 text-indigo-600 dark:text-indigo-400 flex-shrink-0 mt-0.5" />
                             <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100">任务描述</h2>
                           </div>
                           <div className="bg-gradient-to-r from-indigo-50 to-blue-50 dark:from-indigo-900/20 dark:to-blue-900/20 rounded-lg p-4 border border-indigo-200 dark:border-indigo-700/50">
@@ -274,14 +410,14 @@ const ClassSubmissionStatus = () => {
                     {classData.submittedStudents}
                   </span>
                 </div>
-                {classData.lateSubmissions > 0 && (
+                
                   <div className="flex justify-between">
                     <span className="text-gray-600 dark:text-gray-400">逾期：</span>
                     <span className="font-medium text-orange-600 dark:text-orange-400">
                       {classData.lateSubmissions}
                     </span>
                   </div>
-                )}
+                
                 <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
                   <div className="flex justify-between items-center">
                     <span className="text-gray-600 dark:text-gray-400">提交率：</span>
@@ -370,58 +506,36 @@ const ClassSubmissionStatus = () => {
                     transition={{ duration: 0.3 }}
                     className="overflow-hidden"
                   >
-                    <div className="p-4">
-                      {/* 表格头部 */}
-                      <div className="grid grid-cols-6 gap-4 mb-3 pb-2 border-b border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-600 dark:text-gray-400">
-                        <div>学号</div>
-                        <div>姓名</div>
-                        <div>加入状态</div>
-                        <div>提交状态</div>
-                        <div>提交时间</div>
-                        <div>备注</div>
-                      </div>
+                  <div className="p-4">
+                      {/* 🚀 响应式学生列表 */}
+                      {isMobile ? (
+                        // 移动端：卡片布局
+                        <div className="space-y-3">
+                          {classData.students.map((student, index) => 
+                            renderMobileStudentCard(student, index)
+                          )}
+                        </div>
+                      ) : (
+                        // 桌面端：表格布局
+                        <>
+                          {/* 表格头部 */}
+                          <div className="grid grid-cols-6 gap-4 mb-3 pb-2 border-b border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-600 dark:text-gray-400">
+                            <div>学号</div>
+                            <div>姓名</div>
+                            <div>加入状态</div>
+                            <div>提交状态</div>
+                            <div>提交时间</div>
+                            <div>备注</div>
+                          </div>
 
-                      {/* 学生列表 */}
-                      <div className="space-y-2">
-                        {classData.students.map((student, index) => (
-                          <motion.div
-                            key={student.studentId}
-                            initial={{ opacity: 0, x: -20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: index * 0.05 }}
-                            className="grid grid-cols-6 gap-4 py-2 px-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors text-sm"
-                          >
-                            <div className="font-mono">{student.studentId}</div>
-                            <div className="font-medium">{student.name}</div>
-                            <div className={`flex items-center gap-2 ${student.hasJoined ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-gray-400'}`}>
-                              {student.hasJoined ? (
-                                <>
-                                  <CheckCircle className="w-4 h-4" />
-                                  <span>已加入</span>
-                                </>
-                              ) : (
-                                <>
-                                  <XCircle className="w-4 h-4" />
-                                  <span>未加入</span>
-                                </>
-                              )}
-                            </div>
-                            <div className={getStatusColor(student)}>
-                              {getStatusText(student)}
-                            </div>
-                            <div className="text-gray-600 dark:text-gray-400">
-                              {student.submitted ? formatSubmissionTime(student.submittedAt) : '-'}
-                            </div>
-                            <div className="text-xs">
-                              {student.isLateSubmission && (
-                                <span className="text-orange-600 dark:text-orange-400">
-                                  {formatLateTime(student.lateMinutes)}
-                                </span>
-                              )}
-                            </div>
-                          </motion.div>
-                        ))}
-                      </div>
+                          {/* 学生列表 */}
+                          <div className="space-y-2">
+                            {classData.students.map((student, index) =>
+                              renderDesktopStudentRow(student, index)
+                            )}
+                          </div>
+                        </>
+                      )}
 
                       {classData.students.length === 0 && (
                         <div className="text-center py-8 text-gray-500 dark:text-gray-400">
