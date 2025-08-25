@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import api from '../api/axiosInstance';
+import { Loader2 } from 'lucide-react';
 
 const LazyImage = ({ 
   imageId, 
@@ -16,6 +17,7 @@ const LazyImage = ({
   const [loadingStage, setLoadingStage] = useState('idle'); // 'idle' | 'loading' | 'thumbnail' | 'preview' | 'full' | 'error'
   const [isInView, setIsInView] = useState(false);
   const [error, setError] = useState(false);
+  const [clickLoading, setClickLoading] = useState(false); // 🆕 点击加载原图的状态
   
   const imgRef = useRef();
   const observerRef = useRef();
@@ -158,17 +160,22 @@ const LazyImage = ({
     loadImage();
   }, [isInView, loadStrategy, loadingStage, fetchImageBlob]);
 
-  // 点击加载原图
+  // 🆕 优化后的点击加载原图
   const handleClick = useCallback(async (e) => {
     if (onClick) {
       // 如果还没有加载原图，先加载
       if (loadingStage !== 'full') {
         try {
+          setClickLoading(true); // 开始loading
           const fullImageUrl = await fetchImageBlob('full');
+          setCurrentSrc(fullImageUrl);
+          setLoadingStage('full');
           onClick(fullImageUrl, imageId, e);
         } catch (err) {
           console.error('原图加载失败:', err);
           onClick(currentSrc, imageId, e); // 使用当前图片
+        } finally {
+          setClickLoading(false); // 结束loading
         }
       } else {
         onClick(currentSrc, imageId, e);
@@ -185,23 +192,23 @@ const LazyImage = ({
     };
   }, [currentSrc]);
 
-  // 渲染loading状态
+  // 🆕 优化后的loading状态
   const renderPlaceholder = () => (
-    <div className={`${className} flex items-center justify-center bg-gray-200 dark:bg-gray-700 animate-pulse`}>
-      <svg className="w-6 h-6 text-gray-400 dark:text-gray-500" fill="currentColor" viewBox="0 0 20 20">
-        <path d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 4-4v6z" />
-      </svg>
+    <div className={`${className} flex flex-col items-center justify-center bg-gray-100 dark:bg-gray-700`}>
+      <Loader2 className="w-6 h-6 text-gray-400 dark:text-gray-500 animate-spin mb-1" />
+      <span className="text-xs text-gray-400 dark:text-gray-500">加载中</span>
     </div>
   );
 
   // 渲染错误状态
   const renderError = () => (
-    <div className={`${className} flex items-center justify-center bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500`}>
-      <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+    <div className={`${className} flex flex-col items-center justify-center bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500`}>
+      <svg className="w-6 h-6 mb-1" fill="currentColor" viewBox="0 0 20 20">
         <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
         <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
         <path d="M3 3l14 14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
       </svg>
+      <span className="text-xs">加载失败</span>
     </div>
   );
 
@@ -230,9 +237,24 @@ const LazyImage = ({
         style={{ cursor: onClick ? 'pointer' : 'default' }}
       />
       
-      {/* 加载指示器 */}
+      {/* 🆕 优化后的加载指示器 */}
       {loadingStage === 'thumbnail' && loadStrategy === 'progressive' && (
-        <div className="absolute top-1 right-1 w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
+        <div className="absolute inset-0 bg-black bg-opacity-10 flex items-center justify-center">
+          <div className="bg-white dark:bg-gray-800 rounded-full px-2 py-1 text-xs text-gray-600 dark:text-gray-300 shadow-md flex items-center gap-1">
+            <Loader2 className="w-3 h-3 animate-spin" />
+            <span>优化中</span>
+          </div>
+        </div>
+      )}
+
+      {/* 🆕 点击加载原图的loading */}
+      {clickLoading && (
+        <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center">
+          <div className="bg-white dark:bg-gray-800 rounded-lg px-3 py-2 text-sm text-gray-700 dark:text-gray-200 shadow-lg flex items-center gap-2">
+            <Loader2 className="w-4 h-4 animate-spin" />
+            <span>加载原图中...</span>
+          </div>
+        </div>
       )}
     </div>
   );

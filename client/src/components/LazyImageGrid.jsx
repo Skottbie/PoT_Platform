@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import LazyImage from './LazyImage';
 import Modal from 'react-modal';
-import { ImageUp } from 'lucide-react';
+import { ImageUp, Loader2, AlertTriangle } from 'lucide-react';
 
 const LazyImageGrid = ({ 
   imageIds = [], 
@@ -14,19 +14,36 @@ const LazyImageGrid = ({
   const [modalIsOpen, setModalIsOpen] = useState(false);
   const [currentImageUrl, setCurrentImageUrl] = useState('');
   const [currentImageId, setCurrentImageId] = useState('');
+  const [modalLoading, setModalLoading] = useState(false); // 🆕 Modal加载状态
+  const [modalError, setModalError] = useState(false); // 🆕 Modal错误状态
 
   if (!imageIds || imageIds.length === 0) {
     return null;
   }
 
-  const openModal = (imageUrl, imageId) => {
-    setCurrentImageUrl(imageUrl);
+  // 🆕 优化后的打开Modal函数 - 异步加载原图
+  const openModal = async (imageUrl, imageId) => {
+    setCurrentImageUrl('');
     setCurrentImageId(imageId);
     setModalIsOpen(true);
+    setModalLoading(true);
+    setModalError(false);
+
+    try {
+      // 设置原图URL（LazyImage已经在handleClick中处理了加载）
+      setCurrentImageUrl(imageUrl);
+    } catch (error) {
+      console.error('Modal加载图片失败:', error);
+      setModalError(true);
+    } finally {
+      setModalLoading(false);
+    }
   };
 
   const closeModal = () => {
     setModalIsOpen(false);
+    setModalLoading(false);
+    setModalError(false);
     // 延迟清理，避免闪烁
     setTimeout(() => {
       setCurrentImageUrl('');
@@ -34,11 +51,65 @@ const LazyImageGrid = ({
     }, 300);
   };
 
+  // 🆕 Modal内容渲染
+  const renderModalContent = () => {
+    if (modalLoading) {
+      return (
+        <div className="flex flex-col items-center justify-center min-h-[50vh] text-white">
+          <Loader2 className="w-12 h-12 animate-spin mb-4" />
+          <p className="text-lg">加载原图中...</p>
+          <p className="text-sm opacity-75 mt-2">图片ID: {currentImageId}</p>
+        </div>
+      );
+    }
+
+    if (modalError) {
+      return (
+        <div className="flex flex-col items-center justify-center min-h-[50vh] text-white">
+          <AlertTriangle className="w-12 h-12 text-red-400 mb-4" />
+          <p className="text-lg">图片加载失败</p>
+          <button 
+            onClick={closeModal}
+            className="mt-4 px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg transition-colors"
+          >
+            关闭
+          </button>
+        </div>
+      );
+    }
+
+    if (currentImageUrl) {
+      return (
+        <>
+          {/* 原图显示 */}
+          <img 
+            src={currentImageUrl} 
+            alt="原图预览" 
+            className="w-full h-auto object-contain rounded-lg max-h-[80vh]"
+            style={{ maxWidth: '100%' }}
+            onLoad={() => setModalLoading(false)}
+            onError={() => {
+              setModalError(true);
+              setModalLoading(false);
+            }}
+          />
+          
+          {/* 图片信息 */}
+          <div className="absolute bottom-4 left-4 bg-black bg-opacity-50 text-white px-3 py-1 rounded text-sm">
+            图片ID: {currentImageId}
+          </div>
+        </>
+      );
+    }
+
+    return null;
+  };
+
   return (
     <div className="mt-4">
-    <p className="font-semibold text-gray-700 dark:text-gray-300 mb-2 flex items-center whitespace-nowrap">
-      <ImageUp className="w-4 h-4 mr-2" /> {title} ({imageIds.length})
-    </p>
+      <p className="font-semibold text-gray-700 dark:text-gray-300 mb-2 flex items-center whitespace-nowrap">
+        <ImageUp className="w-4 h-4 mr-2" /> {title} ({imageIds.length})
+      </p>
       
       <div className={gridClassName}>
         {imageIds.map((imageId, index) => (
@@ -54,7 +125,7 @@ const LazyImageGrid = ({
         ))}
       </div>
 
-      {/* 图片预览模态框 */}
+      {/* 🆕 优化后的图片预览模态框 */}
       <Modal
         isOpen={modalIsOpen}
         onRequestClose={closeModal}
@@ -63,21 +134,26 @@ const LazyImageGrid = ({
           overlay: {
             backgroundColor: 'rgba(0, 0, 0, 0.75)',
             zIndex: 1000,
+            // 🆕 确保模态框在移动端也能正确居中
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
           },
           content: {
-            top: '50%',
-            left: '50%',
+            position: 'relative',
+            top: 'auto',
+            left: 'auto',
             right: 'auto',
             bottom: 'auto',
-            marginRight: '-50%',
-            transform: 'translate(-50%, -50%)',
+            margin: '0',
+            transform: 'none',
             border: 'none',
             background: 'transparent',
-            padding: 0,
+            padding: '0',
             width: '90%',
             maxWidth: '900px',
             maxHeight: '90%',
-            overflow: 'auto',
+            overflow: 'visible',
           },
         }}
       >
@@ -85,25 +161,13 @@ const LazyImageGrid = ({
           {/* 关闭按钮 */}
           <button 
             onClick={closeModal}
-            className="absolute top-4 right-4 text-white text-3xl font-bold bg-black bg-opacity-50 rounded-full w-10 h-10 flex items-center justify-center z-10 hover:bg-opacity-70 transition-all"
+            className="absolute -top-2 -right-2 text-white text-2xl font-bold bg-black bg-opacity-60 hover:bg-opacity-80 rounded-full w-10 h-10 flex items-center justify-center z-20 transition-all shadow-lg"
           >
             &times;
           </button>
           
-          {/* 原图显示 */}
-          {currentImageUrl && (
-            <img 
-              src={currentImageUrl} 
-              alt="原图预览" 
-              className="w-full h-auto object-contain rounded-lg max-h-[80vh]"
-              style={{ maxWidth: '100%' }}
-            />
-          )}
-          
-          {/* 图片信息 */}
-          <div className="absolute bottom-4 left-4 bg-black bg-opacity-50 text-white px-3 py-1 rounded text-sm">
-            图片ID: {currentImageId}
-          </div>
+          {/* 🆕 动态内容渲染 */}
+          {renderModalContent()}
         </div>
       </Modal>
     </div>
