@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import PullToRefreshContainer from '../components/PullToRefreshContainer';
 import useAutoRefresh from '../hooks/useAutoRefresh';
 import toast from 'react-hot-toast';
+import { createPortal } from 'react-dom';
 import { 
   Edit, 
   Users, 
@@ -207,6 +208,25 @@ const EditClassStudents = () => {
   const [pendingAction, setPendingAction] = useState(null);
   const [hasChanges, setHasChanges] = useState(false);
 
+  // 防止背景滚动
+  const preventBodyScroll = useCallback(() => {
+    document.body.style.overflow = 'hidden';
+  }, []);
+
+  const restoreBodyScroll = useCallback(() => {
+    document.body.style.overflow = '';
+  }, []);
+
+  useEffect(() => {
+    if (showConfirmModal) {
+      preventBodyScroll();
+    } else {
+      restoreBodyScroll();
+    }
+
+    return () => restoreBodyScroll();
+  }, [showConfirmModal, preventBodyScroll, restoreBodyScroll]);
+
   // 核心数据获取函数
   const fetchClassData = useCallback(async () => {
     try {
@@ -215,7 +235,7 @@ const EditClassStudents = () => {
         const cls = res.data.class;
         setClassData(cls);
         const activeStudents = cls.studentList.filter(s => !s.isRemoved);
-        setStudents(activeStudents.map(s => ({ ...s, isModified: false })));
+        setStudents(activeStudents.map(s => ({ ...s, isModified: false, originalStudentId: s.studentId})));
       } else {
         setMessage('获取班级信息失败');
       }
@@ -385,7 +405,7 @@ const EditClassStudents = () => {
 
       const updateData = {
         modifiedStudents: modifiedStudents.map(s => ({
-          originalId: s._id || s.studentId,
+          originalId: s._id || s.originalStudentId,
           name: s.name.trim(),
           studentId: s.studentId.trim()
         })),
@@ -449,7 +469,7 @@ const EditClassStudents = () => {
 
   // 使用独立的自动刷新函数
   useAutoRefresh(handleAutoRefresh, {
-    interval: 120000, // 2分钟
+    interval: 360000, // 6分钟
     enabled: true,
     pauseOnHidden: true,
   });
@@ -873,46 +893,65 @@ const EditClassStudents = () => {
             )}
           </AnimatePresence>
 
-          {/* 确认模态框 */}
+        {/* 确认模态框 - 使用Portal渲染到body */}
+        {showConfirmModal && pendingAction && createPortal(
           <AnimatePresence>
-            {showConfirmModal && pendingAction && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] p-4"
+              onClick={(e) => e.target === e.currentTarget && setShowConfirmModal(false)}
+              style={{
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                zIndex: 9999
+              }}
+            >
               <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
-                onClick={(e) => e.target === e.currentTarget && setShowConfirmModal(false)}
+                initial={{ scale: 0.95, opacity: 0, y: 20 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.95, opacity: 0, y: 20 }}
+                transition={{ 
+                  type: "spring", 
+                  stiffness: 300, 
+                  damping: 25 
+                }}
+                className="bg-white dark:bg-gray-800 rounded-xl p-6 max-w-md w-full mx-4 shadow-xl"
+                style={{
+                  position: 'relative',
+                  maxHeight: '90vh',
+                  overflow: 'auto'
+                }}
               >
-                <motion.div
-                  initial={{ scale: 0.95, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  exit={{ scale: 0.95, opacity: 0 }}
-                  className="bg-white dark:bg-gray-800 rounded-xl p-6 max-w-md w-full mx-4 shadow-xl"
-                >
-                  <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4">
-                    {pendingAction.title}
-                  </h3>
-                  <p className="text-gray-600 dark:text-gray-400 mb-6">
-                    {pendingAction.message}
-                  </p>
-                  <div className="flex gap-3 justify-end">
-                    <Button
-                      variant="secondary"
-                      onClick={() => setShowConfirmModal(false)}
-                    >
-                      取消
-                    </Button>
-                    <Button
-                      variant={pendingAction.type === 'remove_selected' ? 'danger' : 'primary'}
-                      onClick={executeAction}
-                    >
-                      确认
-                    </Button>
-                  </div>
-                </motion.div>
+                <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4">
+                  {pendingAction.title}
+                </h3>
+                <p className="text-gray-600 dark:text-gray-400 mb-6">
+                  {pendingAction.message}
+                </p>
+                <div className="flex gap-3 justify-end">
+                  <Button
+                    variant="secondary"
+                    onClick={() => setShowConfirmModal(false)}
+                  >
+                    取消
+                  </Button>
+                  <Button
+                    variant={pendingAction.type === 'remove_selected' ? 'danger' : 'primary'}
+                    onClick={executeAction}
+                  >
+                    确认
+                  </Button>
+                </div>
               </motion.div>
-            )}
-          </AnimatePresence>
+            </motion.div>
+          </AnimatePresence>,
+          document.body
+        )}
         </div>
       </motion.div>
     </PullToRefreshContainer>
