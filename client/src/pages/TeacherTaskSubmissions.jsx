@@ -1,4 +1,4 @@
-// client/src/pages/TeacherTaskSubmissions.jsx - 修复版本（关键修改部分）
+// client/src/pages/TeacherTaskSubmissions.jsx
 
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -9,6 +9,24 @@ import LazyImageGrid from '../components/LazyImageGrid';
 import toast from 'react-hot-toast';
 import PullToRefreshContainer from '../components/PullToRefreshContainer';
 import useAutoRefresh from '../hooks/useAutoRefresh';
+
+import { 
+  FileText,
+  User, 
+  Clock,
+  AlertTriangle,
+  Paperclip,
+  X,
+  Eye,
+  Download,
+  MessageCircle,
+  Star,
+  BarChart3,
+  ArrowLeft,
+  ChevronDown,
+  ChevronUp,
+  MessageSquareText 
+} from 'lucide-react';
 
 import { 
   detectPoTMode, 
@@ -280,21 +298,23 @@ const TeacherTaskSubmissions = () => {
         <div className="space-y-2 text-sm mt-1">
             <div className="flex flex-wrap gap-2">
                 {isPreviewable && (
-                    <Button
-                        size="sm"
-                        variant="primary"
-                        onClick={() => handlePreview(fileId)}
-                    >
-                        🔍 预览文件
-                    </Button>
+                  <Button
+                    size="sm"
+                    variant="primary"
+                    onClick={() => handlePreview(fileId)}
+                  >
+                    <Eye className="w-4 h-4 mr-1.5" strokeWidth={1.5} />
+                    预览文件
+                  </Button>
                 )}
-                <Button
+                  <Button
                     size="sm"
                     variant="primary"
                     onClick={() => handleDownload(fileId, fileName)}
-                >
-                    ⬇️ 下载作业文件 ({fileName})
-                </Button>
+                  >
+                    <Download className="w-4 h-4 mr-1.5" strokeWidth={1.5} />
+                    下载作业文件 ({fileName})
+                  </Button>
             </div>
             <p className="text-xs text-gray-500 dark:text-gray-400">
                 文件ID：{fileId}
@@ -345,15 +365,26 @@ const TeacherTaskSubmissions = () => {
             variant="primary"
             onClick={() => handleDownload(aigcLogId, 'aigc_log.json')}
           >
-            ⬇️ 下载 AIGC记录
+            <Download className="w-4 h-4 mr-1.5" strokeWidth={1.5} />
+            下载 AIGC记录
           </Button>
-          <Button
-            size="sm"
-            variant="secondary"
-            onClick={toggleJson}
-          >
-            {isExpanded ? '🔽 收起内容' : '📖 展开查看内容'}
-          </Button>
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={toggleJson}
+            >
+              {isExpanded ? (
+                <>
+                  <ChevronUp className="w-4 h-4 mr-1.5" strokeWidth={1.5} />
+                  收起内容
+                </>
+              ) : (
+                <>
+                  <ChevronDown className="w-4 h-4 mr-1.5" strokeWidth={1.5} />
+                  展开查看内容
+                </>
+              )}
+            </Button>
         </div>
         <AnimatePresence>
           {Array.isArray(isExpanded) && (
@@ -421,7 +452,14 @@ const TeacherTaskSubmissions = () => {
   };
   
   if (loading) {
-    return <p className="text-center mt-10 text-gray-500">加载中...</p>;
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+          <p className="text-sm text-gray-500 dark:text-gray-400">正在加载提交记录...</p>
+        </div>
+      </div>
+    );
   }
   
   return (
@@ -433,9 +471,10 @@ const TeacherTaskSubmissions = () => {
       <div className="max-w-4xl mx-auto relative">
         <div className="flex justify-between items-start mb-6">
           <div>
-            <h1 className="text-2xl font-bold mb-2 text-gray-800 dark:text-gray-100">
-              📄 提交记录
-            </h1>
+            <div className="flex items-center gap-3 mb-2">
+              <FileText className="w-6 h-6 text-blue-600 dark:text-blue-400" strokeWidth={1.5} />
+              <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">提交记录</h1>
+            </div>
             {/* 显示任务信息 */}
             {task && (
               <div className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
@@ -443,9 +482,13 @@ const TeacherTaskSubmissions = () => {
                 {/* 📌 显示任务描述 */}
                 {task.description && (
                   <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 mt-2">
-                    <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
-                      📋 {task.description}
-                    </p>
+                    <div className="flex items-start gap-2">
+                      <MessageSquareText className="w-4 h-4 text-gray-500 dark:text-gray-400 mt-0.5 flex-shrink-0" strokeWidth={1.5} />
+                      <span>任务描述 </span>
+                      <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
+                        {task.description}
+                      </p>
+                    </div>
                   </div>
                 )}
                 <p><strong>截止时间：</strong>{formatDeadline(task.deadline)}</p>
@@ -461,14 +504,16 @@ const TeacherTaskSubmissions = () => {
               size="sm"
               onClick={() => navigate(`/task/${taskId}/class-status`)}
             >
-              📊 班级提交情况
+              <BarChart3 className="w-4 h-4 mr-1.5" strokeWidth={1.5} />
+              班级提交情况
             </Button>
             <Button
               variant="secondary"
               size="sm"
               onClick={() => navigate('/teacher')}
             >
-              👈 返回教师首页
+              <ArrowLeft className="w-4 h-4 mr-1.5" strokeWidth={1.5} />
+              返回教师首页
             </Button>
           </div>
         </div>
@@ -500,20 +545,24 @@ const TeacherTaskSubmissions = () => {
                 >
                   <div className="flex justify-between items-start">
                     <div>
-                      <p className="text-sm text-gray-800 dark:text-gray-200">
-                        <strong>👤 学生:</strong> {s.student?.email || '未知'}
-                      </p>
-                      <p className="text-sm text-gray-800 dark:text-gray-200">
-                        <strong>📅 提交时间:</strong>{' '}
-                        {new Date(s.submittedAt).toLocaleString()}
-                      </p>
+                      <div className="flex items-center gap-2 text-sm text-gray-800 dark:text-gray-200">
+                        <User className="w-4 h-4 text-gray-500 dark:text-gray-400" strokeWidth={1.5} />
+                        <strong>学生:</strong>
+                        <span>{s.student?.email || '未知'}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm text-gray-800 dark:text-gray-200">
+                        <Clock className="w-4 h-4 text-gray-500 dark:text-gray-400" strokeWidth={1.5} />
+                        <strong>提交时间:</strong>
+                        <span>{new Date(s.submittedAt).toLocaleString()}</span>
+                      </div>
                     </div>
                     
                     {/* 逾期提交标识 */}
                     {s.isLateSubmission && (
                       <div className="flex flex-col items-end">
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800 dark:bg-orange-900/50 dark:text-orange-300">
-                          ⚠️ 逾期提交
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800 dark:bg-orange-900/50 dark:text-orange-300">
+                          <AlertTriangle className="w-3 h-3" strokeWidth={1.5} />
+                          逾期提交
                         </span>
                         <span className="text-xs text-orange-600 dark:text-orange-400 mt-1">
                           {formatLateTime(s.lateMinutes)}
@@ -524,7 +573,10 @@ const TeacherTaskSubmissions = () => {
                   
                   {s.content && (
                     <div className="mt-4">
-                      <p className="font-semibold text-gray-700 dark:text-gray-300 mb-1">📝 提交文本:</p>
+                      <div className="flex items-center gap-2 font-semibold text-gray-700 dark:text-gray-300 mb-1">
+                        <FileText className="w-4 h-4 text-gray-500 dark:text-gray-400" strokeWidth={1.5} />
+                        <span>提交文本:</span>
+                      </div>
                       <div className="bg-gray-100/70 dark:bg-gray-900/50 p-3 rounded-lg text-sm text-gray-800 dark:text-gray-200 whitespace-pre-wrap">
                         {s.content}
                       </div>
@@ -539,15 +591,19 @@ const TeacherTaskSubmissions = () => {
 
                   {s.fileId && (
                     <div>
-                      <p className="font-semibold text-gray-700 dark:text-gray-300 mt-4 mb-1">📎 作业文件:</p>
+                      <div className="flex items-center gap-2 font-semibold text-gray-700 dark:text-gray-300 mt-4 mb-1">
+                        <Paperclip className="w-4 h-4 text-gray-500 dark:text-gray-400" strokeWidth={1.5} />
+                        <span>作业文件:</span>
+                      </div>
                       {renderFileLinks(s.fileId, s.fileName)}
                     </div>
                   )}
 
                   {!s.fileId && !s.content && (!s.imageIds || s.imageIds.length === 0) && (
-                    <p className="text-red-600 dark:text-red-400 font-medium flex items-center gap-1">
-                      ❌ 学生未提交作业文件或图片
-                    </p>
+                    <div className="flex items-center gap-2 text-red-600 dark:text-red-400 font-medium">
+                      <X className="w-4 h-4" strokeWidth={1.5} />
+                      <span>学生未提交作业文件或图片</span>
+                    </div>
                   )}
 
                   {s.aigcLogId && (
@@ -568,16 +624,25 @@ const TeacherTaskSubmissions = () => {
                         {s.feedback && s.feedback.content ? (
                           <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-3">
                             <div className="flex items-center justify-between mb-2">
-                              <div className="flex items-center gap-2">
-                                <span className="text-blue-600 dark:text-blue-400 font-medium text-sm">
-                                  💬 我的反馈
-                                </span>
-                                {s.feedback.rating && (
-                                  <span className="text-yellow-500">
-                                    {'⭐'.repeat(s.feedback.rating)}
-                                  </span>
-                                )}
-                              </div>
+                                <div className="flex items-center gap-2">
+                                  <div className="flex items-center gap-1.5">
+                                    <MessageCircle className="w-4 h-4 text-blue-600 dark:text-blue-400" strokeWidth={1.5} />
+                                    <span className="text-blue-600 dark:text-blue-400 font-medium text-sm">
+                                      我的反馈
+                                    </span>
+                                  </div>
+                                  {s.feedback.rating && (
+                                    <div className="flex items-center gap-0.5">
+                                      {Array.from({ length: s.feedback.rating }, (_, i) => (
+                                        <Star 
+                                          key={i} 
+                                          className="w-4 h-4 text-yellow-500 fill-current" 
+                                          strokeWidth={1.5}
+                                        />
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
                               <button
                                 onClick={() => handleDeleteFeedback(s._id)}
                                 className="text-red-500 hover:text-red-700 text-xs"
@@ -608,7 +673,8 @@ const TeacherTaskSubmissions = () => {
                           variant="primary"
                           onClick={() => openFeedbackModal(s)}
                         >
-                          {s.feedback && s.feedback.content ? '📝 编辑反馈' : '💬 添加反馈'}
+                          <MessageCircle className="w-4 h-4 mr-1.5" strokeWidth={1.5} />
+                          {s.feedback?.content ? '编辑反馈' : '添加反馈'}
                         </Button>
                       </div>
                     </div>
@@ -634,9 +700,12 @@ const TeacherTaskSubmissions = () => {
               exit={{ scale: 0.95, opacity: 0 }}
               className="bg-white dark:bg-gray-800 rounded-xl p-6 max-w-md w-full mx-4 shadow-xl"
             >
-              <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4">
-                💬 {feedbackModal.currentFeedback?.content ? '编辑' : '添加'}反馈
-              </h3>
+              <div className="flex items-center gap-3 mb-4">
+                <MessageCircle className="w-5 h-5 text-blue-600 dark:text-blue-400" strokeWidth={1.5} />
+                <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
+                  {feedbackModal.currentFeedback?.content ? '编辑' : '添加'}反馈
+                </h3>
+              </div>
               <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
                 学生：{feedbackModal.studentEmail}
               </p>
@@ -655,23 +724,33 @@ const TeacherTaskSubmissions = () => {
                         onClick={() => {
                           setFeedbackForm((prev) => ({
                             ...prev,
-                            rating: prev.rating === star ? 0 : star, // 点击已选中的星星取消评分
+                            rating: prev.rating === star ? 0 : star,
                           }));
                         }}
-                        className={`text-2xl transition-colors ${
-                          // 📌 修复：正确的星星显示逻辑
+                        className={`transition-all duration-200 hover:scale-110 ${
                           feedbackForm.rating >= star && feedbackForm.rating !== 0
                             ? 'text-yellow-500'
                             : 'text-gray-300 hover:text-yellow-400'
                         }`}
                       >
-                        ⭐
+                        <Star 
+                          className="w-6 h-6" 
+                          strokeWidth={1.5}
+                          fill={feedbackForm.rating >= star && feedbackForm.rating !== 0 ? 'currentColor' : 'none'}
+                        />
                       </button>
                     ))}
                   </div>
                   {/* 📌 添加评分状态显示 */}
-                  <p className="text-xs text-gray-500 mt-1">
-                    {feedbackForm.rating === 0 ? '未评分' : `${feedbackForm.rating} 星`}
+                  <p className="text-xs text-gray-500 mt-1 flex items-center gap-1">
+                    {feedbackForm.rating === 0 ? (
+                      <span>未评分</span>
+                    ) : (
+                      <>
+                        <Star className="w-3 h-3 text-yellow-500 fill-current" strokeWidth={1.5} />
+                        <span>{feedbackForm.rating} 星</span>
+                      </>
+                    )}
                   </p>
                 </div>
 
