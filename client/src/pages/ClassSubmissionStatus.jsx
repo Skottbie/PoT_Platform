@@ -7,6 +7,18 @@ import { motion, AnimatePresence } from 'framer-motion';
 import PullToRefreshContainer from '../components/PullToRefreshContainer';
 import useAutoRefresh from '../hooks/useAutoRefresh';
 import toast from 'react-hot-toast';
+import { 
+  BarChart3, 
+  CheckCircle, 
+  XCircle, 
+  ArrowLeft, 
+  Users,
+  ChevronDown,
+  FileText,
+  Eye,
+  Clock,
+  AlertTriangle
+} from 'lucide-react';
 
 const ClassSubmissionStatus = () => {
   const { taskId } = useParams();
@@ -165,24 +177,78 @@ const ClassSubmissionStatus = () => {
     >
       <div className="max-w-6xl mx-auto">
         {/* 页面头部 */}
-        <div className="flex justify-between items-start mb-6">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-2">
-              📊 班级提交情况
-            </h1>
-            <div className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
-              <p><strong>任务：</strong>{data.task.title}</p>
-              <p><strong>截止时间：</strong>{formatDeadline(data.task.deadline)}</p>
-              <p><strong>逾期提交：</strong>{data.task.allowLateSubmission ? '允许' : '不允许'}</p>
-            </div>
-          </div>
-          <Button
-            variant="secondary"
-            onClick={() => navigate('/teacher')}
-          >
-            👈 返回教师首页
-          </Button>
-        </div>
+                <div className="flex justify-between items-start mb-6">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-2">
+                      <BarChart3 className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                      <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">
+                        班级提交情况
+                      </h1>
+                    </div>
+                    <div className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
+                      <p><strong>任务：</strong>{data.task.title}</p>
+                      <p><strong>截止时间：</strong>{formatDeadline(data.task.deadline)}</p>
+                      <p><strong>逾期提交：</strong>{data.task.allowLateSubmission ? '允许' : '不允许'}</p>
+                    </div>
+                  </div>
+                    <div className="hidden md:flex items-center gap-3">
+                    <Button
+                      variant="primary"
+                      onClick={() => navigate(`/task/${taskId}/submissions`)}
+                      className="flex items-center gap-2"
+                    >
+                      <Eye className="w-4 h-4" />
+                      查看详细提交
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      onClick={() => navigate('/teacher')}
+                      className="flex items-center gap-2"
+                    >
+                      <ArrowLeft className="w-4 h-4" />
+                      返回教师首页
+                    </Button>
+                  </div>
+                </div>
+                {/* 移动端按钮区域 */}
+                  <div className="md:hidden mb-6">
+                    <div className="flex flex-col gap-3">
+                      <Button
+                        variant="primary"
+                        size='sm'
+                        onClick={() => navigate(`/task/${taskId}/submissions`)}
+                        className="flex items-center justify-center gap-2 w-full"
+                      >
+                        <Eye className="w-4 h-4" />
+                        查看详细提交
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        size='sm'
+                        onClick={() => navigate('/teacher')}
+                        className="flex items-center justify-center gap-2 w-full"
+                      >
+                        <ArrowLeft className="w-4 h-4" />
+                        返回教师首页
+                      </Button>
+                    </div>
+                  </div>
+                                  {/* 任务描述区域 */}
+                    {data.task.description && (
+                      <div className="mb-6">
+                        <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-md">
+                          <div className="flex items-start gap-3 mb-3">
+                            <FileText className="w-5 h-5 text-indigo-600 dark:text-indigo-400 flex-shrink-0 mt-0.5" />
+                            <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100">任务描述</h2>
+                          </div>
+                          <div className="bg-gradient-to-r from-indigo-50 to-blue-50 dark:from-indigo-900/20 dark:to-blue-900/20 rounded-lg p-4 border border-indigo-200 dark:border-indigo-700/50">
+                            <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap leading-relaxed">
+                              {data.task.description}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
 
         {/* 总览统计 */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
@@ -264,9 +330,12 @@ const ClassSubmissionStatus = () => {
               >
                 <div className="flex justify-between items-center">
                   <div className="flex items-center gap-3">
-                    <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
-                      📚 {classData.className}
-                    </h3>
+                    <div className="flex items-center gap-2">
+                      <Users className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                      <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
+                        {classData.className}
+                      </h3>
+                    </div>
                     <span className="text-sm text-gray-500 dark:text-gray-400">
                       ({classData.submittedStudents}/{classData.joinedStudents} 已提交)
                     </span>
@@ -285,7 +354,7 @@ const ClassSubmissionStatus = () => {
                       animate={{ rotate: expandedClasses.has(classData.classId) ? 180 : 0 }}
                       transition={{ duration: 0.2 }}
                     >
-                      ▼
+                      <ChevronDown className="w-5 h-5 text-gray-400" />
                     </motion.div>
                   </div>
                 </div>
@@ -324,8 +393,18 @@ const ClassSubmissionStatus = () => {
                           >
                             <div className="font-mono">{student.studentId}</div>
                             <div className="font-medium">{student.name}</div>
-                            <div className={student.hasJoined ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-gray-400'}>
-                              {student.hasJoined ? '✅ 已加入' : '❌ 未加入'}
+                            <div className={`flex items-center gap-2 ${student.hasJoined ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-gray-400'}`}>
+                              {student.hasJoined ? (
+                                <>
+                                  <CheckCircle className="w-4 h-4" />
+                                  <span>已加入</span>
+                                </>
+                              ) : (
+                                <>
+                                  <XCircle className="w-4 h-4" />
+                                  <span>未加入</span>
+                                </>
+                              )}
                             </div>
                             <div className={getStatusColor(student)}>
                               {getStatusText(student)}
