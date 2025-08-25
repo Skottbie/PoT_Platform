@@ -55,7 +55,118 @@ const styles = `
       opacity: 1;
     }
   }
-  `;
+
+    @keyframes progress {
+    0% { width: 0%; opacity: 0.6; }
+    50% { width: 70%; opacity: 1; }
+    100% { width: 100%; opacity: 0.6; }
+  }
+
+  @keyframes shimmer {
+    0% { background-position: -200px 0; }
+    100% { background-position: calc(200px + 100%) 0; }
+  }
+
+  .loading-shimmer {
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+    background-size: 200px 100%;
+    animation: shimmer 1.5s infinite;
+  }
+
+  .pulse-dot {
+    animation: pulse-dot 1.4s ease-in-out infinite;
+  }
+
+  .pulse-dot:nth-child(2) { animation-delay: 0.2s; }
+  .pulse-dot:nth-child(3) { animation-delay: 0.4s; }
+
+  @keyframes pulse-dot {
+    0%, 80%, 100% { 
+      transform: scale(0.8);
+      opacity: 0.5;
+    }
+    40% { 
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+
+  /* 🎯 页面进入动画 */
+  @keyframes slideInUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px) scale(0.96);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes scaleIn {
+    from {
+      opacity: 0;
+      transform: scale(0.9);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  .page-container {
+    animation: slideInUp 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+
+  .page-header {
+    animation: fadeInUp 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.1s both;
+  }
+
+  .page-content {
+    animation: fadeInUp 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.2s both;
+  }
+
+  .page-form {
+    animation: fadeInUp 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.3s both;
+  }
+
+  .page-tabs {
+    animation: scaleIn 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.4s both;
+  }
+
+  .page-form-section {
+    animation: fadeInUp 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.5s both;
+  }
+
+  .page-button {
+    animation: scaleIn 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.6s both;
+  }
+
+  /* 减少动画偏好支持 */
+  @media (prefers-reduced-motion: reduce) {
+    .page-container,
+    .page-header,
+    .page-content,
+    .page-form,
+    .page-tabs,
+    .page-form-section,
+    .page-button {
+      animation: none !important;
+    }
+  }
+`;
+
 
 
 
@@ -79,6 +190,7 @@ const CreateClass = () => {
   
   const [message, setMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [pageLoaded, setPageLoaded] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -182,7 +294,7 @@ const CreateClass = () => {
         : [...newStudents, ...Array(3 - newStudents.length).fill({ name: '', studentId: '' })];
       
       setManualStudents(finalStudents);
-      setMessage(`✅ 已粘贴 ${newStudents.length} 条学生信息`);
+      setMessage(` 已粘贴 ${newStudents.length} 条学生信息`);
       
       // 3秒后清除提示
       setTimeout(() => setMessage(''), 3000);
@@ -251,7 +363,7 @@ const CreateClass = () => {
 
       if (res.data && res.data.success) {
         setMessage(`班级创建成功，邀请码：${res.data.inviteCode}`);
-        setTimeout(() => navigate('/teacher'), 2000);
+        setTimeout(() => navigate('/my-classes'), 2000);
       } else {
         setMessage(`创建失败: ${res.data.message || '未知错误'}`);
       }
@@ -285,13 +397,23 @@ const CreateClass = () => {
       };
     }, []);
 
+    // 页面加载动画效果
+    useEffect(() => {
+      const timer = setTimeout(() => {
+        setPageLoaded(true);
+      }, 100); // 很短的延迟，确保DOM完全渲染
+
+      return () => clearTimeout(timer);
+    }, []);
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-10 px-4 transition-colors duration-300">
-      <div className="relative max-w-4xl mx-auto bg-white dark:bg-gray-800 
-                      p-8 rounded-2xl shadow-lg transition-colors duration-300">
+      <div className={`relative max-w-4xl mx-auto bg-white dark:bg-gray-800 
+                      p-8 rounded-2xl shadow-lg transition-colors duration-300
+                      ${pageLoaded ? 'page-container' : 'opacity-0'}`}>
 
         {/* 返回仪表盘按钮 */}
-        <div className="flex justify-end mb-4 md:absolute md:top-4 md:right-4">
+        <div className={`flex justify-end mb-4 md:absolute md:top-4 md:right-4 ${pageLoaded ? 'page-header' : 'opacity-0'}`}>
           <Button
             variant="secondary"
             size="sm"
@@ -303,14 +425,14 @@ const CreateClass = () => {
           </Button>
         </div>
 
-        <h1 className="text-2xl font-bold mb-6 text-gray-800 dark:text-gray-100 flex items-center gap-3">
+        <h1 className={`text-2xl font-bold mb-6 text-gray-800 dark:text-gray-100 flex items-center gap-3 ${pageLoaded ? 'page-content' : 'opacity-0'}`}>
           <BookOpen className="w-7 h-7 text-blue-600 dark:text-blue-400" />
           创建新班级
         </h1>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className={`space-y-6 ${pageLoaded ? 'page-form' : 'opacity-0'}`}>
           {/* 班级基本信息 */}
-          <div className="space-y-4">
+          <div className={`space-y-4 ${pageLoaded ? 'page-form-section' : 'opacity-0'}`}>
             <div>
               <label className="block font-medium text-gray-700 dark:text-gray-200 mb-1">
                 班级名称 *
@@ -354,8 +476,8 @@ const CreateClass = () => {
               学生信息录入方式 *
             </label>
             
-            {/* Tab切换 */}
-            <div className="flex space-x-1 bg-gray-100 dark:bg-gray-700 p-1 rounded-lg mb-4">
+          {/* Tab切换 */}
+          <div className={`bg-gray-100 dark:bg-gray-700 p-1 rounded-lg flex gap-1 mb-4 ${pageLoaded ? 'page-tabs' : 'opacity-0'}`}>
               <button
                 type="button"
                 onClick={() => setActiveTab('csv')}
@@ -384,7 +506,7 @@ const CreateClass = () => {
 
             {/* CSV上传模式 */}
             {activeTab === 'csv' && (
-              <div className="space-y-4">
+              <div className={`space-y-4 ${pageLoaded ? 'page-form-section' : 'opacity-0'}`}>
                 <div>
                   <input
                       type="file"
@@ -457,12 +579,12 @@ const CreateClass = () => {
 
             {/* 手动输入模式 */}
             {activeTab === 'manual' && (
-              <div className="space-y-4">
+              <div className={`space-y-4 ${pageLoaded ? 'page-form-section' : 'opacity-0'}`}>
                 <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-3">
                   <p className="text-sm text-blue-700 dark:text-blue-300 flex items-start gap-2">
                     <Lightbulb className="w-4 h-4 flex-shrink-0 mt-0.5" />
                     <span>
-                      <strong>批量粘贴提示：</strong>您可以从Excel复制学生信息，然后在表格中按 Ctrl+V 粘贴。
+                      <strong>批量粘贴提示：</strong>您可以从Excel复制学生信息，然后在表格中粘贴。
                       <br />支持格式：姓名和学号用制表符分隔，每行一个学生。
                     </span>
                   </p>
@@ -611,7 +733,7 @@ const CreateClass = () => {
             size="md"
             fullWidth
             disabled={isSubmitting}
-            className="flex items-center justify-center gap-2 relative overflow-hidden"
+            className={`flex items-center justify-center gap-2 relative overflow-hidden ${pageLoaded ? 'page-button' : 'opacity-0'}`}
           >
             {isSubmitting ? (
               <>
