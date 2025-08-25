@@ -413,12 +413,19 @@ const CreateClass = () => {
                       ${pageLoaded ? 'page-container' : 'opacity-0'}`}>
 
         {/* 返回仪表盘按钮 */}
-        <div className={`flex justify-end mb-4 md:absolute md:top-4 md:right-4 ${pageLoaded ? 'page-header' : 'opacity-0'}`}>
+        <div className={`flex justify-end mb-4 md:absolute md:top-4 md:right-4 md:z-50 ${pageLoaded ? 'page-header' : 'opacity-0'}`}>
           <Button
             variant="secondary"
             size="sm"
             onClick={() => navigate('/teacher')}
-            className="w-full md:w-auto flex items-center justify-center gap-2"
+            className="w-full md:w-auto flex items-center justify-center gap-2 
+                      relative z-10 pointer-events-auto touch-manipulation
+                      min-h-[44px] md:min-h-[36px]"
+            style={{ 
+              // 确保按钮始终可点击
+              position: 'relative',
+              zIndex: 10
+            }}
           >
             <ArrowLeft className="w-4 h-4" />
             返回仪表盘
