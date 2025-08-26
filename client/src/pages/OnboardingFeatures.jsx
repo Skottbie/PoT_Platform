@@ -26,7 +26,7 @@ const OnboardingFeatures = () => {
   const pageControls = useAnimation();
   const headerControls = useAnimation();
   const cardsControls = useAnimation();
-  const ctaControls = useAnimation();
+  const ctaControls = useAnimation(); // 保留但会正确启动
 
   // 响应式检测
   useEffect(() => {
@@ -86,7 +86,7 @@ const OnboardingFeatures = () => {
   const currentFeatures = featuresData[role];
   const isTeacher = role === 'teacher';
 
-  // 页面进入动画
+  // 页面进入动画 - 添加ctaControls启动
   useEffect(() => {
     const runEntranceAnimation = async () => {
       await pageControls.start({
@@ -110,11 +110,19 @@ const OnboardingFeatures = () => {
         }
       });
 
+      // 🔧 修复：启动CTA控制器
+      await ctaControls.start({
+        opacity: 1,
+        y: 0,
+        scale: 1,
+        transition: { duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }
+      });
+
       setIsAnimated(true);
     };
 
     runEntranceAnimation();
-  }, [pageControls, headerControls, cardsControls]);
+  }, [pageControls, headerControls, cardsControls, ctaControls]);
 
   // 移动端滑动控制
   const handleNext = useCallback(() => {
@@ -131,7 +139,7 @@ const OnboardingFeatures = () => {
     const newIndex = currentIndex - 1;
     if (newIndex >= 0) {
       setCurrentIndex(newIndex);
-      if (newIndex === currentFeatures.length - 1) {
+      if (newIndex < currentFeatures.length) { // 🔧 修复：条件逻辑
         setShowFinalCTA(false);
       }
     }
@@ -145,7 +153,7 @@ const OnboardingFeatures = () => {
     });
   }, [navigate, role]);
 
-  // 功能卡片组件
+  // 功能卡片组件 - 🔧 修复：移除重复的delay，避免双重交错
   const FeatureCard = ({ feature, index }) => {
     const IconComponent = feature.icon;
     
@@ -156,7 +164,7 @@ const OnboardingFeatures = () => {
                    hover:scale-[1.02] hover:-translate-y-1"
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: index * 0.2 }}
+        // 🔧 移除这行避免双重交错: transition={{ delay: index * 0.2 }}
         whileHover={{ 
           scale: 1.02,
           y: -4,
@@ -192,7 +200,7 @@ const OnboardingFeatures = () => {
     );
   };
 
-  // 最终CTA组件
+  // 最终CTA组件 - 🔧 修复：简化条件判断
   const FinalCTA = () => (
     <motion.div
       className="text-center py-12"
@@ -202,7 +210,7 @@ const OnboardingFeatures = () => {
       <motion.div
         className="mb-8"
         initial={{ opacity: 0, y: 20 }}
-        animate={showFinalCTA ? { opacity: 1, y: 0 } : {}}
+        animate={{ opacity: 1, y: 0 }} // 🔧 移除showFinalCTA条件，直接显示
         transition={{ delay: 0.2 }}
       >
         <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
@@ -294,6 +302,7 @@ const OnboardingFeatures = () => {
                   <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md rounded-3xl p-8 
                                   shadow-lg border border-gray-200/50 dark:border-gray-700/50
                                   flex flex-col items-center justify-center min-h-[400px]">
+                    {/* 🔧 修复：移动端CTA始终显示，不需要showFinalCTA条件 */}
                     <FinalCTA />
                   </div>
                 </div>
