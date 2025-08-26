@@ -1,5 +1,5 @@
-// client/src/pages/OnboardingFeatures.jsx
-import { useState, useEffect, useCallback } from 'react';
+// client/src/pages/OnboardingFeatures.jsx - Apple风格优化版
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence, useAnimation } from 'framer-motion';
 import { 
@@ -12,7 +12,10 @@ import {
   ChevronLeft,
   ChevronRight,
   Plus,
-  X
+  X,
+  Sparkles,
+  Star,
+  ArrowRight
 } from 'lucide-react';
 
 const OnboardingFeatures = () => {
@@ -25,17 +28,21 @@ const OnboardingFeatures = () => {
   const [showFinalCTA, setShowFinalCTA] = useState(false);
   const [showDesktopCTA, setShowDesktopCTA] = useState(false);
   
-  // 🆕 模态框相关状态
+  // 模态框相关状态
   const [selectedFeature, setSelectedFeature] = useState(null);
   const [showModal, setShowModal] = useState(false);
   
-  // 🆕 移动端滑动相关状态
+  // 优化后的移动端滑动状态
   const [touchStart, setTouchStart] = useState(0);
   const [touchEnd, setTouchEnd] = useState(0);
+  const [touchStartTime, setTouchStartTime] = useState(0);
+  const [isSliding, setIsSliding] = useState(false);
+  const [slideOffset, setSlideOffset] = useState(0);
 
   const pageControls = useAnimation();
   const headerControls = useAnimation();
   const cardsControls = useAnimation();
+  const containerRef = useRef(null);
 
   // 响应式检测
   useEffect(() => {
@@ -48,46 +55,81 @@ const OnboardingFeatures = () => {
     return () => window.removeEventListener('resize', checkDevice);
   }, []);
 
-  // 功能数据配置
+  // 移动端禁用页面滚动
+  useEffect(() => {
+    if (isMobile) {
+      document.body.style.overflow = 'hidden';
+      document.body.style.position = 'fixed';
+      document.body.style.width = '100%';
+      document.body.style.height = '100%';
+      
+      return () => {
+        document.body.style.overflow = '';
+        document.body.style.position = '';
+        document.body.style.width = '';
+        document.body.style.height = '';
+      };
+    }
+  }, [isMobile]);
+
+  // 增强的功能数据配置 - Apple风格内容
   const featuresData = {
     teacher: [
       {
         icon: Search,
-        title: "学生AI使用全透明，教学超安心。",
+        title: "学生AI使用全透明",
+        subtitle: "教学超安心",
         description: "AI交互原始记录随任务捆绑提交，用好AI or 滥用AI？证据已到位，决定权在你。",
-        placeholder: "AI使用记录截图占位符"
+        features: ["完整对话记录", "时间戳追踪", "使用频率分析"],
+        color: "blue",
+        gradient: "from-blue-500 to-cyan-500"
       },
       {
         icon: Brain,
-        title: "思维轨迹，一目了然。",
-        description: "定制PoT-Mode智能体引导学生思考，精准把握掌握程度，个性化指导更高效，教学更轻松。",
-        placeholder: "思维轨迹可视化截图占位符"
+        title: "思维轨迹可视化",
+        subtitle: "一目了然",
+        description: "定制PoT-Mode智能体引导学生思考，精准把握掌握程度，个性化指导更高效。",
+        features: ["思维导图生成", "知识点覆盖率", "个性化建议"],
+        color: "purple",
+        gradient: "from-purple-500 to-pink-500"
       },
       {
         icon: Zap,
-        title: "教学管理，简约而强大。",
-        description: "任务发布、班级管理、提交查阅，在手机上也能轻松完成。",
-        placeholder: "教学管理界面截图占位符"
+        title: "教学管理",
+        subtitle: "简约而强大",
+        description: "任务发布、班级管理、提交查阅，在手机上也能轻松完成所有教学工作。",
+        features: ["一键发布", "实时通知", "数据统计"],
+        color: "green",
+        gradient: "from-green-500 to-emerald-500"
       }
     ],
     student: [
       {
         icon: Bot,
-        title: "PoT-Mode，启发不代替。",
-        description: "PoT定制模型，个性化高效指导。所有任务，保质还保量。",
-        placeholder: "PoT对话界面截图占位符"
+        title: "PoT-Mode",
+        subtitle: "启发不代替",
+        description: "PoT定制模型提供个性化高效指导，帮你高质量完成所有学习任务。",
+        features: ["智能引导", "循序渐进", "深度思考"],
+        color: "indigo",
+        gradient: "from-indigo-500 to-blue-500"
       },
       {
         icon: Shield,
-        title: "AI使用透明化，学术无忧。",
-        description: "记录AI协作全过程，展现真实思考轨迹。负责任的AI助力，提交作业更自信。",
-        placeholder: "学术诚信记录截图占位符"
+        title: "AI使用透明化",
+        subtitle: "学术无忧",
+        description: "记录AI协作全过程，展现真实思考轨迹。负责任地使用AI，提交作业更自信。",
+        features: ["诚信保障", "过程透明", "能力证明"],
+        color: "amber",
+        gradient: "from-amber-500 to-orange-500"
       },
       {
         icon: Layers,
-        title: "开始你的思考，AI友情客串。",
-        description: "接入多种强力AIGC模型，移动端原生体验，学习无界限。",
-        placeholder: "多模态学习截图占位符"
+        title: "多模态学习",
+        subtitle: "无界思考",
+        description: "接入多种强力AIGC模型，移动端原生体验，随时随地开启学习之旅。",
+        features: ["多模型选择", "移动端优化", "离线支持"],
+        color: "rose",
+        gradient: "from-rose-500 to-pink-500"
       }
     ]
   };
@@ -129,29 +171,62 @@ const OnboardingFeatures = () => {
     runEntranceAnimation();
   }, [pageControls, headerControls, cardsControls, isMobile]);
 
-  // 🆕 移动端滑动事件处理
+  // 优化的移动端滑动处理
   const handleTouchStart = useCallback((e) => {
-    setTouchStart(e.targetTouches[0].clientX);
+    const touch = e.targetTouches[0];
+    setTouchStart(touch.clientX);
+    setTouchStartTime(Date.now());
+    setIsSliding(false);
+    setSlideOffset(0);
   }, []);
 
   const handleTouchMove = useCallback((e) => {
-    setTouchEnd(e.targetTouches[0].clientX);
-  }, []);
+    if (!touchStart) return;
+    
+    const touch = e.targetTouches[0];
+    const currentTouch = touch.clientX;
+    const diff = touchStart - currentTouch;
+    
+    // 检测是否为滑动
+    if (Math.abs(diff) > 10) {
+      setIsSliding(true);
+      e.preventDefault(); // 防止垂直滚动
+    }
+    
+    setTouchEnd(currentTouch);
+    setSlideOffset(-diff); // 实时滑动效果
+  }, [touchStart]);
 
   const handleTouchEnd = useCallback(() => {
-    if (!touchStart || !touchEnd) return;
+    if (!touchStart || !touchEnd) {
+      setSlideOffset(0);
+      return;
+    }
     
     const distance = touchStart - touchEnd;
-    const isLeftSwipe = distance > 50;
-    const isRightSwipe = distance < -50;
-
-    if (isLeftSwipe && currentIndex < currentFeatures.length) {
-      handleNext();
+    const duration = Date.now() - touchStartTime;
+    const velocity = Math.abs(distance) / duration;
+    
+    // 优化的滑动检测：降低阈值，增加速度判断
+    const minSwipeDistance = 30;
+    const minSwipeVelocity = 0.3;
+    
+    if (Math.abs(distance) > minSwipeDistance || velocity > minSwipeVelocity) {
+      if (distance > 0 && currentIndex < currentFeatures.length) {
+        // 左滑 - 下一页
+        handleNext();
+      } else if (distance < 0 && currentIndex > 0) {
+        // 右滑 - 上一页
+        handlePrev();
+      }
     }
-    if (isRightSwipe && currentIndex > 0) {
-      handlePrev();
-    }
-  }, [touchStart, touchEnd, currentIndex, currentFeatures.length]);
+    
+    // 重置状态
+    setSlideOffset(0);
+    setTouchStart(0);
+    setTouchEnd(0);
+    setIsSliding(false);
+  }, [touchStart, touchEnd, touchStartTime, currentIndex, currentFeatures.length]);
 
   // 移动端滑动控制
   const handleNext = useCallback(() => {
@@ -174,16 +249,27 @@ const OnboardingFeatures = () => {
     }
   }, [currentIndex, currentFeatures.length]);
 
-  // 🆕 卡片点击处理
-  const handleCardClick = useCallback((feature) => {
+  // 优化的卡片点击处理 - 解决点击不灵敏问题
+  const handleCardClick = useCallback((feature, e) => {
+    // 如果正在滑动，不触发点击
+    if (isSliding) {
+      e?.preventDefault();
+      return;
+    }
+    
+    // 触觉反馈（如果支持）
+    if (window.navigator?.vibrate) {
+      window.navigator.vibrate(10);
+    }
+    
     setSelectedFeature(feature);
     setShowModal(true);
-  }, []);
+  }, [isSliding]);
 
-  // 🆕 模态框关闭处理
+  // 模态框关闭处理
   const closeModal = useCallback(() => {
     setShowModal(false);
-    setTimeout(() => setSelectedFeature(null), 300); // 等待动画完成后清空
+    setTimeout(() => setSelectedFeature(null), 300);
   }, []);
 
   // CTA点击处理
@@ -194,17 +280,17 @@ const OnboardingFeatures = () => {
     });
   }, [navigate, role]);
 
-  // 🆕 Apple风格功能卡片组件
+  // Apple风格功能卡片组件 - 长矩形设计
   const FeatureCard = ({ feature, index, onClick }) => {
     const IconComponent = feature.icon;
     
     return (
       <motion.div
-        className="relative bg-white/90 dark:bg-gray-100/10 backdrop-blur-sm rounded-2xl p-6 
-                   border border-gray-200/30 dark:border-gray-700/30 
-                   hover:bg-white/95 dark:hover:bg-gray-100/15 transition-all duration-300 cursor-pointer
-                   hover:shadow-lg hover:shadow-gray-200/50 dark:hover:shadow-gray-900/50
-                   hover:-translate-y-0.5"
+        className="relative bg-white dark:bg-gray-900 rounded-3xl overflow-hidden
+                   shadow-[0_0_0_0.5px_rgba(0,0,0,0.05),0_2px_4px_rgba(0,0,0,0.08),0_12px_24px_rgba(0,0,0,0.08)]
+                   dark:shadow-[0_0_0_0.5px_rgba(255,255,255,0.05),0_2px_4px_rgba(0,0,0,0.3),0_12px_24px_rgba(0,0,0,0.3)]
+                   hover:shadow-[0_0_0_0.5px_rgba(0,0,0,0.05),0_4px_8px_rgba(0,0,0,0.1),0_20px_30px_rgba(0,0,0,0.1)]
+                   transition-all duration-500 cursor-pointer group"
         variants={{
           hidden: { opacity: 0, y: 30 },
           visible: { 
@@ -217,84 +303,141 @@ const OnboardingFeatures = () => {
           }
         }}
         onClick={() => onClick(feature)}
-        whileHover={{ 
-          y: -2,
-          transition: { duration: 0.2 }
-        }}
+        whileHover={{ y: -4 }}
         whileTap={{ scale: 0.98 }}
       >
-        {/* 左上角图标 */}
-        <div className="mb-6">
-          <div className="w-10 h-10 rounded-xl bg-gray-100 dark:bg-gray-800/50 
-                          flex items-center justify-center">
-            <IconComponent className="w-5 h-5 text-gray-700 dark:text-gray-300" strokeWidth={1.5} />
+        {/* 渐变背景装饰 */}
+        <div className={`absolute inset-0 bg-gradient-to-br ${feature.gradient} opacity-5 dark:opacity-10`} />
+        
+        {/* 内容区域 */}
+        <div className="relative p-8">
+          {/* 图标和标题区域 */}
+          <div className="flex items-start justify-between mb-6">
+            <div className="flex items-center space-x-4">
+              <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${feature.gradient} 
+                            flex items-center justify-center shadow-lg`}>
+                <IconComponent className="w-7 h-7 text-white" strokeWidth={1.5} />
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+                  {feature.title}
+                </h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                  {feature.subtitle}
+                </p>
+              </div>
+            </div>
+            
+            {/* 右上角装饰 */}
+            <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+              <Sparkles className="w-5 h-5 text-gray-400 dark:text-gray-600" />
+            </div>
           </div>
-        </div>
 
-        {/* 标题 */}
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 leading-tight">
-          {feature.title}
-        </h3>
+          {/* 描述文本 */}
+          <p className="text-gray-600 dark:text-gray-300 leading-relaxed mb-6">
+            {feature.description}
+          </p>
 
-        {/* 描述 */}
-        <p className="text-gray-600 dark:text-gray-400 leading-relaxed text-sm">
-          {feature.description}
-        </p>
+          {/* 特性标签 */}
+          <div className="flex flex-wrap gap-2 mb-6">
+            {feature.features.map((item, i) => (
+              <span key={i} className="px-3 py-1 bg-gray-100 dark:bg-gray-800 
+                                     text-xs text-gray-600 dark:text-gray-400 
+                                     rounded-full">
+                {item}
+              </span>
+            ))}
+          </div>
 
-        {/* 右下角加号 */}
-        <div className="absolute bottom-6 right-6">
-          <div className="w-6 h-6 rounded-full bg-gray-200/50 dark:bg-gray-700/50 
-                          flex items-center justify-center">
-            <Plus className="w-4 h-4 text-gray-600 dark:text-gray-400" strokeWidth={1.5} />
+          {/* 底部操作提示 */}
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-gray-500 dark:text-gray-400">
+              点击了解更多
+            </span>
+            <div className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 
+                          flex items-center justify-center group-hover:bg-gray-200 
+                          dark:group-hover:bg-gray-700 transition-colors">
+              <Plus className="w-4 h-4 text-gray-600 dark:text-gray-400" strokeWidth={2} />
+            </div>
           </div>
         </div>
       </motion.div>
     );
   };
 
-  // 🆕 移动端简化卡片组件（用于滑动视图）
+  // 移动端卡片组件 - Apple风格优化
   const MobileFeatureCard = ({ feature, onClick }) => {
     const IconComponent = feature.icon;
+    const [touchStartPos, setTouchStartPos] = useState(0);
+    const [touchStartTime, setTouchStartTime] = useState(0);
+    
+    const handleTouchStart = (e) => {
+      setTouchStartPos(e.touches[0].clientX);
+      setTouchStartTime(Date.now());
+    };
+    
+    const handleTouchEnd = (e) => {
+      const touchEndPos = e.changedTouches[0].clientX;
+      const touchDuration = Date.now() - touchStartTime;
+      const touchDistance = Math.abs(touchEndPos - touchStartPos);
+      
+      // 只有短时间内小范围移动才算点击
+      if (touchDuration < 300 && touchDistance < 10) {
+        onClick(feature);
+      }
+    };
     
     return (
       <div 
-        className="bg-white/90 dark:bg-gray-100/10 backdrop-blur-sm rounded-2xl p-6 
-                   border border-gray-200/30 dark:border-gray-700/30 
-                   hover:bg-white/95 dark:hover:bg-gray-100/15 transition-all duration-300 cursor-pointer
-                   shadow-sm hover:shadow-md hover:shadow-gray-200/50 dark:hover:shadow-gray-900/50
-                   relative"
-        onClick={() => onClick(feature)}
+        className="bg-white dark:bg-gray-900 rounded-2xl
+                   shadow-[0_2px_10px_rgba(0,0,0,0.08)] dark:shadow-[0_2px_10px_rgba(0,0,0,0.3)]
+                   min-h-[240px] relative overflow-hidden select-none"
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
       >
-        {/* 左上角图标 */}
-        <div className="mb-6">
-          <div className="w-10 h-10 rounded-xl bg-gray-100 dark:bg-gray-800/50 
-                          flex items-center justify-center">
-            <IconComponent className="w-5 h-5 text-gray-700 dark:text-gray-300" strokeWidth={1.5} />
+        {/* 渐变背景 */}
+        <div className={`absolute inset-0 bg-gradient-to-br ${feature.gradient} opacity-5 dark:opacity-10`} />
+        
+        {/* 内容 */}
+        <div className="relative p-6 h-full flex flex-col">
+          {/* 头部 */}
+          <div className="flex items-start justify-between mb-4">
+            <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${feature.gradient} 
+                          flex items-center justify-center shadow-md`}>
+              <IconComponent className="w-6 h-6 text-white" strokeWidth={1.5} />
+            </div>
+            <Star className="w-4 h-4 text-gray-300 dark:text-gray-700" />
           </div>
-        </div>
 
-        {/* 标题 */}
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 leading-tight">
-          {feature.title}
-        </h3>
+          {/* 标题和副标题 */}
+          <div className="mb-3">
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-1">
+              {feature.title}
+            </h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              {feature.subtitle}
+            </p>
+          </div>
 
-        {/* 描述 */}
-        <p className="text-gray-600 dark:text-gray-400 leading-relaxed text-sm mb-6">
-          {feature.description}
-        </p>
+          {/* 描述 */}
+          <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed flex-1">
+            {feature.description}
+          </p>
 
-        {/* 右下角加号 */}
-        <div className="absolute bottom-6 right-6">
-          <div className="w-6 h-6 rounded-full bg-gray-200/50 dark:bg-gray-700/50 
-                          flex items-center justify-center">
-            <Plus className="w-4 h-4 text-gray-600 dark:text-gray-400" strokeWidth={1.5} />
+          {/* 底部提示 */}
+          <div className="flex items-center justify-end mt-4">
+            <span className="text-xs text-gray-400 dark:text-gray-500 mr-2">
+              轻触查看
+            </span>
+            <ArrowRight className="w-4 h-4 text-gray-400 dark:text-gray-500" strokeWidth={1.5} />
           </div>
         </div>
       </div>
     );
   };
 
-  // 🆕 功能详情模态框组件
+  // 功能详情模态框组件
   const FeatureModal = ({ feature, isOpen, onClose, isMobile }) => {
     if (!feature) return null;
     
@@ -306,7 +449,7 @@ const OnboardingFeatures = () => {
           <>
             {/* 背景遮罩 */}
             <motion.div
-              className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50"
+              className="fixed inset-0 bg-black/60 backdrop-blur-md z-50"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -339,58 +482,70 @@ const OnboardingFeatures = () => {
               transition={{ 
                 type: "spring", 
                 damping: 25, 
-                stiffness: 300,
-                duration: 0.4 
+                stiffness: 300
               }}
             >
-              <div className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl rounded-2xl 
-                              border border-gray-200/50 dark:border-gray-700/50 
-                              shadow-2xl shadow-gray-900/20 dark:shadow-black/40
-                              h-full overflow-hidden flex flex-col">
+              <div className="bg-white dark:bg-gray-900 rounded-3xl 
+                            shadow-2xl h-full overflow-hidden flex flex-col">
                 
                 {/* 模态框头部 */}
-                <div className="flex items-center justify-between p-6 border-b border-gray-200/50 dark:border-gray-700/50">
+                <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-800">
                   <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-800/50 
-                                    flex items-center justify-center">
-                      <IconComponent className="w-4 h-4 text-gray-700 dark:text-gray-300" strokeWidth={1.5} />
+                    <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${feature.gradient} 
+                                  flex items-center justify-center`}>
+                      <IconComponent className="w-5 h-5 text-white" strokeWidth={1.5} />
                     </div>
-                    <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                      功能详情
-                    </h2>
+                    <div>
+                      <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                        {feature.title}
+                      </h2>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        {feature.subtitle}
+                      </p>
+                    </div>
                   </div>
                   
                   <button
                     onClick={onClose}
-                    className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800/50 
-                               hover:bg-gray-200 dark:hover:bg-gray-700/70
-                               flex items-center justify-center transition-colors"
+                    className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 
+                             hover:bg-gray-200 dark:hover:bg-gray-700
+                             flex items-center justify-center transition-colors"
                   >
-                    <X className="w-4 h-4 text-gray-600 dark:text-gray-400" strokeWidth={1.5} />
+                    <X className="w-5 h-5 text-gray-600 dark:text-gray-400" strokeWidth={2} />
                   </button>
                 </div>
 
                 {/* 模态框内容 */}
                 <div className="flex-1 overflow-y-auto p-6 space-y-6">
-                  {/* 功能标题 */}
+                  {/* 功能描述 */}
                   <div>
-                    <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 leading-tight">
-                      {feature.title}
-                    </h3>
-                    
-                    {/* 功能描述 */}
-                    <p className="text-gray-600 dark:text-gray-300 leading-relaxed text-base">
+                    <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
                       {feature.description}
                     </p>
                   </div>
 
-                  {/* 配图区域 */}
-                  <div className="bg-gradient-to-br from-gray-100/50 to-gray-200/50 
-                                  dark:from-gray-800/30 dark:to-gray-700/30 
-                                  rounded-xl h-64 md:h-80 flex items-center justify-center
-                                  border border-gray-200/30 dark:border-gray-700/30">
-                    <span className="text-gray-500 dark:text-gray-400 text-sm text-center px-4">
-                      {feature.placeholder}
+                  {/* 特性列表 */}
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">
+                      核心特性
+                    </h3>
+                    <div className="space-y-2">
+                      {feature.features.map((item, i) => (
+                        <div key={i} className="flex items-center space-x-3 p-3 
+                                              bg-gray-50 dark:bg-gray-800 rounded-xl">
+                          <div className="w-2 h-2 rounded-full bg-gradient-to-r from-blue-500 to-purple-500" />
+                          <span className="text-sm text-gray-700 dark:text-gray-300">{item}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* 配图占位区域 */}
+                  <div className="bg-gradient-to-br from-gray-100 to-gray-200 
+                                dark:from-gray-800 dark:to-gray-700 
+                                rounded-2xl h-48 flex items-center justify-center">
+                    <span className="text-gray-500 dark:text-gray-400 text-sm">
+                      功能演示图
                     </span>
                   </div>
                 </div>
@@ -417,10 +572,10 @@ const OnboardingFeatures = () => {
         transition={{ delay: 0.2, duration: 0.5 }}
       >
         <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-          Proof of Thought.
+          Proof of Thought
         </h2>
         <p className="text-gray-600 dark:text-gray-400">
-          共创AI学习新范式。
+          共创AI学习新范式
         </p>
       </motion.div>
 
@@ -431,17 +586,9 @@ const OnboardingFeatures = () => {
                    hover:scale-[1.05] active:scale-[0.98]
                    focus:outline-none focus:ring-4 focus:ring-blue-500/50
                    min-w-[160px]"
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ 
-          delay: 0.4, 
-          type: "spring", 
-          stiffness: 300,
-          damping: 20
-        }}
         whileTap={{ scale: 0.95 }}
       >
-        加入PoT.
+        加入 PoT
       </motion.button>
     </motion.div>
   );
@@ -451,42 +598,44 @@ const OnboardingFeatures = () => {
     <AnimatePresence>
       {showDesktopCTA && (
         <motion.div
-          className="text-center py-12"
+          className="text-center py-16"
           initial={{ opacity: 0, y: 30, scale: 0.95 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 30, scale: 0.95 }}
           transition={{ duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
         >
           <motion.div
-            className="mb-8"
+            className="mb-10"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
           >
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-              Proof of Thought.
+            <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-3">
+              Proof of Thought
             </h2>
-            <p className="text-gray-600 dark:text-gray-400">
-              共创AI学习新范式。
+            <p className="text-lg text-gray-600 dark:text-gray-400">
+              共创AI学习新范式
             </p>
           </motion.div>
 
           <motion.button
             onClick={handleJoinPoT}
-            className="px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold 
-                       rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300
-                       hover:scale-[1.05] active:scale-[0.98]
-                       focus:outline-none focus:ring-4 focus:ring-blue-500/50"
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.4, type: "spring", stiffness: 300 }}
-            whileHover={{ 
-              scale: 1.05,
-              boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)"
-            }}
+            className="group px-10 py-5 bg-gradient-to-r from-blue-600 to-purple-600 
+                     text-white font-semibold text-lg rounded-3xl 
+                     shadow-xl hover:shadow-2xl transition-all duration-300
+                     hover:scale-[1.05] active:scale-[0.98]
+                     focus:outline-none focus:ring-4 focus:ring-blue-500/50
+                     relative overflow-hidden"
+            whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.98 }}
           >
-            加入PoT.
+            <span className="relative z-10">加入 PoT Academy</span>
+            <motion.div
+              className="absolute inset-0 bg-gradient-to-r from-purple-600 to-blue-600"
+              initial={{ x: '-100%' }}
+              whileHover={{ x: 0 }}
+              transition={{ duration: 0.3 }}
+            />
           </motion.button>
         </motion.div>
       )}
@@ -494,30 +643,35 @@ const OnboardingFeatures = () => {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 
-                    dark:from-gray-900 dark:via-gray-800 dark:to-purple-900
-                    flex flex-col items-center justify-center px-4 py-8 overflow-hidden">
-      
+    <div className={`min-h-screen flex items-center justify-center bg-gradient-to-br 
+                    from-gray-50 via-white to-gray-50 
+                    dark:from-gray-950 dark:via-gray-900 dark:to-gray-950
+                    ${isMobile ? 'overflow-hidden' : ''}`}
+         style={{ touchAction: isMobile ? 'pan-x' : 'auto' }}>
       <motion.div
-        className="w-full max-w-7xl mx-auto"
+        ref={containerRef}
+        className="w-full max-w-7xl mx-auto px-6 py-12"
         initial={{ opacity: 0 }}
         animate={pageControls}
       >
         {/* 页面标题 */}
         <motion.div
-          className="text-left mb-12"
-          initial={{ opacity: 0, y: -30 }}
+          className="text-center mb-12"
+          initial={{ opacity: 0, y: 20 }}
           animate={headerControls}
         >
-          <h1 className="text-2xl font-light text-gray-700 dark:text-gray-300">
-            {isTeacher ? '教学' : '学习'}新范式，了解一下。
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-4">
+            {isTeacher ? '教学' : '学习'}新范式，了解一下
           </h1>
+          <p className="text-lg text-gray-600 dark:text-gray-400">
+            探索 PoT Academy 的核心功能
+          </p>
         </motion.div>
 
-        {/* 桌面端：横向卡片布局 */}
+        {/* 桌面端：网格卡片布局 */}
         {!isMobile && (
           <motion.div
-            className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16"
+            className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8"
             initial={{ opacity: 0, y: 30 }}
             animate={cardsControls}
             variants={{
@@ -528,7 +682,7 @@ const OnboardingFeatures = () => {
                 transition: {
                   duration: 0.8,
                   ease: [0.25, 0.46, 0.45, 0.94],
-                  staggerChildren: 0.2
+                  staggerChildren: 0.15
                 }
               }
             }}
@@ -544,29 +698,18 @@ const OnboardingFeatures = () => {
           </motion.div>
         )}
 
-        {/* 移动端：滑动卡片 */}
+        {/* 移动端：优化的滑动卡片 */}
         {isMobile && (
           <div className="relative mb-8">
             <motion.div
               className="overflow-hidden"
               initial={{ opacity: 0, y: 30 }}
               animate={cardsControls}
-              variants={{
-                hidden: { opacity: 0, y: 30 },
-                visible: {
-                  opacity: 1,
-                  y: 0,
-                  transition: {
-                    duration: 0.8,
-                    ease: [0.25, 0.46, 0.45, 0.94]
-                  }
-                }
-              }}
             >
               <div
                 className="flex transition-transform duration-300 ease-out"
                 style={{
-                  transform: `translateX(-${currentIndex * (100 / (currentFeatures.length + 1))}%)`,
+                  transform: `translateX(calc(-${currentIndex * (100 / (currentFeatures.length + 1))}% + ${slideOffset}px))`,
                   width: `${(currentFeatures.length + 1) * 100}%`
                 }}
                 onTouchStart={handleTouchStart}
@@ -575,46 +718,66 @@ const OnboardingFeatures = () => {
               >
                 {/* 功能卡片 */}
                 {currentFeatures.map((feature, index) => (
-                  <div key={index} style={{ width: `${100 / (currentFeatures.length + 1)}%` }} className="flex-shrink-0 px-4">
+                  <div key={index} style={{ width: `${100 / (currentFeatures.length + 1)}%` }} className="flex-shrink-0 px-3">
                     <MobileFeatureCard feature={feature} onClick={handleCardClick} />
                   </div>
                 ))}
                 
-                {/* 移动端CTA卡片 */}
-                <div style={{ width: `${100 / (currentFeatures.length + 1)}%` }} className="flex-shrink-0 px-4">
-                  <div className="bg-white/90 dark:bg-gray-100/10 backdrop-blur-sm rounded-2xl p-8 
-                                  shadow-sm border border-gray-200/30 dark:border-gray-700/30
-                                  flex flex-col items-center justify-center min-h-[320px]">
+                {/* CTA卡片 */}
+                <div style={{ width: `${100 / (currentFeatures.length + 1)}%` }} className="flex-shrink-0 px-3">
+                  <div className="bg-white dark:bg-gray-900 rounded-2xl
+                                shadow-[0_2px_10px_rgba(0,0,0,0.08)] dark:shadow-[0_2px_10px_rgba(0,0,0,0.3)]
+                                flex flex-col items-center justify-center min-h-[240px]">
                     <MobileFinalCTA />
                   </div>
                 </div>
               </div>
             </motion.div>
 
-            {/* 🆕 Apple风格滑动控制按钮（参考图1样式） */}
-            <div className="flex justify-center items-center mt-6">
-              <div className="flex space-x-2 bg-white/80 dark:bg-gray-800/80 rounded-full p-1 
-                              shadow-sm border border-gray-200/50 dark:border-gray-700/50">
-                <button
-                  onClick={handlePrev}
-                  disabled={currentIndex === 0}
-                  className="p-2 rounded-full transition-colors
-                             disabled:opacity-30 disabled:cursor-not-allowed
-                             hover:bg-gray-100 dark:hover:bg-gray-700/70 aigc-native-button"
-                >
-                  <ChevronLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" strokeWidth={1.5} />
-                </button>
+            {/* Apple风格分离式控制按钮 */}
+            <div className="flex justify-center items-center mt-6 space-x-3">
+              {/* 上一页按钮 */}
+              <button
+                onClick={handlePrev}
+                disabled={currentIndex === 0}
+                className="w-11 h-11 rounded-full bg-white/90 dark:bg-gray-800/90 backdrop-blur-xl
+                         shadow-[0_2px_8px_rgba(0,0,0,0.08)] dark:shadow-[0_2px_8px_rgba(0,0,0,0.3)]
+                         flex items-center justify-center transition-all duration-200
+                         disabled:opacity-30 disabled:cursor-not-allowed
+                         hover:bg-white dark:hover:bg-gray-700
+                         hover:shadow-[0_4px_12px_rgba(0,0,0,0.12)]
+                         active:scale-95"
+              >
+                <ChevronLeft className="w-5 h-5 text-gray-700 dark:text-gray-300" strokeWidth={2} />
+              </button>
 
-                <button
-                  onClick={handleNext}
-                  disabled={currentIndex >= currentFeatures.length}
-                  className="p-2 rounded-full transition-colors
-                             disabled:opacity-30 disabled:cursor-not-allowed
-                             hover:bg-gray-100 dark:hover:bg-gray-700/70 aigc-native-button"
-                >
-                  <ChevronRight className="w-5 h-5 text-gray-600 dark:text-gray-400" strokeWidth={1.5} />
-                </button>
+              {/* 页面指示器 */}
+              <div className="flex items-center space-x-1.5 px-3">
+                {[...Array(currentFeatures.length + 1)].map((_, index) => (
+                  <div
+                    key={index}
+                    className={`transition-all duration-300 rounded-full
+                              ${currentIndex === index 
+                                ? 'w-7 h-2 bg-gray-900 dark:bg-white' 
+                                : 'w-2 h-2 bg-gray-300 dark:bg-gray-600'}`}
+                  />
+                ))}
               </div>
+
+              {/* 下一页按钮 */}
+              <button
+                onClick={handleNext}
+                disabled={currentIndex >= currentFeatures.length}
+                className="w-11 h-11 rounded-full bg-white/90 dark:bg-gray-800/90 backdrop-blur-xl
+                         shadow-[0_2px_8px_rgba(0,0,0,0.08)] dark:shadow-[0_2px_8px_rgba(0,0,0,0.3)]
+                         flex items-center justify-center transition-all duration-200
+                         disabled:opacity-30 disabled:cursor-not-allowed
+                         hover:bg-white dark:hover:bg-gray-700
+                         hover:shadow-[0_4px_12px_rgba(0,0,0,0.12)]
+                         active:scale-95"
+              >
+                <ChevronRight className="w-5 h-5 text-gray-700 dark:text-gray-300" strokeWidth={2} />
+              </button>
             </div>
           </div>
         )}
@@ -623,7 +786,7 @@ const OnboardingFeatures = () => {
         <DesktopFinalCTA />
       </motion.div>
 
-      {/* 🆕 功能详情模态框 */}
+      {/* 功能详情模态框 */}
       <FeatureModal 
         feature={selectedFeature}
         isOpen={showModal}
