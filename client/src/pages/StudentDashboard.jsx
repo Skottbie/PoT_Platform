@@ -164,7 +164,7 @@ const StudentDashboard = () => {
       // 处理用户信息
       if (userRes.status === 'fulfilled') {
         if (userRes.value.data.role !== 'student') {
-          navigate('/');
+          navigate('/login');
           return;
         }
         setUser(userRes.value.data);
@@ -199,7 +199,7 @@ const StudentDashboard = () => {
 
     } catch (err) {
       console.error('获取数据失败:', err);
-      navigate('/');
+      navigate('/login');
     } finally {
       setLoading(false);
     }

@@ -203,7 +203,7 @@ const TeacherDashboard = () => {
       if (results[0].status === 'fulfilled') {
         const userData = results[0].value.data;
         if (userData.role !== 'teacher') {
-          navigate('/');
+          navigate('/login');
           return;
         }
         setUser(userData);
@@ -225,7 +225,7 @@ const TeacherDashboard = () => {
 
     } catch (err) {
       console.error('获取初始数据失败:', err);
-      navigate('/');
+      navigate('/login');
     } finally {
       setLoading(false);
     }

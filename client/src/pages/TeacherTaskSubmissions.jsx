@@ -106,7 +106,7 @@ const TeacherTaskSubmissions = () => {
     } catch (err) {
       console.error('获取数据失败', err);
       toast.error('获取数据失败');
-      navigate('/');
+      navigate('/login');
     } finally {
       setLoading(false);
     }
