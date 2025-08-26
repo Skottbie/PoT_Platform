@@ -111,8 +111,11 @@ const StudentDashboard = () => {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  // 📌 新增：检测移动端状态
+  // 📌 检测移动端状态
   const [isMobile, setIsMobile] = useState(false);
+
+  //  固定欢迎词状态
+  const [welcomeMessage, setWelcomeMessage] = useState('欢迎回来');
 
   // 📌 新增：折叠状态管理（只针对当前任务）
   const [collapsedStates, setCollapsedStates] = useState({
@@ -205,6 +208,14 @@ const StudentDashboard = () => {
   useEffect(() => {
     fetchUserAndTasks();
   }, [fetchUserAndTasks]);
+
+  //  用户信息加载完成时生成固定欢迎词
+  useEffect(() => {
+    if (user && user.email) {
+      const greeting = getGreeting('student', user.nickname, user.email);
+      setWelcomeMessage(greeting);
+    }
+  }, [user]);
 
   // 🎯 预加载可能访问的任务详情
   useEffect(() => {
@@ -771,7 +782,7 @@ const StudentDashboard = () => {
                 }`}>
                   <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                     {/* 🆕 使用智能欢迎词系统 */}
-                    {user ? getGreeting('student', user.nickname, user.email) : '欢迎回来'}
+                    {welcomeMessage}
                   </span>
                 </h1>
                 

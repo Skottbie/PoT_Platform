@@ -165,6 +165,9 @@ const TeacherDashboard = () => {
   // 📌 检测移动端状态
   const [isMobile, setIsMobile] = useState(false);
 
+  // 固定欢迎词状态
+  const [welcomeMessage, setWelcomeMessage] = useState('欢迎回来');
+
   const handleUserUpdate = useCallback((updatedUser) => {
     setUser(updatedUser);
   }, []);
@@ -231,6 +234,14 @@ const TeacherDashboard = () => {
   useEffect(() => {
     fetchInitialData();
   }, [fetchInitialData]);
+
+  //  用户信息加载完成时生成固定欢迎词
+  useEffect(() => {
+    if (user && user.email) {
+      const greeting = getGreeting('teacher', user.nickname, user.email);
+      setWelcomeMessage(greeting);
+    }
+  }, [user]);
 
 
 
@@ -937,7 +948,7 @@ const TeacherDashboard = () => {
                 }`}>
                   <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                     {/* 🆕 使用智能欢迎词系统 */}
-                    {user ? getGreeting('teacher', user.nickname, user.email) : '欢迎回来'}
+                    {welcomeMessage}
                   </span>
                 </h1>
                 
