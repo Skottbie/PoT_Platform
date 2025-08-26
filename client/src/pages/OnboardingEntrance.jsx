@@ -25,6 +25,7 @@ const OnboardingEntrance = () => {
 
   const sloganControls = useAnimation();
   const buttonsControls = useAnimation();
+  const brandControls = useAnimation();
 
   // 增强的设备检测
   useEffect(() => {
@@ -94,6 +95,17 @@ const OnboardingEntrance = () => {
               delay: 0.3
             }
           });
+
+          brandControls.start({
+            opacity: 1,
+            y: 0,
+            scale: 1,
+            transition: {
+                duration: 1.0,
+                ease: [0.25, 0.46, 0.45, 0.94],
+                delay: 0.8
+            }
+            });
         }
       }, 350);
     };
@@ -586,7 +598,7 @@ const OnboardingEntrance = () => {
                 whileTap={{ scale: 0.98 }}
                 transition={{ type: "spring", stiffness: 300, damping: 20 }}
               >
-                <span className="text-base sm:text-lg">我是教师 - 启发思辨。</span>
+                <span className="text-base sm:text-lg">我是学生 - 探求真知。</span>
               </motion.button>
 
               <motion.button
@@ -602,23 +614,21 @@ const OnboardingEntrance = () => {
                 whileTap={{ scale: 0.98 }}
                 transition={{ type: "spring", stiffness: 300, damping: 20 }}
               >
-                <span className="text-base sm:text-lg">我是学生 - 探求真知。</span>
+                <span className="text-base sm:text-lg">我是教师 - 启发思辨。</span>
               </motion.button>
             </motion.div>
           )}
         </AnimatePresence>
 
         {/* 底部品牌标识 */}
-        {currentStep === 1 && (
-          <motion.div 
-            className="mt-16 text-gray-400 dark:text-gray-600"
-            initial={{ opacity: 0 }}
-            animate={buttonsControls}
-            transition={{ delay: 0.8, duration: 1.0 }}
-          >
-            <p className="text-sm font-light tracking-wide">© 2025 PoTAcademy. All rights reserved.</p>
-          </motion.div>
-        )}
+        <motion.div 
+        className="mt-16 text-gray-400 dark:text-gray-600"
+        initial={{ opacity: 0 }}
+        animate={brandControls}
+        transition={{ delay: 0.8, duration: 1.0 }}
+        >
+        <p className="text-sm font-light tracking-wide">© 2025 PoTAcademy. All rights reserved.</p>
+        </motion.div>
       </motion.div>
     </div>
   );
