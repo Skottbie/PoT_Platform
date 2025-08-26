@@ -401,19 +401,33 @@ const ClassHistory = () => {
                             {formatDate(record.editedAt)}
                           </span>
                         </div>
-                        {record.details && (
-                          <div className="text-sm text-gray-600 dark:text-gray-400">
-                            {record.details.modifiedCount && (
-                              <span>修改了 {record.details.modifiedCount} 名学生</span>
-                            )}
-                            {record.details.addedCount && (
-                              <span>添加了 {record.details.addedCount} 名学生</span>
-                            )}
-                            {record.details.removedCount && (
-                              <span>移除了 {record.details.removedCount} 名学生</span>
-                            )}
-                          </div>
-                        )}
+                          {record.details && (
+                            <div className="text-sm text-gray-600 dark:text-gray-400">
+                              {/* 处理不同action类型的详情显示 */}
+                              {record.action === 'modify_students' && (() => {
+                                const parts = [];
+                                if (record.details.modifiedCount > 0) {
+                                  parts.push(`修改了 ${record.details.modifiedCount} 名学生`);
+                                }
+                                if (record.details.addedCount > 0) {
+                                  parts.push(`添加了 ${record.details.addedCount} 名学生`);
+                                }
+                                return parts.join('，');
+                              })()}
+                              
+                              {record.action === 'remove_students' && record.details.removedCount > 0 && (
+                                `移除了 ${record.details.removedCount} 名学生`
+                              )}
+                              
+                              {record.action === 'restore_student' && record.details.studentName && (
+                                `恢复学生：${record.details.studentName}(${record.details.studentId})`
+                              )}
+                              
+                              {record.action === 'permanent_delete_student' && record.details.studentName && (
+                                `永久删除学生：${record.details.studentName}(${record.details.studentId})`
+                              )}
+                            </div>
+                          )}
                       </div>
                     </div>
                   </motion.div>
