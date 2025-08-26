@@ -10,7 +10,9 @@ import {
   Shield, 
   Layers,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Plus,
+  X
 } from 'lucide-react';
 
 const OnboardingFeatures = () => {
@@ -21,7 +23,15 @@ const OnboardingFeatures = () => {
   const [isMobile, setIsMobile] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showFinalCTA, setShowFinalCTA] = useState(false);
-  const [showDesktopCTA, setShowDesktopCTA] = useState(false); // 🔧 新增：桌面端CTA显示状态
+  const [showDesktopCTA, setShowDesktopCTA] = useState(false);
+  
+  // 🆕 模态框相关状态
+  const [selectedFeature, setSelectedFeature] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+  
+  // 🆕 移动端滑动相关状态
+  const [touchStart, setTouchStart] = useState(0);
+  const [touchEnd, setTouchEnd] = useState(0);
 
   const pageControls = useAnimation();
   const headerControls = useAnimation();
@@ -85,7 +95,7 @@ const OnboardingFeatures = () => {
   const currentFeatures = featuresData[role];
   const isTeacher = role === 'teacher';
 
-  // 页面进入动画 - 🔧 修复：移除ctaControls，添加桌面端CTA计时器
+  // 页面进入动画
   useEffect(() => {
     const runEntranceAnimation = async () => {
       await pageControls.start({
@@ -105,20 +115,43 @@ const OnboardingFeatures = () => {
         transition: { 
           duration: 0.8,
           ease: [0.25, 0.46, 0.45, 0.94],
-          staggerChildren: 0.2  // 🔧 保留交错动画，但让子组件配合
+          staggerChildren: 0.2
         }
       });
 
-      // 🔧 修复：桌面端CTA使用简单的2秒延迟
       if (!isMobile) {
         setTimeout(() => {
           setShowDesktopCTA(true);
-        }, 2000); // 设计要求的2秒延迟
+        }, 2000);
       }
     };
 
     runEntranceAnimation();
   }, [pageControls, headerControls, cardsControls, isMobile]);
+
+  // 🆕 移动端滑动事件处理
+  const handleTouchStart = useCallback((e) => {
+    setTouchStart(e.targetTouches[0].clientX);
+  }, []);
+
+  const handleTouchMove = useCallback((e) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  }, []);
+
+  const handleTouchEnd = useCallback(() => {
+    if (!touchStart || !touchEnd) return;
+    
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > 50;
+    const isRightSwipe = distance < -50;
+
+    if (isLeftSwipe && currentIndex < currentFeatures.length) {
+      handleNext();
+    }
+    if (isRightSwipe && currentIndex > 0) {
+      handlePrev();
+    }
+  }, [touchStart, touchEnd, currentIndex, currentFeatures.length]);
 
   // 移动端滑动控制
   const handleNext = useCallback(() => {
@@ -141,6 +174,18 @@ const OnboardingFeatures = () => {
     }
   }, [currentIndex, currentFeatures.length]);
 
+  // 🆕 卡片点击处理
+  const handleCardClick = useCallback((feature) => {
+    setSelectedFeature(feature);
+    setShowModal(true);
+  }, []);
+
+  // 🆕 模态框关闭处理
+  const closeModal = useCallback(() => {
+    setShowModal(false);
+    setTimeout(() => setSelectedFeature(null), 300); // 等待动画完成后清空
+  }, []);
+
   // CTA点击处理
   const handleJoinPoT = useCallback(() => {
     navigate('/login', {
@@ -149,17 +194,18 @@ const OnboardingFeatures = () => {
     });
   }, [navigate, role]);
 
-  // 🔧 修复：功能卡片组件 - 完全配合父级动画控制
-  const FeatureCard = ({ feature, index }) => {
+  // 🆕 Apple风格功能卡片组件
+  const FeatureCard = ({ feature, index, onClick }) => {
     const IconComponent = feature.icon;
     
     return (
       <motion.div
-        className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md rounded-3xl p-8 shadow-lg hover:shadow-xl
-                   border border-gray-200/50 dark:border-gray-700/50 transition-all duration-300
-                   hover:scale-[1.02] hover:-translate-y-1"
+        className="relative bg-white/90 dark:bg-gray-100/10 backdrop-blur-sm rounded-2xl p-6 
+                   border border-gray-200/30 dark:border-gray-700/30 
+                   hover:bg-white/95 dark:hover:bg-gray-100/15 transition-all duration-300 cursor-pointer
+                   hover:shadow-lg hover:shadow-gray-200/50 dark:hover:shadow-gray-900/50
+                   hover:-translate-y-0.5"
         variants={{
-          // 🔧 修复：使用variants配合父级的stagger，避免双重动画
           hidden: { opacity: 0, y: 30 },
           visible: { 
             opacity: 1, 
@@ -170,42 +216,193 @@ const OnboardingFeatures = () => {
             }
           }
         }}
+        onClick={() => onClick(feature)}
         whileHover={{ 
-          scale: 1.02,
-          y: -4,
-          transition: { duration: 0.3 }
+          y: -2,
+          transition: { duration: 0.2 }
         }}
+        whileTap={{ scale: 0.98 }}
       >
-        {/* 图标区域 */}
-        <div className="flex justify-center mb-6">
-          <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl 
-                          flex items-center justify-center shadow-lg">
-            <IconComponent className="w-8 h-8 text-white" />
+        {/* 左上角图标 */}
+        <div className="mb-6">
+          <div className="w-10 h-10 rounded-xl bg-gray-100 dark:bg-gray-800/50 
+                          flex items-center justify-center">
+            <IconComponent className="w-5 h-5 text-gray-700 dark:text-gray-300" strokeWidth={1.5} />
           </div>
         </div>
 
         {/* 标题 */}
-        <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4 text-center leading-tight">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 leading-tight">
           {feature.title}
         </h3>
 
         {/* 描述 */}
-        <p className="text-gray-600 dark:text-gray-300 text-center leading-relaxed mb-6">
+        <p className="text-gray-600 dark:text-gray-400 leading-relaxed text-sm">
           {feature.description}
         </p>
 
-        {/* 占位符图片 */}
-        <div className="bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-600 
-                        rounded-2xl h-48 flex items-center justify-center">
-          <span className="text-gray-500 dark:text-gray-400 text-sm text-center px-4">
-            {feature.placeholder}
-          </span>
+        {/* 右下角加号 */}
+        <div className="absolute bottom-6 right-6">
+          <div className="w-6 h-6 rounded-full bg-gray-200/50 dark:bg-gray-700/50 
+                          flex items-center justify-center">
+            <Plus className="w-4 h-4 text-gray-600 dark:text-gray-400" strokeWidth={1.5} />
+          </div>
         </div>
       </motion.div>
     );
   };
 
-  // 🔧 修复：独立的移动端CTA组件，不依赖外部controls
+  // 🆕 移动端简化卡片组件（用于滑动视图）
+  const MobileFeatureCard = ({ feature, onClick }) => {
+    const IconComponent = feature.icon;
+    
+    return (
+      <div 
+        className="bg-white/90 dark:bg-gray-100/10 backdrop-blur-sm rounded-2xl p-6 
+                   border border-gray-200/30 dark:border-gray-700/30 
+                   hover:bg-white/95 dark:hover:bg-gray-100/15 transition-all duration-300 cursor-pointer
+                   shadow-sm hover:shadow-md hover:shadow-gray-200/50 dark:hover:shadow-gray-900/50
+                   relative"
+        onClick={() => onClick(feature)}
+      >
+        {/* 左上角图标 */}
+        <div className="mb-6">
+          <div className="w-10 h-10 rounded-xl bg-gray-100 dark:bg-gray-800/50 
+                          flex items-center justify-center">
+            <IconComponent className="w-5 h-5 text-gray-700 dark:text-gray-300" strokeWidth={1.5} />
+          </div>
+        </div>
+
+        {/* 标题 */}
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 leading-tight">
+          {feature.title}
+        </h3>
+
+        {/* 描述 */}
+        <p className="text-gray-600 dark:text-gray-400 leading-relaxed text-sm mb-6">
+          {feature.description}
+        </p>
+
+        {/* 右下角加号 */}
+        <div className="absolute bottom-6 right-6">
+          <div className="w-6 h-6 rounded-full bg-gray-200/50 dark:bg-gray-700/50 
+                          flex items-center justify-center">
+            <Plus className="w-4 h-4 text-gray-600 dark:text-gray-400" strokeWidth={1.5} />
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // 🆕 功能详情模态框组件
+  const FeatureModal = ({ feature, isOpen, onClose, isMobile }) => {
+    if (!feature) return null;
+    
+    const IconComponent = feature.icon;
+
+    return (
+      <AnimatePresence>
+        {isOpen && (
+          <>
+            {/* 背景遮罩 */}
+            <motion.div
+              className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+              onClick={onClose}
+            />
+            
+            {/* 模态框内容 */}
+            <motion.div
+              className={`fixed z-50 ${
+                isMobile 
+                  ? 'inset-x-4 bottom-4 top-20' 
+                  : 'top-1/2 left-1/2 w-[600px] max-h-[80vh]'
+              }`}
+              initial={
+                isMobile 
+                  ? { y: '100%', opacity: 0 }
+                  : { y: '-50%', x: '-50%', scale: 0.9, opacity: 0 }
+              }
+              animate={
+                isMobile
+                  ? { y: 0, opacity: 1 }
+                  : { y: '-50%', x: '-50%', scale: 1, opacity: 1 }
+              }
+              exit={
+                isMobile
+                  ? { y: '100%', opacity: 0 }
+                  : { y: '-50%', x: '-50%', scale: 0.9, opacity: 0 }
+              }
+              transition={{ 
+                type: "spring", 
+                damping: 25, 
+                stiffness: 300,
+                duration: 0.4 
+              }}
+            >
+              <div className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl rounded-2xl 
+                              border border-gray-200/50 dark:border-gray-700/50 
+                              shadow-2xl shadow-gray-900/20 dark:shadow-black/40
+                              h-full overflow-hidden flex flex-col">
+                
+                {/* 模态框头部 */}
+                <div className="flex items-center justify-between p-6 border-b border-gray-200/50 dark:border-gray-700/50">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-800/50 
+                                    flex items-center justify-center">
+                      <IconComponent className="w-4 h-4 text-gray-700 dark:text-gray-300" strokeWidth={1.5} />
+                    </div>
+                    <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                      功能详情
+                    </h2>
+                  </div>
+                  
+                  <button
+                    onClick={onClose}
+                    className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800/50 
+                               hover:bg-gray-200 dark:hover:bg-gray-700/70
+                               flex items-center justify-center transition-colors"
+                  >
+                    <X className="w-4 h-4 text-gray-600 dark:text-gray-400" strokeWidth={1.5} />
+                  </button>
+                </div>
+
+                {/* 模态框内容 */}
+                <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                  {/* 功能标题 */}
+                  <div>
+                    <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 leading-tight">
+                      {feature.title}
+                    </h3>
+                    
+                    {/* 功能描述 */}
+                    <p className="text-gray-600 dark:text-gray-300 leading-relaxed text-base">
+                      {feature.description}
+                    </p>
+                  </div>
+
+                  {/* 配图区域 */}
+                  <div className="bg-gradient-to-br from-gray-100/50 to-gray-200/50 
+                                  dark:from-gray-800/30 dark:to-gray-700/30 
+                                  rounded-xl h-64 md:h-80 flex items-center justify-center
+                                  border border-gray-200/30 dark:border-gray-700/30">
+                    <span className="text-gray-500 dark:text-gray-400 text-sm text-center px-4">
+                      {feature.placeholder}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+    );
+  };
+
+  // 移动端CTA组件
   const MobileFinalCTA = () => (
     <motion.div
       className="text-center py-8 px-4"
@@ -249,7 +446,7 @@ const OnboardingFeatures = () => {
     </motion.div>
   );
 
-  // 🔧 修复：桌面端CTA组件，使用简化的显示控制
+  // 桌面端CTA组件
   const DesktopFinalCTA = () => (
     <AnimatePresence>
       {showDesktopCTA && (
@@ -313,7 +510,7 @@ const OnboardingFeatures = () => {
           animate={headerControls}
         >
           <h1 className="text-2xl font-light text-gray-700 dark:text-gray-300">
-            了解一下{isTeacher ? '教学' : '学习'}新范式。
+            {isTeacher ? '教学' : '学习'}新范式，了解一下。
           </h1>
         </motion.div>
 
@@ -324,7 +521,6 @@ const OnboardingFeatures = () => {
             initial={{ opacity: 0, y: 30 }}
             animate={cardsControls}
             variants={{
-              // 🔧 修复：为容器添加variants，控制子元素动画
               hidden: { opacity: 0, y: 30 },
               visible: {
                 opacity: 1,
@@ -332,13 +528,18 @@ const OnboardingFeatures = () => {
                 transition: {
                   duration: 0.8,
                   ease: [0.25, 0.46, 0.45, 0.94],
-                  staggerChildren: 0.2 // 交错动画间隔
+                  staggerChildren: 0.2
                 }
               }
             }}
           >
             {currentFeatures.map((feature, index) => (
-              <FeatureCard key={index} feature={feature} index={index} />
+              <FeatureCard 
+                key={index} 
+                feature={feature} 
+                index={index} 
+                onClick={handleCardClick}
+              />
             ))}
           </motion.div>
         )}
@@ -368,95 +569,67 @@ const OnboardingFeatures = () => {
                   transform: `translateX(-${currentIndex * (100 / (currentFeatures.length + 1))}%)`,
                   width: `${(currentFeatures.length + 1) * 100}%`
                 }}
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
               >
                 {/* 功能卡片 */}
                 {currentFeatures.map((feature, index) => (
                   <div key={index} style={{ width: `${100 / (currentFeatures.length + 1)}%` }} className="flex-shrink-0 px-4">
-                    {/* 🔧 修复：移动端卡片使用简化版本，避免stagger冲突 */}
-                    <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md rounded-3xl p-8 shadow-lg
-                                   border border-gray-200/50 dark:border-gray-700/50 transition-all duration-300">
-                      {/* 图标区域 */}
-                      <div className="flex justify-center mb-6">
-                        <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl 
-                                        flex items-center justify-center shadow-lg">
-                          <feature.icon className="w-8 h-8 text-white" />
-                        </div>
-                      </div>
-
-                      {/* 标题 */}
-                      <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4 text-center leading-tight">
-                        {feature.title}
-                      </h3>
-
-                      {/* 描述 */}
-                      <p className="text-gray-600 dark:text-gray-300 text-center leading-relaxed mb-6">
-                        {feature.description}
-                      </p>
-
-                      {/* 占位符图片 */}
-                      <div className="bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-600 
-                                      rounded-2xl h-48 flex items-center justify-center">
-                        <span className="text-gray-500 dark:text-gray-400 text-sm text-center px-4">
-                          {feature.placeholder}
-                        </span>
-                      </div>
-                    </div>
+                    <MobileFeatureCard feature={feature} onClick={handleCardClick} />
                   </div>
                 ))}
                 
-                {/* 🔧 修复：移动端CTA卡片，使用独立组件 */}
+                {/* 移动端CTA卡片 */}
                 <div style={{ width: `${100 / (currentFeatures.length + 1)}%` }} className="flex-shrink-0 px-4">
-                  <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md rounded-3xl p-8 
-                                  shadow-lg border border-gray-200/50 dark:border-gray-700/50
-                                  flex flex-col items-center justify-center min-h-[400px]">
+                  <div className="bg-white/90 dark:bg-gray-100/10 backdrop-blur-sm rounded-2xl p-8 
+                                  shadow-sm border border-gray-200/30 dark:border-gray-700/30
+                                  flex flex-col items-center justify-center min-h-[320px]">
                     <MobileFinalCTA />
                   </div>
                 </div>
               </div>
             </motion.div>
 
-            {/* 滑动控制按钮 */}
-            <div className="flex justify-between items-center mt-6">
-              <button
-                onClick={handlePrev}
-                disabled={currentIndex === 0}
-                className="p-3 rounded-full bg-white/80 dark:bg-gray-800/80 shadow-md
-                           disabled:opacity-50 disabled:cursor-not-allowed
-                           hover:bg-white dark:hover:bg-gray-700 transition-colors"
-              >
-                <ChevronLeft className="w-6 h-6 text-gray-600 dark:text-gray-400" />
-              </button>
+            {/* 🆕 Apple风格滑动控制按钮（参考图1样式） */}
+            <div className="flex justify-center items-center mt-6">
+              <div className="flex space-x-2 bg-white/80 dark:bg-gray-800/80 rounded-full p-1 
+                              shadow-sm border border-gray-200/50 dark:border-gray-700/50">
+                <button
+                  onClick={handlePrev}
+                  disabled={currentIndex === 0}
+                  className="p-2 rounded-full transition-colors
+                             disabled:opacity-30 disabled:cursor-not-allowed
+                             hover:bg-gray-100 dark:hover:bg-gray-700/70 aigc-native-button"
+                >
+                  <ChevronLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" strokeWidth={1.5} />
+                </button>
 
-              {/* 指示器 */}
-              <div className="flex space-x-2">
-                {[...Array(currentFeatures.length + 1)].map((_, index) => (
-                  <div
-                    key={index}
-                    className={`w-2 h-2 rounded-full transition-colors ${
-                      currentIndex === index 
-                        ? 'bg-blue-600' 
-                        : 'bg-gray-300 dark:bg-gray-600'
-                    }`}
-                  />
-                ))}
+                <button
+                  onClick={handleNext}
+                  disabled={currentIndex >= currentFeatures.length}
+                  className="p-2 rounded-full transition-colors
+                             disabled:opacity-30 disabled:cursor-not-allowed
+                             hover:bg-gray-100 dark:hover:bg-gray-700/70 aigc-native-button"
+                >
+                  <ChevronRight className="w-5 h-5 text-gray-600 dark:text-gray-400" strokeWidth={1.5} />
+                </button>
               </div>
-
-              <button
-                onClick={handleNext}
-                disabled={currentIndex >= currentFeatures.length}
-                className="p-3 rounded-full bg-white/80 dark:bg-gray-800/80 shadow-md
-                           disabled:opacity-50 disabled:cursor-not-allowed
-                           hover:bg-white dark:hover:bg-gray-700 transition-colors"
-              >
-                <ChevronRight className="w-6 h-6 text-gray-600 dark:text-gray-400" />
-              </button>
             </div>
           </div>
         )}
 
-        {/* 🔧 修复：桌面端CTA，使用简化的显示逻辑 */}
+        {/* 桌面端CTA */}
         <DesktopFinalCTA />
       </motion.div>
+
+      {/* 🆕 功能详情模态框 */}
+      <FeatureModal 
+        feature={selectedFeature}
+        isOpen={showModal}
+        onClose={closeModal}
+        isMobile={isMobile}
+      />
     </div>
   );
 };
