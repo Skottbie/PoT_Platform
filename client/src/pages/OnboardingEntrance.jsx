@@ -1,4 +1,4 @@
-// client/src/pages/OnboardingEntrance.jsx - Step 1: 引导入口页面 (已优化)
+// client/src/pages/OnboardingEntrance.jsx - Step 1: 引导入口页面 (修复版本)
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -12,14 +12,17 @@ const OnboardingEntrance = () => {
     mobileFirst: '', // 思考，
     mobileSecond: '', // 未曾如此。
     showCursor: true,
+    currentPosition: 'first', // 'first', 'second', 'none'
     isComplete: false,
     showButtons: false
   });
 
-  // 响应式检测
+  // 响应式检测 - 优化iOS检测
   useEffect(() => {
     const checkIsMobile = () => {
-      setIsMobile(window.innerWidth < 768);
+      const width = window.innerWidth;
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+      setIsMobile(width < 768 || isIOS);
     };
     checkIsMobile();
     window.addEventListener('resize', checkIsMobile);
@@ -41,76 +44,92 @@ const OnboardingEntrance = () => {
   // 打字动画效果
   useEffect(() => {
     let timeouts = [];
-    // 将 blinkInterval 定义在外部，以便在 cleanup 函数中访问
-    let blinkInterval; 
+    let blinkInterval;
 
     const typeText = async () => {
       // 动画完成后的统一处理逻辑
       const handleTypingComplete = () => {
-        setTypingState(prev => ({ ...prev, isComplete: true }));
+        setTypingState(prev => ({ 
+          ...prev, 
+          isComplete: true, 
+          currentPosition: 'none'
+        }));
         
         let blinkCount = 0;
         blinkInterval = setInterval(() => {
           setTypingState(prev => ({ ...prev, showCursor: !prev.showCursor }));
           blinkCount++;
-          if (blinkCount >= 6) { // 3次完整闪烁
+          if (blinkCount >= 5) { // 闪烁2.5次
             clearInterval(blinkInterval);
             setTypingState(prev => ({ ...prev, showCursor: false }));
 
-            // ✨ FIX: 移除 2.5s 的长延迟，在闪烁结束后通过短延迟立即显示按钮
+            // 🎯 优化：闪烁结束后立即开始丝滑的上移+按钮出现动画
             setTimeout(() => {
               setTypingState(prev => ({ ...prev, showButtons: true }));
-            }, 100); 
+            }, 200); 
           }
-        }, 300);
+        }, 400); // 稍慢的闪烁节奏
       };
 
       if (isMobile) {
         // 移动端：先打第一列，再打第二列
+        setTypingState(prev => ({ ...prev, currentPosition: 'first' }));
+        
         for (let i = 0; i <= texts.mobile.first.length; i++) {
           timeouts.push(setTimeout(() => {
             setTypingState(prev => ({
               ...prev,
               mobileFirst: texts.mobile.first.slice(0, i)
             }));
-          }, i * 80));
+          }, i * 120));
         }
 
-        const firstColDelay = texts.mobile.first.length * 80 + 200;
+        // 第一列完成后切换到第二列
+        const firstColDelay = texts.mobile.first.length * 120 + 300;
+        timeouts.push(setTimeout(() => {
+          setTypingState(prev => ({ ...prev, currentPosition: 'second' }));
+        }, firstColDelay));
+        
         for (let i = 0; i <= texts.mobile.second.length; i++) {
           timeouts.push(setTimeout(() => {
             setTypingState(prev => ({
               ...prev,
               mobileSecond: texts.mobile.second.slice(0, i)
             }));
-          }, firstColDelay + i * 80));
+          }, firstColDelay + i * 120));
         }
 
-        const totalDelay = firstColDelay + texts.mobile.second.length * 80;
+        const totalDelay = firstColDelay + texts.mobile.second.length * 120;
         timeouts.push(setTimeout(handleTypingComplete, totalDelay));
 
       } else {
         // 桌面端：先打英文，再打中文
+        setTypingState(prev => ({ ...prev, currentPosition: 'first' }));
+        
         for (let i = 0; i <= texts.desktop.en.length; i++) {
           timeouts.push(setTimeout(() => {
             setTypingState(prev => ({
               ...prev,
               desktopEn: texts.desktop.en.slice(0, i)
             }));
-          }, i * 80));
+          }, i * 100));
         }
 
-        const enLineDelay = texts.desktop.en.length * 80 + 300;
+        const enLineDelay = texts.desktop.en.length * 100 + 400;
+        timeouts.push(setTimeout(() => {
+          setTypingState(prev => ({ ...prev, currentPosition: 'second' }));
+        }, enLineDelay));
+        
         for (let i = 0; i <= texts.desktop.zh.length; i++) {
           timeouts.push(setTimeout(() => {
             setTypingState(prev => ({
               ...prev,
               desktopZh: texts.desktop.zh.slice(0, i)
             }));
-          }, enLineDelay + i * 100));
+          }, enLineDelay + i * 150));
         }
 
-        const totalDelay = enLineDelay + texts.desktop.zh.length * 100;
+        const totalDelay = enLineDelay + texts.desktop.zh.length * 150;
         timeouts.push(setTimeout(handleTypingComplete, totalDelay));
       }
     };
@@ -154,101 +173,94 @@ const OnboardingEntrance = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, ease: "easeOut" }}
       >
-        {/* 主标语区域 */}
+        {/* 主标语区域 - 🎯 优化丝滑上移动画 */}
         <motion.div 
           className="mb-16"
-          animate={typingState.showButtons ? { y: -20 } : { y: 0 }}
+          animate={typingState.showButtons ? 
+            { y: -30, scale: 0.95 } : 
+            { y: 0, scale: 1 }
+          }
           transition={{ 
-            duration: 0.6, 
-            ease: [0.4, 0, 0.2, 1] // easeOutCubic
+            duration: 0.8, 
+            ease: [0.25, 0.46, 0.45, 0.94], // easeOutQuad - 更丝滑的缓动
+            type: "tween"
           }}
         >
           {isMobile ? (
-            // ✨ REFACTORED: 移动端布局重构，解决 iOS 兼容性和光标对齐问题
-            <div className="flex justify-center items-start gap-8 min-h-[200px]">
-              {/* 第一列：思考， */}
-              <div className="flex flex-col items-center">
-                <p 
-                  className="text-4xl sm:text-5xl font-bold text-gray-900 dark:text-white"
-                  style={{ 
-                    writingMode: 'vertical-rl',
-                    textOrientation: 'upright',
-                    letterSpacing: '0.2em' // 增加字间距
-                  }}
-                >
+            // 🎯 修复iOS兼容性 - 使用flex布局代替CSS writing-mode
+            <div className="flex flex-col items-center space-y-8 min-h-[300px] justify-center">
+              {/* 第一行：思考， */}
+              <div className="relative flex items-center justify-center">
+                <h1 className="text-5xl sm:text-6xl font-bold text-gray-900 dark:text-white tracking-wide">
                   {typingState.mobileFirst}
-                </p>
-                {!typingState.isComplete && typingState.mobileSecond === '' && (
-                  <motion.span
-                    className="block w-8 h-1 bg-gray-900 dark:bg-white mt-4"
-                    layoutId="mobile-cursor"
-                    animate={typingState.showCursor ? { opacity: 1 } : { opacity: 0 }}
-                    transition={{ 
-                      duration: 0.8,
-                      repeat: typingState.isComplete ? 0 : Infinity,
-                      repeatType: "reverse"
-                    }}
-                  />
-                )}
-              </div>
-              
-              {/* 第二列：未曾如此。 */}
-              <div className="flex flex-col items-center">
-                <p
-                  className="text-4xl sm:text-5xl font-bold text-gray-900 dark:text-white"
-                  style={{ 
-                    writingMode: 'vertical-rl',
-                    textOrientation: 'upright',
-                    letterSpacing: '0.2em' // 增加字间距
-                  }}
-                >
-                  {typingState.mobileSecond}
-                </p>
-                {typingState.mobileSecond !== '' && (
-                  <motion.span
-                    className="block w-8 h-1 bg-gray-900 dark:bg-white mt-4"
-                    layoutId="mobile-cursor"
-                    animate={typingState.showCursor ? { opacity: 1 } : { opacity: 0 }}
-                    transition={{ 
-                      duration: 0.8,
-                      repeat: typingState.isComplete ? 0 : Infinity,
-                      repeatType: "reverse"
-                    }}
-                  />
-                )}
-              </div>
-            </div>
-          ) : (
-            // 桌面端布局
-            <div className="space-y-6">
-              <div className="relative text-center">
-                <h1 className="text-4xl xl:text-5xl font-bold text-gray-900 dark:text-white tracking-tight inline-flex items-baseline">
-                  {typingState.desktopEn}
-                  {!typingState.isComplete && typingState.desktopZh === '' && (
+                  {/* 光标只在当前打字位置显示 */}
+                  {typingState.currentPosition === 'first' && typingState.showCursor && (
                     <motion.span
-                      className="w-1 h-12 xl:h-14 bg-gray-900 dark:bg-white ml-1 inline-block"
-                      animate={typingState.showCursor ? { opacity: 1 } : { opacity: 0 }}
+                      className="inline-block w-1 h-12 sm:h-16 bg-gray-900 dark:bg-white ml-2 align-bottom"
+                      animate={{ opacity: [1, 0] }}
                       transition={{ 
                         duration: 0.8,
                         repeat: Infinity,
-                        repeatType: "reverse"
+                        repeatType: "reverse",
+                        ease: "easeInOut"
                       }}
                     />
                   )}
                 </h1>
               </div>
               
-              <div className="relative text-center">
-                <h2 className="text-4xl xl:text-5xl font-bold text-gray-900 dark:text-white tracking-tight inline-flex items-baseline">
-                  {typingState.desktopZh}
-                  {typingState.desktopZh !== '' && (
+              {/* 第二行：未曾如此。 */}
+              <div className="relative flex items-center justify-center">
+                <h2 className="text-5xl sm:text-6xl font-bold text-gray-900 dark:text-white tracking-wide">
+                  {typingState.mobileSecond}
+                  {/* 光标只在当前打字位置显示 */}
+                  {typingState.currentPosition === 'second' && typingState.showCursor && (
                     <motion.span
-                      className="w-1 h-12 xl:h-14 bg-gray-900 dark:bg-white ml-1 inline-block"
-                      animate={typingState.showCursor ? { opacity: 1 } : { opacity: 0 }}
+                      className="inline-block w-1 h-12 sm:h-16 bg-gray-900 dark:bg-white ml-2 align-bottom"
+                      animate={{ opacity: [1, 0] }}
                       transition={{ 
                         duration: 0.8,
-                        repeat: typingState.isComplete ? 0 : Infinity,
-                        repeatType: "reverse"
+                        repeat: Infinity,
+                        repeatType: "reverse",
+                        ease: "easeInOut"
+                      }}
+                    />
+                  )}
+                </h2>
+              </div>
+            </div>
+          ) : (
+            // 桌面端：横向布局
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+              <div className="relative">
+                <h1 className="text-4xl xl:text-5xl font-bold text-gray-900 dark:text-white tracking-tight">
+                  {typingState.desktopEn}
+                  {typingState.currentPosition === 'first' && typingState.showCursor && (
+                    <motion.span
+                      className="inline-block w-1 h-12 xl:h-14 bg-gray-900 dark:bg-white ml-1 align-bottom"
+                      animate={{ opacity: [1, 0] }}
+                      transition={{ 
+                        duration: 0.8,
+                        repeat: Infinity,
+                        repeatType: "reverse",
+                        ease: "easeInOut"
+                      }}
+                    />
+                  )}
+                </h1>
+              </div>
+              <div className="relative">
+                <h2 className="text-4xl xl:text-5xl font-bold text-gray-900 dark:text-white tracking-tight">
+                  {typingState.desktopZh}
+                  {typingState.currentPosition === 'second' && typingState.showCursor && (
+                    <motion.span
+                      className="inline-block w-1 h-12 xl:h-14 bg-gray-900 dark:bg-white ml-1 align-bottom"
+                      animate={{ opacity: [1, 0] }}
+                      transition={{ 
+                        duration: 0.8,
+                        repeat: Infinity,
+                        repeatType: "reverse",
+                        ease: "easeInOut"
                       }}
                     />
                   )}
@@ -258,36 +270,53 @@ const OnboardingEntrance = () => {
           )}
         </motion.div>
 
-        {/* 操作按钮 */}
+        {/* 操作按钮 - 🎯 优化出现动画 */}
         <AnimatePresence>
           {typingState.showButtons && (
             <motion.div
               className="space-y-4 sm:space-y-0 sm:space-x-6 sm:flex sm:justify-center sm:items-center"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
+              initial={{ opacity: 0, y: 30, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -20 }}
-              // ✨ TWEAK: 为按钮容器添加 delay，实现丝滑的级联动画效果
-              transition={{ duration: 0.6, ease: "easeOut", delay: 0.2 }}
+              transition={{ 
+                duration: 0.8, 
+                ease: [0.25, 0.46, 0.45, 0.94],
+                delay: 0.3 // 在标语上移动画开始后稍微延迟
+              }}
             >
+              {/* 探索 PoT Academy 按钮 */}
               <motion.button
                 onClick={handleExplore}
                 className="w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-2xl
                          shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98]
                          transition-all duration-300 ease-out
                          focus:outline-none focus:ring-4 focus:ring-blue-500/50"
-                whileHover={{ scale: 1.02 }}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5, duration: 0.5 }}
+                whileHover={{ 
+                  scale: 1.02,
+                  boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)"
+                }}
                 whileTap={{ scale: 0.98 }}
               >
                 <span className="text-lg">探索PoT Academy</span>
               </motion.button>
 
+              {/* 已有账号按钮 */}
               <motion.button
                 onClick={handleLogin}
                 className="w-full sm:w-auto px-8 py-4 border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-semibold rounded-2xl
                          hover:border-gray-400 dark:hover:border-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800/50 hover:scale-[1.02] active:scale-[0.98]
                          transition-all duration-300 ease-out
                          focus:outline-none focus:ring-4 focus:ring-gray-500/50"
-                whileHover={{ scale: 1.02 }}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.6, duration: 0.5 }}
+                whileHover={{ 
+                  scale: 1.02,
+                  backgroundColor: "rgba(0, 0, 0, 0.02)"
+                }}
                 whileTap={{ scale: 0.98 }}
               >
                 <span className="text-lg">我已经是PoT的一员</span>
@@ -296,12 +325,12 @@ const OnboardingEntrance = () => {
           )}
         </AnimatePresence>
 
-        {/* 品牌标识（可选） */}
+        {/* 品牌标识 */}
         <motion.div 
           className="mt-16 text-gray-400 dark:text-gray-600"
           initial={{ opacity: 0 }}
           animate={{ opacity: typingState.showButtons ? 1 : 0 }}
-          transition={{ delay: typingState.showButtons ? 0.5 : 0, duration: 0.8 }}
+          transition={{ delay: 1, duration: 0.8 }}
         >
           <p className="text-sm">Proof of Thought Academy</p>
         </motion.div>
