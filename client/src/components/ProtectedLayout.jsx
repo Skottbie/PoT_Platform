@@ -17,7 +17,7 @@ const ProtectedLayout = ({ children }) => {
     localStorage.removeItem('token');
     localStorage.removeItem('role');
     localStorage.removeItem('tokenExpiresAt');
-    navigate('/', { replace: true });
+    navigate('/login', { replace: true });
   }, [navigate]);
 
   const fetchUser = useCallback(async () => {

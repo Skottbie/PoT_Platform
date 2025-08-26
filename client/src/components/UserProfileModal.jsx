@@ -72,7 +72,7 @@ const UserProfileModal = ({ isOpen, onClose, user, onUserUpdate }) => {
     toast.success('已成功退出登录');
     
     // 导航到首页
-    navigate('/');
+    navigate('/login');
   };
 
   // 保存设置

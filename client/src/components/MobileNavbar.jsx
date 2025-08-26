@@ -25,7 +25,7 @@ const MobileNavbar = ({ user }) => {
     localStorage.removeItem('token');
     localStorage.removeItem('role');
     setIsMenuOpen(false);
-    navigate('/');
+    navigate('/login');
   };
 
   const handleOpenProfile = () => {

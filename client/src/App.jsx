@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import OnboardingEntrance from './pages/OnboardingEntrance'; // 🆕 新增引导入口页面
 import TeacherDashboard from './pages/TeacherDashboard';
 import StudentDashboard from './pages/StudentDashboard';
 import SubmitTask from './pages/SubmitTask';
@@ -39,14 +40,17 @@ function App() {
         <div className="min-h-screen flex flex-col"> 
           <div className="flex-1"> 
             <Routes>
-              <Route path="/" element={<Login />} />
+              {/* 🆕 引导流程路由 */}
+              <Route path="/" element={<OnboardingEntrance />} />
+              <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
+              
+              {/* 现有的功能路由 */}
               <Route path="/teacher" element={<ProtectedLayout><TeacherDashboard /></ProtectedLayout>} />
               <Route path="/student" element={<ProtectedLayout><StudentDashboard /></ProtectedLayout>} />
               <Route path="/submit/:taskId" element={<SubmitTask />} />
               <Route path="/task/:taskId/submissions" element={<TeacherTaskSubmissions />} />
               <Route path="/create-class" element={<CreateClass />} />
-
               <Route path="/student/join" element={<StudentJoinClass />} />
               <Route path="/my-classes" element={<MyClasses />} />
               <Route path="/class/:classId/students" element={<ClassStudents />} />

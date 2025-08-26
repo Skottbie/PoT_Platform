@@ -26,7 +26,7 @@ const Register = () => {
       });
       
       toast.success('注册成功，请登录'); 
-      navigate('/');
+      navigate('/login');
     } catch (err) {
      
       const errorMessage = err.response?.data?.message || '注册失败';
@@ -134,7 +134,7 @@ const Register = () => {
 
         <p className="text-center text-sm text-gray-500 dark:text-gray-400 mt-6">
           已有账号？
-          <a href="/" className="text-blue-600 dark:text-blue-400 hover:underline ml-1">
+          <a href="/login" className="text-blue-600 dark:text-blue-400 hover:underline ml-1">
             去登录
           </a>
         </p>

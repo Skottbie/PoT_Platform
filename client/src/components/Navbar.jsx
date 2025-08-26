@@ -12,7 +12,7 @@ const Navbar = ({ user, onUserUpdate }) => {
 
   const handleLogout = () => {
     localStorage.removeItem('token');
-    navigate('/');
+    navigate('/login');
   };
 
   const handleOpenProfile = () => {
