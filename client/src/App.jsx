@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import OnboardingEntrance from './pages/OnboardingEntrance'; // 🆕 新增引导入口页面
+import OnboardingFeatures from './pages/OnboardingFeatures'; 
 import TeacherDashboard from './pages/TeacherDashboard';
 import StudentDashboard from './pages/StudentDashboard';
 import SubmitTask from './pages/SubmitTask';
@@ -27,7 +28,7 @@ import Test from './Test'; // 导入测试组件
 function App() {
   const [hideFeedback, setHideFeedback] = useState(false);
 
-  const noFooterPages = ['/'];
+  const noFooterPages = ['/', '/onboarding/features'];
   const shouldShowFooter = !noFooterPages.includes(location.pathname);
   useEffect(() => {
     const handler = () => {
@@ -47,6 +48,7 @@ function App() {
               <Route path="/" element={<OnboardingEntrance />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
+              <Route path="/onboarding/features" element={<OnboardingFeatures />} />
               
               {/* 现有的功能路由 */}
               <Route path="/teacher" element={<ProtectedLayout><TeacherDashboard /></ProtectedLayout>} />

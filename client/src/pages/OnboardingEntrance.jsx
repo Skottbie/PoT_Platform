@@ -369,18 +369,66 @@ const OnboardingEntrance = () => {
   }, [navigate]);
 
   const handleTeacherSelect = useCallback(() => {
-    navigate('/onboarding/features', {
-      state: { role: 'teacher', from: 'identity' },
-      replace: false
-    });
-  }, [navigate]);
+        // 添加按钮渐隐动画
+        buttonsControls.start({
+        opacity: 0,
+        y: 30,
+        scale: 0.95,
+        transition: {
+            duration: 0.6,
+            ease: [0.25, 0.46, 0.45, 0.94]
+        }
+        });
 
-  const handleStudentSelect = useCallback(() => {
-    navigate('/onboarding/features', {
-      state: { role: 'student', from: 'identity' },
-      replace: false
-    });
-  }, [navigate]);
+        // 添加文案回撤动画
+        sloganControls.start({
+        opacity: 0,
+        y: -30,
+        transition: {
+            duration: 0.8,
+            ease: [0.25, 0.46, 0.45, 0.94]
+        }
+        });
+
+        // 延迟跳转，确保动画完成
+        setTimeout(() => {
+        navigate('/onboarding/features', {
+            state: { role: 'teacher', from: 'identity' },
+            replace: false
+        });
+        }, 800); // 与动画时长匹配
+    }, [navigate, buttonsControls, sloganControls]);
+
+    const handleStudentSelect = useCallback(() => {
+        // 添加按钮渐隐动画
+        buttonsControls.start({
+        opacity: 0,
+        y: 30,
+        scale: 0.95,
+        transition: {
+            duration: 0.6,
+            ease: [0.25, 0.46, 0.45, 0.94]
+        }
+        });
+
+        // 添加文案回撤动画
+        sloganControls.start({
+        opacity: 0,
+        y: -30,
+        transition: {
+            duration: 0.8,
+            ease: [0.25, 0.46, 0.45, 0.94]
+        }
+        });
+
+        // 延迟跳转，确保动画完成
+        setTimeout(() => {
+        navigate('/onboarding/features', {
+            state: { role: 'student', from: 'identity' },
+            replace: false
+        });
+        }, 800); // 与动画时长匹配
+    }, [navigate, buttonsControls, sloganControls]);
 
   // iOS兼容的竖排文字组件
   const VerticalText = ({ text, showCursor, className }) => {
@@ -586,7 +634,7 @@ const OnboardingEntrance = () => {
               animate={buttonsControls}
             >
               <motion.button
-                onClick={handleTeacherSelect}
+                onClick={handleStudentSelect}
                 className="w-full sm:w-auto px-6 py-3 text-base sm:px-8 sm:py-4 sm:text-lg bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-2xl
                          shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98]
                          transition-all duration-300 ease-out
@@ -602,7 +650,7 @@ const OnboardingEntrance = () => {
               </motion.button>
 
               <motion.button
-                onClick={handleStudentSelect}
+                onClick={handleTeacherSelect}
                 className="w-full sm:w-auto px-6 py-3 text-base sm:px-8 sm:py-4 sm:text-lg border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-semibold rounded-2xl
                          hover:border-gray-400 dark:hover:border-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800/50 hover:scale-[1.02] active:scale-[0.98]
                          transition-all duration-300 ease-out
