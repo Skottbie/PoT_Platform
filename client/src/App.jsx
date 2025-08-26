@@ -26,6 +26,9 @@ import Test from './Test'; // 导入测试组件
 
 function App() {
   const [hideFeedback, setHideFeedback] = useState(false);
+
+  const noFooterPages = ['/'];
+  const shouldShowFooter = !noFooterPages.includes(location.pathname);
   useEffect(() => {
     const handler = () => {
       setHideFeedback(localStorage.getItem('hideFeedback') === '1');
@@ -66,7 +69,7 @@ function App() {
               <Route path="/test" element={<Test />} />
             </Routes>
           </div>
-          <Footer />
+          {shouldShowFooter && <Footer />}  {/* 条件渲染 Footer */}
         </div>
         {!hideFeedback && <FeedbackWidget />}
       </Router>

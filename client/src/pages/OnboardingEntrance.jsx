@@ -265,7 +265,10 @@ const OnboardingEntrance = () => {
               />
             </div>
           ) : (
-            <div className="space-y-6 flex flex-col items-center">
+            <div 
+                className="space-y-6 flex flex-col items-center"
+                style={{ transform: 'translateX(12px)' }}
+                >
             <h1 className="text-4xl xl:text-5xl font-bold text-gray-900 dark:text-white tracking-tight text-center">
                 {typingState.desktopEn}
                 {!typingState.isComplete && typingState.desktopZh === '' && (
@@ -344,7 +347,7 @@ const OnboardingEntrance = () => {
           animate={buttonsControls}
           transition={{ delay: 0.8, duration: 1.0 }}
         >
-          <p className="text-sm font-light tracking-wide">Proof of Thought Academy</p>
+          <p className="text-sm font-light tracking-wide">© 2025 PoTAcademy. All rights reserved.</p>
         </motion.div>
       </motion.div>
     </div>
