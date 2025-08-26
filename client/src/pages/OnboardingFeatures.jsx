@@ -21,12 +21,11 @@ const OnboardingFeatures = () => {
   const [isMobile, setIsMobile] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showFinalCTA, setShowFinalCTA] = useState(false);
-  const [isAnimated, setIsAnimated] = useState(false);
+  const [showDesktopCTA, setShowDesktopCTA] = useState(false); // 🔧 新增：桌面端CTA显示状态
 
   const pageControls = useAnimation();
   const headerControls = useAnimation();
   const cardsControls = useAnimation();
-  const ctaControls = useAnimation(); // 保留但会正确启动
 
   // 响应式检测
   useEffect(() => {
@@ -86,7 +85,7 @@ const OnboardingFeatures = () => {
   const currentFeatures = featuresData[role];
   const isTeacher = role === 'teacher';
 
-  // 页面进入动画 - 添加ctaControls启动
+  // 页面进入动画 - 🔧 修复：移除ctaControls，添加桌面端CTA计时器
   useEffect(() => {
     const runEntranceAnimation = async () => {
       await pageControls.start({
@@ -106,23 +105,20 @@ const OnboardingFeatures = () => {
         transition: { 
           duration: 0.8,
           ease: [0.25, 0.46, 0.45, 0.94],
-          staggerChildren: 0.2
+          staggerChildren: 0.2  // 🔧 保留交错动画，但让子组件配合
         }
       });
 
-      // 🔧 修复：启动CTA控制器
-      await ctaControls.start({
-        opacity: 1,
-        y: 0,
-        scale: 1,
-        transition: { duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }
-      });
-
-      setIsAnimated(true);
+      // 🔧 修复：桌面端CTA使用简单的2秒延迟
+      if (!isMobile) {
+        setTimeout(() => {
+          setShowDesktopCTA(true);
+        }, 2000); // 设计要求的2秒延迟
+      }
     };
 
     runEntranceAnimation();
-  }, [pageControls, headerControls, cardsControls, ctaControls]);
+  }, [pageControls, headerControls, cardsControls, isMobile]);
 
   // 移动端滑动控制
   const handleNext = useCallback(() => {
@@ -139,7 +135,7 @@ const OnboardingFeatures = () => {
     const newIndex = currentIndex - 1;
     if (newIndex >= 0) {
       setCurrentIndex(newIndex);
-      if (newIndex < currentFeatures.length) { // 🔧 修复：条件逻辑
+      if (newIndex < currentFeatures.length) {
         setShowFinalCTA(false);
       }
     }
@@ -153,7 +149,7 @@ const OnboardingFeatures = () => {
     });
   }, [navigate, role]);
 
-  // 功能卡片组件 - 🔧 修复：移除重复的delay，避免双重交错
+  // 🔧 修复：功能卡片组件 - 完全配合父级动画控制
   const FeatureCard = ({ feature, index }) => {
     const IconComponent = feature.icon;
     
@@ -162,9 +158,18 @@ const OnboardingFeatures = () => {
         className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md rounded-3xl p-8 shadow-lg hover:shadow-xl
                    border border-gray-200/50 dark:border-gray-700/50 transition-all duration-300
                    hover:scale-[1.02] hover:-translate-y-1"
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        // 🔧 移除这行避免双重交错: transition={{ delay: index * 0.2 }}
+        variants={{
+          // 🔧 修复：使用variants配合父级的stagger，避免双重动画
+          hidden: { opacity: 0, y: 30 },
+          visible: { 
+            opacity: 1, 
+            y: 0,
+            transition: {
+              duration: 0.6,
+              ease: [0.25, 0.46, 0.45, 0.94]
+            }
+          }
+        }}
         whileHover={{ 
           scale: 1.02,
           y: -4,
@@ -200,18 +205,19 @@ const OnboardingFeatures = () => {
     );
   };
 
-  // 最终CTA组件 - 🔧 修复：简化条件判断
-  const FinalCTA = () => (
+  // 🔧 修复：独立的移动端CTA组件，不依赖外部controls
+  const MobileFinalCTA = () => (
     <motion.div
-      className="text-center py-12"
-      initial={{ opacity: 0, y: 30, scale: 0.95 }}
-      animate={ctaControls}
+      className="text-center py-8 px-4"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
     >
       <motion.div
         className="mb-8"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }} // 🔧 移除showFinalCTA条件，直接显示
-        transition={{ delay: 0.2 }}
+        initial={{ opacity: 0, y: 15 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2, duration: 0.5 }}
       >
         <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
           Proof of Thought.
@@ -226,19 +232,68 @@ const OnboardingFeatures = () => {
         className="px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold 
                    rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300
                    hover:scale-[1.05] active:scale-[0.98]
-                   focus:outline-none focus:ring-4 focus:ring-blue-500/50"
+                   focus:outline-none focus:ring-4 focus:ring-blue-500/50
+                   min-w-[160px]"
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
-        transition={{ delay: 0.4, type: "spring", stiffness: 300 }}
-        whileHover={{ 
-          scale: 1.05,
-          boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)"
+        transition={{ 
+          delay: 0.4, 
+          type: "spring", 
+          stiffness: 300,
+          damping: 20
         }}
-        whileTap={{ scale: 0.98 }}
+        whileTap={{ scale: 0.95 }}
       >
         加入PoT.
       </motion.button>
     </motion.div>
+  );
+
+  // 🔧 修复：桌面端CTA组件，使用简化的显示控制
+  const DesktopFinalCTA = () => (
+    <AnimatePresence>
+      {showDesktopCTA && (
+        <motion.div
+          className="text-center py-12"
+          initial={{ opacity: 0, y: 30, scale: 0.95 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: 30, scale: 0.95 }}
+          transition={{ duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
+        >
+          <motion.div
+            className="mb-8"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+              Proof of Thought.
+            </h2>
+            <p className="text-gray-600 dark:text-gray-400">
+              共创AI学习新范式。
+            </p>
+          </motion.div>
+
+          <motion.button
+            onClick={handleJoinPoT}
+            className="px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold 
+                       rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300
+                       hover:scale-[1.05] active:scale-[0.98]
+                       focus:outline-none focus:ring-4 focus:ring-blue-500/50"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.4, type: "spring", stiffness: 300 }}
+            whileHover={{ 
+              scale: 1.05,
+              boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)"
+            }}
+            whileTap={{ scale: 0.98 }}
+          >
+            加入PoT.
+          </motion.button>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 
   return (
@@ -268,6 +323,19 @@ const OnboardingFeatures = () => {
             className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16"
             initial={{ opacity: 0, y: 30 }}
             animate={cardsControls}
+            variants={{
+              // 🔧 修复：为容器添加variants，控制子元素动画
+              hidden: { opacity: 0, y: 30 },
+              visible: {
+                opacity: 1,
+                y: 0,
+                transition: {
+                  duration: 0.8,
+                  ease: [0.25, 0.46, 0.45, 0.94],
+                  staggerChildren: 0.2 // 交错动画间隔
+                }
+              }
+            }}
           >
             {currentFeatures.map((feature, index) => (
               <FeatureCard key={index} feature={feature} index={index} />
@@ -282,6 +350,17 @@ const OnboardingFeatures = () => {
               className="overflow-hidden"
               initial={{ opacity: 0, y: 30 }}
               animate={cardsControls}
+              variants={{
+                hidden: { opacity: 0, y: 30 },
+                visible: {
+                  opacity: 1,
+                  y: 0,
+                  transition: {
+                    duration: 0.8,
+                    ease: [0.25, 0.46, 0.45, 0.94]
+                  }
+                }
+              }}
             >
               <div
                 className="flex transition-transform duration-300 ease-out"
@@ -293,17 +372,44 @@ const OnboardingFeatures = () => {
                 {/* 功能卡片 */}
                 {currentFeatures.map((feature, index) => (
                   <div key={index} style={{ width: `${100 / (currentFeatures.length + 1)}%` }} className="flex-shrink-0 px-4">
-                    <FeatureCard feature={feature} index={index} />
+                    {/* 🔧 修复：移动端卡片使用简化版本，避免stagger冲突 */}
+                    <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md rounded-3xl p-8 shadow-lg
+                                   border border-gray-200/50 dark:border-gray-700/50 transition-all duration-300">
+                      {/* 图标区域 */}
+                      <div className="flex justify-center mb-6">
+                        <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl 
+                                        flex items-center justify-center shadow-lg">
+                          <feature.icon className="w-8 h-8 text-white" />
+                        </div>
+                      </div>
+
+                      {/* 标题 */}
+                      <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4 text-center leading-tight">
+                        {feature.title}
+                      </h3>
+
+                      {/* 描述 */}
+                      <p className="text-gray-600 dark:text-gray-300 text-center leading-relaxed mb-6">
+                        {feature.description}
+                      </p>
+
+                      {/* 占位符图片 */}
+                      <div className="bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-600 
+                                      rounded-2xl h-48 flex items-center justify-center">
+                        <span className="text-gray-500 dark:text-gray-400 text-sm text-center px-4">
+                          {feature.placeholder}
+                        </span>
+                      </div>
+                    </div>
                   </div>
                 ))}
                 
-                {/* 移动端最终CTA卡片 */}
+                {/* 🔧 修复：移动端CTA卡片，使用独立组件 */}
                 <div style={{ width: `${100 / (currentFeatures.length + 1)}%` }} className="flex-shrink-0 px-4">
                   <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md rounded-3xl p-8 
                                   shadow-lg border border-gray-200/50 dark:border-gray-700/50
                                   flex flex-col items-center justify-center min-h-[400px]">
-                    {/* 🔧 修复：移动端CTA始终显示，不需要showFinalCTA条件 */}
-                    <FinalCTA />
+                    <MobileFinalCTA />
                   </div>
                 </div>
               </div>
@@ -348,21 +454,8 @@ const OnboardingFeatures = () => {
           </div>
         )}
 
-        {/* 桌面端最终CTA */}
-        <AnimatePresence>
-            {!isMobile && isAnimated && (
-              <motion.div
-                key="desktop-cta"
-                initial={{ opacity: 0, y: 30, scale: 0.95 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: 30, scale: 0.95 }}
-                transition={{ delay: 2, duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
-                className="text-center py-12"
-              >
-                <FinalCTA />
-              </motion.div>
-            )}
-        </AnimatePresence>
+        {/* 🔧 修复：桌面端CTA，使用简化的显示逻辑 */}
+        <DesktopFinalCTA />
       </motion.div>
     </div>
   );
