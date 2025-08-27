@@ -441,3 +441,47 @@
 .mobile-feature-swiper .swiper-slide {
   height: auto;
 }
+
+/* 🎯 CTA动画性能优化 */
+.mobile-cta-container, .desktop-cta-container {
+  /* 为复杂动画启用GPU加速 */
+  will-change: transform, opacity;
+  transform: translateZ(0);
+}
+
+/* Brain-Bot连接动画优化 */
+.brain-bot-connection {
+  contain: layout style paint;
+}
+
+/* 按钮悬停效果优化 */
+.cta-button {
+  /* 避免layout重排 */
+  will-change: transform;
+  backface-visibility: hidden;
+}
+
+.cta-button:hover {
+  /* 使用transform而非修改其他属性 */
+  transform: translateY(-2px) scale(1.02);
+}
+
+/* 背景装饰动画优化 */
+.decorative-blob {
+  /* 降低重绘频率 */
+  will-change: transform;
+  contain: strict;
+}
+
+/* 移动端专用优化 */
+@media (max-width: 768px) {
+  .mobile-cta-container {
+    /* 移动端减少阴影复杂度 */
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* 减少移动端的动画复杂度 */
+  .complex-animation {
+    animation-duration: 0.3s;
+  }
+}

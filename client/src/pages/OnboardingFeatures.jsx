@@ -6,6 +6,7 @@ import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation } from 'swiper/modules';
 import 'swiper/css';
 import 'swiper/css/navigation';
+import React from 'react';
 import { 
   Search, 
   Brain, 
@@ -27,8 +28,8 @@ const OnboardingFeatures = () => {
   const [isMobile, setIsMobile] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showFinalCTA, setShowFinalCTA] = useState(false);
-  const [showDesktopCTA, setShowDesktopCTA] = useState(false);
-  
+const [showDesktopCTA, setShowDesktopCTA] = useState(false);
+
   // 🆕 模态框相关状态
   const [selectedFeature, setSelectedFeature] = useState(null);
   const [showModal, setShowModal] = useState(false);
@@ -112,20 +113,23 @@ const OnboardingFeatures = () => {
   const currentFeatures = featuresData[role];
   const isTeacher = role === 'teacher';
 
-  // 页面进入动画
+  // 🎯 恢复正确的页面入场动画逻辑
   useEffect(() => {
     const runEntranceAnimation = async () => {
+      // 页面整体淡入
       await pageControls.start({
         opacity: 1,
         transition: { duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }
       });
 
+      // 标题区域动画
       await headerControls.start({
         opacity: 1,
         y: 0,
         transition: { duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }
       });
 
+      // 卡片区域动画
       await cardsControls.start({
         opacity: 1,
         y: 0,
@@ -136,6 +140,7 @@ const OnboardingFeatures = () => {
         }
       });
 
+      // 桌面端CTA延迟显示（恢复原逻辑）
       if (!isMobile) {
         setTimeout(() => {
           setShowDesktopCTA(true);
@@ -350,7 +355,7 @@ const OnboardingFeatures = () => {
             <motion.button
               onClick={handlePrev}
               disabled={currentIndex === 0}
-              className="w-11 h-11 rounded-xl bg-transparent hover:bg-gray-100/80 
+              className="w-11 h-11 rounded-3xl bg-transparent hover:bg-gray-100/80 
                          dark:hover:bg-gray-700/50 
                          disabled:opacity-30 disabled:cursor-not-allowed
                          flex items-center justify-center transition-all duration-300
@@ -371,7 +376,7 @@ const OnboardingFeatures = () => {
             <motion.button
               onClick={handleNext}
               disabled={currentIndex >= currentFeatures.length}
-              className="w-11 h-11 rounded-xl bg-transparent hover:bg-gray-100/80 
+              className="w-11 h-11 rounded-3xl bg-transparent hover:bg-gray-100/80 
                          dark:hover:bg-gray-700/50 
                          disabled:opacity-30 disabled:cursor-not-allowed
                          flex items-center justify-center transition-all duration-300
@@ -513,91 +518,303 @@ const OnboardingFeatures = () => {
     );
   };
 
-  // 桌面端最终CTA组件（保持原有逻辑）
-  const DesktopFinalCTA = () => (
-    <AnimatePresence>
-      {showDesktopCTA && (
+  // 🎯 重构后的桌面端CTA组件 - 预留空间稳定布局（修正版）
+  const DesktopFinalCTA = React.memo(() => (
+    <motion.div
+      className="text-center space-y-6 max-w-lg mx-auto"
+      initial={{ opacity: 0 }}
+      animate={{ 
+        opacity: showDesktopCTA ? 1 : 0,
+        transition: { 
+          duration: 0.6,
+          ease: [0.25, 0.46, 0.45, 0.94]
+        }
+      }}
+      // 关键：即使不可见也保持空间占用
+      style={{ 
+        visibility: 'visible', // 始终保持布局空间
+        pointerEvents: showDesktopCTA ? 'auto' : 'none' // 控制交互
+      }}
+    >
+      {/* 🆕 紧凑的AI + Brain 图标组合 */}
+      <motion.div 
+        className="flex items-center justify-center space-x-4 mb-4"
+        initial={{ opacity: 0, scale: 0.8 }}
+        animate={{ 
+          opacity: showDesktopCTA ? 1 : 0,
+          scale: showDesktopCTA ? 1 : 0.8,
+          transition: { delay: 0.2, duration: 0.5 }
+        }}
+      >
+        {/* Brain 图标（淡雅设计） */}
+        <div className="relative group">
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-gray-50/80 to-gray-100/50
+                          dark:from-gray-800/50 dark:to-gray-700/30
+                          border border-gray-200/40 dark:border-gray-700/40
+                          flex items-center justify-center shadow-md backdrop-blur-sm
+                          group-hover:shadow-lg transition-all duration-300">
+            <Brain className="w-6 h-6 text-gray-600 dark:text-gray-400" strokeWidth={1.5} />
+          </div>
+        </div>
+
+        {/* 连接线 - 霓虹效果 */}
         <motion.div
-          className="text-center space-y-6"
-          initial={{ opacity: 0, y: 30, scale: 0.95 }}
+          className="flex items-center space-x-1"
+          initial={{ scaleX: 0, opacity: 0 }}
+          animate={{ 
+            scaleX: showDesktopCTA ? 1 : 0,
+            opacity: showDesktopCTA ? 1 : 0,
+            transition: { delay: 0.4, duration: 0.6 }
+          }}
+        >
+          <div className="w-8 h-0.5 bg-gradient-to-r from-gray-300/40 via-blue-400/60 to-purple-400/60
+                          dark:from-gray-600/40 dark:via-blue-400/40 dark:to-purple-400/40 rounded-full"></div>
+          <motion.div
+            className="w-2 h-2 rounded-full bg-gradient-to-r from-blue-400/80 to-purple-400/80 shadow-sm"
+            animate={{ 
+              boxShadow: showDesktopCTA ? [
+                "0 0 4px rgba(168, 85, 247, 0.3)",
+                "0 0 8px rgba(168, 85, 247, 0.5)",
+                "0 0 4px rgba(168, 85, 247, 0.3)"
+              ] : "0 0 0px rgba(168, 85, 247, 0)"
+            }}
+            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+          />
+          <div className="w-8 h-0.5 bg-gradient-to-r from-purple-400/60 via-blue-400/60 to-gray-300/40
+                          dark:from-purple-400/40 dark:via-blue-400/40 dark:to-gray-600/40 rounded-full"></div>
+        </motion.div>
+
+        {/* Bot 图标（淡雅设计） */}
+        <div className="relative group">
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-gray-50/80 to-gray-100/50
+                          dark:from-gray-800/50 dark:to-gray-700/30
+                          border border-gray-200/40 dark:border-gray-700/40
+                          flex items-center justify-center shadow-md backdrop-blur-sm
+                          group-hover:shadow-lg transition-all duration-300">
+            <Bot className="w-6 h-6 text-gray-600 dark:text-gray-400" strokeWidth={1.5} />
+          </div>
+        </div>
+      </motion.div>
+
+      {/* 🆕 修改后的文案设计 - 桌面端一行 */}
+      <motion.div 
+        className="space-y-1"
+        initial={{ opacity: 0, y: 15 }}
+        animate={{ 
+          opacity: showDesktopCTA ? 1 : 0,
+          y: showDesktopCTA ? 0 : 15,
+          transition: { delay: 0.3, duration: 0.5 }
+        }}
+      >
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">
+          共创新范式 · Powered by Proof of Thought.
+        </h2>
+      </motion.div>
+
+      {/* 🎯 升级版协调按钮设计 - 添加aigc-native-button类 */}
+      <motion.button
+        onClick={handleJoinPoT}
+        className="relative px-10 py-4 
+                  bg-white/70 dark:bg-gray-900/70 
+                  border border-gray-200/50 dark:border-gray-700/50
+                  text-gray-900 dark:text-gray-100 font-semibold text-base
+                  rounded-xl backdrop-blur-xl overflow-hidden group
+                  transition-all duration-500 ease-out
+                  hover:bg-white/85 dark:hover:bg-gray-900/85
+                  hover:border-gray-300/60 dark:hover:border-gray-600/60
+                  hover:shadow-2xl hover:shadow-gray-900/15 dark:hover:shadow-black/25
+                  hover:scale-[1.02] active:scale-[0.98]
+                  focus:outline-none focus:ring-2 focus:ring-gray-400/30
+                  aigc-native-button"
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ 
+          opacity: showDesktopCTA ? 1 : 0,
+          scale: showDesktopCTA ? 1 : 0.9,
+          transition: { delay: 0.5, type: "spring", stiffness: 200 }
+        }}
+        whileHover={{ 
+          scale: 1.02,
+          transition: { duration: 0.2 }
+        }}
+        whileTap={{ scale: 0.98 }}
+      >
+        {/* 协调的背景渐变效果 */}
+        <div className="absolute inset-0 bg-gradient-to-r from-gray-50/40 via-blue-50/30 to-gray-50/40
+                        dark:from-gray-800/40 dark:via-blue-900/20 dark:to-gray-800/40
+                        opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-xl"></div>
+        
+        {/* 微妙的霓虹效果 */}
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-blue-400/15 to-transparent 
+                        opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-xl border border-blue-400/20"></div>
+        
+        {/* 按钮内容 */}
+        <span className="relative z-10">
+          加入PoT.
+        </span>
+
+        {/* 微妙的底部光条 */}
+        <motion.div
+          className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r 
+                    from-transparent via-blue-400/50 to-transparent 
+                    opacity-0 group-hover:opacity-100"
+          initial={{ scaleX: 0 }}
+          whileHover={{ scaleX: 1 }}
+          transition={{ duration: 0.5, ease: "easeInOut" }}
+        />
+      </motion.button>
+    </motion.div>
+  ));
+
+  // 🎯 重构后的移动端CTA组件 - 人机合作主题（修正版）
+  const MobileFinalCTA = () => (
+    <AnimatePresence>
+      {showFinalCTA && (
+        <motion.div
+          className="text-center space-y-6 px-4"
+          initial={{ opacity: 0, y: 30, scale: 0.9 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: 30, scale: 0.95 }}
+          exit={{ opacity: 0, y: 30, scale: 0.9 }}
           transition={{ 
             duration: 0.6,
             ease: [0.25, 0.46, 0.45, 0.94]
           }}
         >
-          <motion.div className="space-y-3">
-            <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
-              Proof of Thought.
+          {/* 🆕 AI + Brain 连接动画图标（淡雅色调） */}
+          <motion.div 
+            className="flex items-center justify-center space-x-4 mb-6"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3, duration: 0.8 }}
+          >
+            {/* Brain 图标 */}
+            <motion.div
+              className="relative"
+              initial={{ x: -15, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              transition={{ delay: 0.5, duration: 0.6, type: "spring" }}
+            >
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-gray-50 to-gray-100/50
+                              dark:from-gray-800/50 dark:to-gray-700/50 
+                              border border-gray-200/30 dark:border-gray-700/30
+                              flex items-center justify-center shadow-lg backdrop-blur-sm">
+                <Brain className="w-7 h-7 text-gray-600 dark:text-gray-400" strokeWidth={1.5} />
+              </div>
+            </motion.div>
+
+            {/* 连接线动画（霓虹效果） */}
+            <motion.div
+              className="flex items-center"
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.8, duration: 0.4 }}
+            >
+              <motion.div
+                className="w-6 h-px bg-gradient-to-r from-gray-300/60 via-blue-400/80 to-purple-400/80
+                          dark:from-gray-600/60 dark:via-blue-400/60 dark:to-purple-400/60"
+                initial={{ scaleX: 0 }}
+                animate={{ scaleX: 1 }}
+                transition={{ delay: 1.0, duration: 0.6 }}
+                style={{ originX: 0 }}
+              />
+              <motion.div
+                className="w-1.5 h-1.5 rounded-full bg-gradient-to-r from-blue-400 to-purple-400 mx-1 shadow-lg"
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 1.2, duration: 0.3 }}
+                style={{
+                  boxShadow: "0 0 8px rgba(168, 85, 247, 0.4)"
+                }}
+              />
+              <motion.div
+                className="w-6 h-px bg-gradient-to-r from-purple-400/80 via-blue-400/80 to-gray-300/60
+                          dark:from-purple-400/60 dark:via-blue-400/60 dark:to-gray-600/60"
+                initial={{ scaleX: 0 }}
+                animate={{ scaleX: 1 }}
+                transition={{ delay: 1.0, duration: 0.6 }}
+                style={{ originX: 1 }}
+              />
+            </motion.div>
+
+            {/* Bot 图标 */}
+            <motion.div
+              className="relative"
+              initial={{ x: 15, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              transition={{ delay: 0.7, duration: 0.6, type: "spring" }}
+            >
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-gray-50 to-gray-100/50
+                              dark:from-gray-800/50 dark:to-gray-700/50
+                              border border-gray-200/30 dark:border-gray-700/30
+                              flex items-center justify-center shadow-lg backdrop-blur-sm">
+                <Bot className="w-7 h-7 text-gray-600 dark:text-gray-400" strokeWidth={1.5} />
+              </div>
+            </motion.div>
+          </motion.div>
+
+          {/* 🆕 修改后的对话式文案 - 移动端两行 */}
+          <motion.div 
+            className="space-y-2"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 1.4, duration: 0.6 }}
+          >
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white leading-tight">
+              共创新范式
             </h2>
-            <p className="text-gray-600 dark:text-gray-400">
-              共创AI学习新范式。
+            <p className="text-base text-gray-500 dark:text-gray-400 leading-relaxed font-medium">
+              Powered by Proof of Thought.
             </p>
           </motion.div>
 
+          {/* 🎯 升级版协调按钮设计 - 添加aigc-native-button类 */}
           <motion.button
             onClick={handleJoinPoT}
-            className="px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold 
-                       rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300
-                       hover:scale-[1.05] active:scale-[0.98]
-                       focus:outline-none focus:ring-4 focus:ring-blue-500/50"
+            className="relative px-12 py-4 
+                      bg-white/80 dark:bg-gray-900/80 
+                      border border-gray-200/60 dark:border-gray-700/60
+                      text-gray-900 dark:text-gray-100 font-semibold text-base 
+                      rounded-2xl backdrop-blur-xl overflow-hidden group 
+                      transition-all duration-500 ease-out
+                      hover:bg-white/90 dark:hover:bg-gray-900/90
+                      hover:border-gray-300/70 dark:hover:border-gray-600/70
+                      hover:shadow-xl hover:shadow-gray-900/10 dark:hover:shadow-black/20
+                      hover:scale-[1.02] active:scale-[0.98]
+                      focus:outline-none focus:ring-2 focus:ring-gray-400/30
+                      aigc-native-button"
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.4, type: "spring", stiffness: 300 }}
+            transition={{ delay: 1.6, type: "spring", stiffness: 300 }}
             whileHover={{ 
-              scale: 1.05,
-              boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)"
+              scale: 1.02,
+              transition: { duration: 0.2 }
             }}
             whileTap={{ scale: 0.98 }}
           >
-            加入PoT.
+            {/* 协调的背景渐变效果 */}
+            <div className="absolute inset-0 bg-gradient-to-r from-gray-50/50 via-blue-50/30 to-gray-50/50
+                            dark:from-gray-800/50 dark:via-blue-900/20 dark:to-gray-800/50
+                            opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl"></div>
+            
+            {/* 微妙的霓虹边框 */}
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-blue-400/20 to-transparent 
+                            opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl border border-blue-400/30"></div>
+            
+            <span className="relative z-10">
+              加入PoT
+            </span>
           </motion.button>
-        </motion.div>
-      )}
-    </AnimatePresence>
-  );
 
-  // 移动端最终CTA组件（保持原有逻辑）
-  const MobileFinalCTA = () => (
-    <AnimatePresence>
-      {showFinalCTA && (
-        <motion.div
-          className="text-center space-y-6"
-          initial={{ opacity: 0, y: 20, scale: 0.95 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: 20, scale: 0.95 }}
-          transition={{ 
-            duration: 0.5,
-            ease: [0.25, 0.46, 0.45, 0.94]
-          }}
-        >
-          <motion.div className="space-y-3">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-              Proof of Thought.
-            </h2>
-            <p className="text-gray-600 dark:text-gray-400">
-              共创AI学习新范式。
-            </p>
-          </motion.div>
-
-          <motion.button
-            onClick={handleJoinPoT}
-            className="px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold 
-                       rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300
-                       hover:scale-[1.05] active:scale-[0.98]
-                       focus:outline-none focus:ring-4 focus:ring-blue-500/50"
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.4, type: "spring", stiffness: 300 }}
-            whileHover={{ 
-              scale: 1.05,
-              boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)"
+          {/* 🆕 微妙的装饰元素（淡化） */}
+          <motion.div
+            className="absolute -top-8 -right-8 w-16 h-16 rounded-full 
+                      bg-gradient-to-br from-gray-100/20 to-blue-100/20
+                      dark:from-gray-800/20 dark:to-blue-800/20 blur-2xl"
+            animate={{
+              scale: [1, 1.1, 1],
+              opacity: [0.1, 0.2, 0.1]
             }}
-            whileTap={{ scale: 0.98 }}
-          >
-            加入PoT.
-          </motion.button>
+            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+          />
         </motion.div>
       )}
     </AnimatePresence>
@@ -606,7 +823,7 @@ const OnboardingFeatures = () => {
   return (
     <div className="h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 
                     dark:from-gray-900 dark:via-gray-800 dark:to-purple-900
-                    flex flex-col items-center justify-center px-4 py-safe overflow-hidden">
+                    flex flex-col items-center justify-center px-4 py-safe overflow-hidden fixed inset-0">
       
       <motion.div
         className="w-full max-w-7xl mx-auto h-full flex flex-col justify-center"
@@ -694,14 +911,21 @@ const OnboardingFeatures = () => {
                     </SwiperSlide>
                   ))}
                   
-                  {/* 移动端CTA卡片 */}
-                  <SwiperSlide className="px-4">
-                    <div className="bg-white/90 dark:bg-gray-100/10 backdrop-blur-sm rounded-3xl p-8 
-                                    shadow-sm border border-gray-200/30 dark:border-gray-700/30
-                                    h-[400px] flex flex-col items-center justify-center">
+                {/* 移动端CTA卡片 */}
+                <SwiperSlide className="px-4">
+                  <div className="relative bg-white/95 dark:bg-gray-900/90 backdrop-blur-xl rounded-3xl p-8 
+                                  shadow-xl shadow-gray-900/5 dark:shadow-black/20
+                                  border border-gray-200/40 dark:border-gray-700/40
+                                  h-[400px] flex flex-col items-center justify-center
+                                  overflow-hidden">
+                    {/* 淡雅背景装饰 */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-transparent via-gray-50/30 to-gray-100/20
+                                    dark:from-transparent dark:via-gray-800/20 dark:to-gray-700/10 pointer-events-none"></div>
+                    <div className="relative z-10 w-full">
                       <MobileFinalCTA />
                     </div>
-                  </SwiperSlide>
+                  </div>
+                </SwiperSlide>
                 </Swiper>
               </motion.div>
 
@@ -711,7 +935,12 @@ const OnboardingFeatures = () => {
           )}
 
           {/* 桌面端CTA */}
-          <DesktopFinalCTA />
+          {/* 桌面端CTA - 预留空间避免布局跳动 */}
+          {!isMobile && (
+            <div className="w-full flex items-center justify-center mt-8 min-h-[100px]">
+              <DesktopFinalCTA />
+            </div>
+          )}
         </div>
       </motion.div>
 
