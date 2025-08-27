@@ -20,6 +20,144 @@ import {
   X
 } from 'lucide-react';
 
+  // 🎯 重构后的桌面端CTA组件 - 预留空间稳定布局（修正版）
+const DesktopFinalCTA = React.memo(({ showDesktopCTA, handleJoinPoT }) => (
+    <motion.div
+      className="text-center space-y-6 max-w-lg mx-auto"
+      initial={{ opacity: 0 }}
+      animate={{ 
+        opacity: showDesktopCTA ? 1 : 0,
+        transition: { 
+          duration: 0.6,
+          ease: [0.25, 0.46, 0.45, 0.94]
+        }
+      }}
+      // 关键：即使不可见也保持空间占用
+      style={{ 
+        visibility: 'visible', // 始终保持布局空间
+        pointerEvents: showDesktopCTA ? 'auto' : 'none' // 控制交互
+      }}
+    >
+      {/* 🆕 紧凑的AI + Brain 图标组合 */}
+      <motion.div 
+        className="flex items-center justify-center space-x-4 mb-4"
+        initial={{ opacity: 0, scale: 0.8 }}
+        animate={{ 
+          opacity: showDesktopCTA ? 1 : 0,
+          scale: showDesktopCTA ? 1 : 0.8,
+          transition: { delay: 0.2, duration: 0.5 }
+        }}
+      >
+        {/* Brain 图标（淡雅设计） */}
+        <div className="relative group">
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-gray-50/80 to-gray-100/50
+                          dark:from-gray-800/50 dark:to-gray-700/30
+                          border border-gray-200/40 dark:border-gray-700/40
+                          flex items-center justify-center shadow-md backdrop-blur-sm
+                          group-hover:shadow-lg transition-all duration-300">
+            <Brain className="w-6 h-6 text-gray-600 dark:text-gray-400" strokeWidth={1.5} />
+          </div>
+        </div>
+
+        {/* 连接线 - 霓虹效果 */}
+        <motion.div
+          className="flex items-center space-x-1"
+          initial={{ scaleX: 0, opacity: 0 }}
+          animate={{ 
+            scaleX: showDesktopCTA ? 1 : 0,
+            opacity: showDesktopCTA ? 1 : 0,
+            transition: { delay: 0.4, duration: 0.6 }
+          }}
+        >
+          <div className="w-8 h-0.5 bg-gradient-to-r from-gray-300/40 via-blue-400/60 to-purple-400/60
+                          dark:from-gray-600/40 dark:via-blue-400/40 dark:to-purple-400/40 rounded-full"></div>
+          <motion.div
+            className="w-2 h-2 rounded-full bg-gradient-to-r from-blue-400/80 to-purple-400/80 shadow-sm"
+            animate={{ 
+              boxShadow: showDesktopCTA ? [
+                "0 0 4px rgba(168, 85, 247, 0.3)",
+                "0 0 8px rgba(168, 85, 247, 0.5)",
+                "0 0 4px rgba(168, 85, 247, 0.3)"
+              ] : "0 0 0px rgba(168, 85, 247, 0)"
+            }}
+            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+          />
+          <div className="w-8 h-0.5 bg-gradient-to-r from-purple-400/60 via-blue-400/60 to-gray-300/40
+                          dark:from-purple-400/40 dark:via-blue-400/40 dark:to-gray-600/40 rounded-full"></div>
+        </motion.div>
+
+        {/* Bot 图标（淡雅设计） */}
+        <div className="relative group">
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-gray-50/80 to-gray-100/50
+                          dark:from-gray-800/50 dark:to-gray-700/30
+                          border border-gray-200/40 dark:border-gray-700/40
+                          flex items-center justify-center shadow-md backdrop-blur-sm
+                          group-hover:shadow-lg transition-all duration-300">
+            <Bot className="w-6 h-6 text-gray-600 dark:text-gray-400" strokeWidth={1.5} />
+          </div>
+        </div>
+      </motion.div>
+
+      {/* 🆕 修改后的文案设计 - 桌面端一行 */}
+      <motion.div 
+        className="space-y-1"
+        initial={{ opacity: 0, y: 15 }}
+        animate={{ 
+          opacity: showDesktopCTA ? 1 : 0,
+          y: showDesktopCTA ? 0 : 15,
+          transition: { delay: 0.3, duration: 0.5 }
+        }}
+      >
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">
+          共创新范式 · Rooted in Proof of Thought.
+        </h2>
+      </motion.div>
+
+      {/* 🎯 升级版协调按钮设计 - 添加aigc-native-button类 */}
+          <motion.button
+            onClick={handleJoinPoT}
+            className="relative px-12 py-4 
+                      bg-white/80 dark:bg-gray-900/80 
+                      border border-gray-200/60 dark:border-gray-700/60
+                      text-gray-900 dark:text-gray-100 font-semibold text-base 
+                      rounded-2xl backdrop-blur-xl overflow-hidden group 
+                      transition-all duration-500 ease-out
+                      hover:bg-white/90 dark:hover:bg-gray-900/90
+                      hover:border-gray-300/70 dark:hover:border-gray-600/70
+                      hover:shadow-xl hover:shadow-gray-900/10 dark:hover:shadow-black/20
+                      hover:scale-[1.02] active:scale-[0.98]
+                      focus:outline-none focus:ring-2 focus:ring-gray-400/30
+                      aigc-native-button"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 1.6, type: "spring", stiffness: 300 }}
+            whileHover={{ 
+              scale: 1.02,
+              transition: { duration: 0.2 }
+            }}
+            whileTap={{ scale: 0.98 }}
+          >
+            {/* 协调的背景渐变效果：默认可见，并根据模式改变颜色 */}
+            <div className="absolute inset-0 bg-gradient-to-r 
+                        from-gray-50/50 via-blue-50/30 to-gray-50/50
+                        dark:from-gray-800/50 dark:via-purple-900/20 dark:to-gray-800/50
+                        opacity-100 transition-opacity duration-500 rounded-2xl"></div>
+            
+            {/* 微妙的霓虹边框：默认可见，并根据模式改变颜色 */}
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent 
+                        via-blue-400/20 to-transparent 
+                        dark:via-purple-400/20 
+                        opacity-100 transition-opacity duration-500 rounded-2xl 
+                        border border-blue-400/30 dark:border-purple-400/30"></div>
+            
+            <span className="relative z-10">
+              加入PoT.
+            </span>
+          </motion.button>
+    </motion.div>
+  ));
+
+
 const OnboardingFeatures = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -60,25 +198,25 @@ const [showDesktopCTA, setShowDesktopCTA] = useState(false);
       {
         icon: Search,
         title: "学生AI使用全透明，教学超安心。",
-        description: "AI交互原始记录随任务捆绑提交，用好AI or 滥用AI？证据已到位，你说了算。",
-        detailedDescription: "每次学生与AI的对话记录都会完整保存并随作业一同提交。查看学生的思考过程、AI的引导轨迹，以及最终的成果输出。从问题提出到答案生成，整个协作链条一览无余，让您精准掌握学生的真实能力与AI依赖程度。",
-        benefits: ["完整AI对话记录", "思考过程可视化", "学术诚信保障", "个性化指导依据"],
+        description: "PoT(Proof of Thought)记录随任务捆绑提交，用好AI or 滥用AI？证据已到位，你说了算。",
+        detailedDescription: "每次学生与AI的对话记录(PoT)记录都会完整保存并随作业一同提交。查看学生的思考过程、AI的引导轨迹，以及最终的成果输出。从问题到答案，整个协作链条一览无余，让您精准掌握学生的真实能力与AI依赖程度。",
+        benefits: ["原始AI对话记录", "思维链条可视化", "学术诚信保障", "个性化指导依据"],
         placeholder: "AI使用记录截图占位符"
       },
       {
         icon: Brain,
         title: "思维轨迹，一目了然。",
         description: "定制PoT-Mode智能体引导学生思考，精准把握掌握程度，个性化指导更高效，教学更轻松。",
-        detailedDescription: "PoT智能体采用苏格拉底式提问，循循善诱地引导学生独立思考。不给答案，只给启发。通过分析学生的回答模式、思维深度和推理逻辑，生成个性化的思维能力画像，帮您发现每位学生的认知特点与潜力。",
-        benefits: ["苏格拉底式引导", "思维能力画像", "认知特点分析", "个性化教学建议"],
+        detailedDescription: "PoT定制智能体善用「苏格拉底式教学法」，循循善诱地引导学生独立思考。不直接提供答案，总提供思维启发。通过分析学生的回答模式、思维深度和推理逻辑，生成个性化的思维能力画像*，帮您发现每位学生的认知特点与潜力。",
+        benefits: ["苏格拉底式引导", "思维能力画像*", "认知特点分析*", "个性化教学建议*"],
         placeholder: "思维轨迹可视化截图占位符"
       },
       {
         icon: Zap,
         title: "教学管理，简约而强大。",
         description: "任务发布、班级管理、提交查阅，在手机上也能轻松完成。",
-        detailedDescription: "一站式教学工作台，从任务创建到成果评阅，全流程移动化操作。智能推荐任务模板，批量管理多个班级，实时掌握提交进度。让繁琐的教务工作变得如iPhone般简约易用。",
-        benefits: ["移动端全功能", "智能任务模板", "批量班级管理", "实时进度追踪"],
+        detailedDescription: "一站式教师仪表盘设计，从任务创建到成果评阅，全流程移动适配。智能推荐任务模板*，批量管理多个班级，实时掌握提交进度。让繁琐的教务工作变得如iPhone般简约易用。",
+        benefits: ["移动端100%适配", "智能任务模板*", "批量班级管理", "实时进度追踪"],
         placeholder: "教学管理界面截图占位符"
       }
     ],
@@ -86,8 +224,8 @@ const [showDesktopCTA, setShowDesktopCTA] = useState(false);
       {
         icon: Bot,
         title: "PoT-Mode，启发不代替。",
-        description: "PoT定制模型，个性化高效指导。所有任务，保质还保量。",
-        detailedDescription: "专为学术思维训练设计的AI伙伴。它不会直接给出答案，而是通过精心设计的问题引导你深入思考。就像一位智慧的导师，帮你发现问题的本质，构建属于自己的知识框架。",
+        description: "PoT(Proof of Thought)定制模型，个性化高效指导。所有任务，保质还保量。",
+        detailedDescription: "专为学术思维训练设计的AI学习伙伴。它不会直接给出答案，而是通过精心定制的步骤，引导你自己解决问题。独属于你的24h学伴，帮你发现问题的本质，构建属于自己的知识框架，事半功倍。",
         benefits: ["启发式对话", "个性化引导", "思维能力提升", "学术诚信保障"],
         placeholder: "PoT对话界面截图占位符"
       },
@@ -95,7 +233,7 @@ const [showDesktopCTA, setShowDesktopCTA] = useState(false);
         icon: Shield,
         title: "AI使用透明化，学术无忧。",
         description: "记录AI协作全过程，展现真实思考轨迹。负责任的AI助力，提交作业更自信。",
-        detailedDescription: "每一次AI协作都被完整记录，形成你的专属学习档案。向老师展示你的思考历程，证明你的学术诚信。在AI时代，透明度就是你的竞争优势。",
+        detailedDescription: "每一次AI协作都被完整记录，形成你的专属学习档案。向老师展示你的思考历程，AI赋能而非代替，体现你的学术诚信。在AI时代，透明度就是你的竞争优势。",
         benefits: ["完整协作记录", "学术诚信证明", "思考过程展示", "老师信任建立"],
         placeholder: "学术诚信记录截图占位符"
       },
@@ -103,8 +241,8 @@ const [showDesktopCTA, setShowDesktopCTA] = useState(false);
         icon: Layers,
         title: "开始你的思考，AI友情客串。",
         description: "接入多种强力AIGC模型，移动端原生体验，学习无界限。",
-        detailedDescription: "集成ChatGPT、Claude、文心一言等顶级AI模型，根据任务需求智能推荐最适合的助手。无论是文本创作、数据分析还是创意设计，都能获得专业级的协助。原生移动体验，随时随地开启深度学习。",
-        benefits: ["多模型集成", "智能模型推荐", "原生移动体验", "专业级协助"],
+        detailedDescription: "集成主流厂商最新顶级AI模型，尽情根据需求选择最适合的助手。无论是文本创作、数据分析还是创意设计，都能获得专业级的协助。移动端100%适配，随时随地开启深度学习。",
+        benefits: ["多模型集成", "智能模型推荐*", "原生移动体验", "专业级协助"],
         placeholder: "多模态学习截图占位符"
       }
     ]
@@ -518,152 +656,6 @@ const [showDesktopCTA, setShowDesktopCTA] = useState(false);
     );
   };
 
-  // 🎯 重构后的桌面端CTA组件 - 预留空间稳定布局（修正版）
-  const DesktopFinalCTA = React.memo(() => (
-    <motion.div
-      className="text-center space-y-6 max-w-lg mx-auto"
-      initial={{ opacity: 0 }}
-      animate={{ 
-        opacity: showDesktopCTA ? 1 : 0,
-        transition: { 
-          duration: 0.6,
-          ease: [0.25, 0.46, 0.45, 0.94]
-        }
-      }}
-      // 关键：即使不可见也保持空间占用
-      style={{ 
-        visibility: 'visible', // 始终保持布局空间
-        pointerEvents: showDesktopCTA ? 'auto' : 'none' // 控制交互
-      }}
-    >
-      {/* 🆕 紧凑的AI + Brain 图标组合 */}
-      <motion.div 
-        className="flex items-center justify-center space-x-4 mb-4"
-        initial={{ opacity: 0, scale: 0.8 }}
-        animate={{ 
-          opacity: showDesktopCTA ? 1 : 0,
-          scale: showDesktopCTA ? 1 : 0.8,
-          transition: { delay: 0.2, duration: 0.5 }
-        }}
-      >
-        {/* Brain 图标（淡雅设计） */}
-        <div className="relative group">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-gray-50/80 to-gray-100/50
-                          dark:from-gray-800/50 dark:to-gray-700/30
-                          border border-gray-200/40 dark:border-gray-700/40
-                          flex items-center justify-center shadow-md backdrop-blur-sm
-                          group-hover:shadow-lg transition-all duration-300">
-            <Brain className="w-6 h-6 text-gray-600 dark:text-gray-400" strokeWidth={1.5} />
-          </div>
-        </div>
-
-        {/* 连接线 - 霓虹效果 */}
-        <motion.div
-          className="flex items-center space-x-1"
-          initial={{ scaleX: 0, opacity: 0 }}
-          animate={{ 
-            scaleX: showDesktopCTA ? 1 : 0,
-            opacity: showDesktopCTA ? 1 : 0,
-            transition: { delay: 0.4, duration: 0.6 }
-          }}
-        >
-          <div className="w-8 h-0.5 bg-gradient-to-r from-gray-300/40 via-blue-400/60 to-purple-400/60
-                          dark:from-gray-600/40 dark:via-blue-400/40 dark:to-purple-400/40 rounded-full"></div>
-          <motion.div
-            className="w-2 h-2 rounded-full bg-gradient-to-r from-blue-400/80 to-purple-400/80 shadow-sm"
-            animate={{ 
-              boxShadow: showDesktopCTA ? [
-                "0 0 4px rgba(168, 85, 247, 0.3)",
-                "0 0 8px rgba(168, 85, 247, 0.5)",
-                "0 0 4px rgba(168, 85, 247, 0.3)"
-              ] : "0 0 0px rgba(168, 85, 247, 0)"
-            }}
-            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-          />
-          <div className="w-8 h-0.5 bg-gradient-to-r from-purple-400/60 via-blue-400/60 to-gray-300/40
-                          dark:from-purple-400/40 dark:via-blue-400/40 dark:to-gray-600/40 rounded-full"></div>
-        </motion.div>
-
-        {/* Bot 图标（淡雅设计） */}
-        <div className="relative group">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-gray-50/80 to-gray-100/50
-                          dark:from-gray-800/50 dark:to-gray-700/30
-                          border border-gray-200/40 dark:border-gray-700/40
-                          flex items-center justify-center shadow-md backdrop-blur-sm
-                          group-hover:shadow-lg transition-all duration-300">
-            <Bot className="w-6 h-6 text-gray-600 dark:text-gray-400" strokeWidth={1.5} />
-          </div>
-        </div>
-      </motion.div>
-
-      {/* 🆕 修改后的文案设计 - 桌面端一行 */}
-      <motion.div 
-        className="space-y-1"
-        initial={{ opacity: 0, y: 15 }}
-        animate={{ 
-          opacity: showDesktopCTA ? 1 : 0,
-          y: showDesktopCTA ? 0 : 15,
-          transition: { delay: 0.3, duration: 0.5 }
-        }}
-      >
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">
-          共创新范式 · Powered by Proof of Thought.
-        </h2>
-      </motion.div>
-
-      {/* 🎯 升级版协调按钮设计 - 添加aigc-native-button类 */}
-      <motion.button
-        onClick={handleJoinPoT}
-        className="relative px-10 py-4 
-                  bg-white/70 dark:bg-gray-900/70 
-                  border border-gray-200/50 dark:border-gray-700/50
-                  text-gray-900 dark:text-gray-100 font-semibold text-base
-                  rounded-xl backdrop-blur-xl overflow-hidden group
-                  transition-all duration-500 ease-out
-                  hover:bg-white/85 dark:hover:bg-gray-900/85
-                  hover:border-gray-300/60 dark:hover:border-gray-600/60
-                  hover:shadow-2xl hover:shadow-gray-900/15 dark:hover:shadow-black/25
-                  hover:scale-[1.02] active:scale-[0.98]
-                  focus:outline-none focus:ring-2 focus:ring-gray-400/30
-                  aigc-native-button"
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ 
-          opacity: showDesktopCTA ? 1 : 0,
-          scale: showDesktopCTA ? 1 : 0.9,
-          transition: { delay: 0.5, type: "spring", stiffness: 200 }
-        }}
-        whileHover={{ 
-          scale: 1.02,
-          transition: { duration: 0.2 }
-        }}
-        whileTap={{ scale: 0.98 }}
-      >
-        {/* 协调的背景渐变效果 */}
-        <div className="absolute inset-0 bg-gradient-to-r from-gray-50/40 via-blue-50/30 to-gray-50/40
-                        dark:from-gray-800/40 dark:via-blue-900/20 dark:to-gray-800/40
-                        opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-xl"></div>
-        
-        {/* 微妙的霓虹效果 */}
-        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-blue-400/15 to-transparent 
-                        opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-xl border border-blue-400/20"></div>
-        
-        {/* 按钮内容 */}
-        <span className="relative z-10">
-          加入PoT.
-        </span>
-
-        {/* 微妙的底部光条 */}
-        <motion.div
-          className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r 
-                    from-transparent via-blue-400/50 to-transparent 
-                    opacity-0 group-hover:opacity-100"
-          initial={{ scaleX: 0 }}
-          whileHover={{ scaleX: 1 }}
-          transition={{ duration: 0.5, ease: "easeInOut" }}
-        />
-      </motion.button>
-    </motion.div>
-  ));
 
   // 🎯 重构后的移动端CTA组件 - 人机合作主题（修正版）
   const MobileFinalCTA = () => (
@@ -759,14 +751,13 @@ const [showDesktopCTA, setShowDesktopCTA] = useState(false);
             transition={{ delay: 1.4, duration: 0.6 }}
           >
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white leading-tight">
-              共创新范式
+              共创新范式。
             </h2>
             <p className="text-base text-gray-500 dark:text-gray-400 leading-relaxed font-medium">
-              Powered by Proof of Thought.
+              Rooted in Proof of Thought.
             </p>
           </motion.div>
 
-          {/* 🎯 升级版协调按钮设计 - 添加aigc-native-button类 */}
           <motion.button
             onClick={handleJoinPoT}
             className="relative px-12 py-4 
@@ -790,17 +781,21 @@ const [showDesktopCTA, setShowDesktopCTA] = useState(false);
             }}
             whileTap={{ scale: 0.98 }}
           >
-            {/* 协调的背景渐变效果 */}
-            <div className="absolute inset-0 bg-gradient-to-r from-gray-50/50 via-blue-50/30 to-gray-50/50
-                            dark:from-gray-800/50 dark:via-blue-900/20 dark:to-gray-800/50
-                            opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl"></div>
+            {/* 协调的背景渐变效果：默认可见，并根据模式改变颜色 */}
+            <div className="absolute inset-0 bg-gradient-to-r 
+                        from-gray-50/50 via-blue-50/30 to-gray-50/50
+                        dark:from-gray-800/50 dark:via-purple-900/20 dark:to-gray-800/50
+                        opacity-100 transition-opacity duration-500 rounded-2xl"></div>
             
-            {/* 微妙的霓虹边框 */}
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-blue-400/20 to-transparent 
-                            opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl border border-blue-400/30"></div>
+            {/* 微妙的霓虹边框：默认可见，并根据模式改变颜色 */}
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent 
+                        via-blue-400/20 to-transparent 
+                        dark:via-purple-400/20 
+                        opacity-100 transition-opacity duration-500 rounded-2xl 
+                        border border-blue-400/30 dark:border-purple-400/30"></div>
             
             <span className="relative z-10">
-              加入PoT
+              加入PoT.
             </span>
           </motion.button>
 
@@ -934,11 +929,13 @@ const [showDesktopCTA, setShowDesktopCTA] = useState(false);
             </div>
           )}
 
-          {/* 桌面端CTA */}
           {/* 桌面端CTA - 预留空间避免布局跳动 */}
           {!isMobile && (
             <div className="w-full flex items-center justify-center mt-8 min-h-[100px]">
-              <DesktopFinalCTA />
+              <DesktopFinalCTA 
+                showDesktopCTA={showDesktopCTA} 
+                handleJoinPoT={handleJoinPoT} 
+              />
             </div>
           )}
         </div>
