@@ -35,13 +35,12 @@ const OnboardingFeatures = () => {
   
   // 🆕 滑动指示器状态
   const [showNavigationControls, setShowNavigationControls] = useState(false);
-  
+  const [isFirstShow, setIsFirstShow] = useState(true);
   const [swiperRef, setSwiperRef] = useState(null);
 
   const pageControls = useAnimation();
   const headerControls = useAnimation();
   const cardsControls = useAnimation();
-  const navigationControls = useAnimation();
 
   // 响应式检测
   useEffect(() => {
@@ -149,26 +148,16 @@ const OnboardingFeatures = () => {
 
   // 🆕 滑动指示器延迟显示动画
   useEffect(() => {
-    const showNavigation = async () => {
-      if (isMobile) {
-        // 等待卡片动画完成后再显示导航控制
-        setTimeout(async () => {
-          setShowNavigationControls(true);
-          await navigationControls.start({
-            opacity: 1,
-            y: 0,
-            transition: { 
-              duration: 0.6, 
-              ease: [0.25, 0.46, 0.45, 0.94],
-              delay: 0.3
-            }
-          });
-        }, 1200); // 卡片动画完成后1.2秒
-      }
-    };
-
-    showNavigation();
-  }, [isMobile, navigationControls]);
+    if (isMobile) {
+      setTimeout(() => {
+        setShowNavigationControls(true);
+        // 入场动画结束后标记为非首次
+        setTimeout(() => {
+          setIsFirstShow(false);
+        }, 1200); // 等待入场动画完成
+      }, 1400);
+    }
+  }, [isMobile]);
 
   // Swiper 滑动事件处理
   const handleSlideChange = useCallback((swiper) => {
@@ -346,16 +335,16 @@ const OnboardingFeatures = () => {
     <AnimatePresence>
       {showNavigationControls && (
         <motion.div 
-          className="flex justify-center items-center mt-8"
-          initial={{ opacity: 0, y: 20 }}
-          animate={navigationControls}
+          className="flex justify-start items-center mt-8 pr-4"
+          initial={isFirstShow ? { opacity: 0, y: 20 } : false}
+          animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 20 }}
-          transition={{ duration: 0.6 }}
+          transition={{ duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
         >
           <div className="flex items-center space-x-1 bg-white/80 dark:bg-gray-900/80 
-                          backdrop-blur-2xl rounded-2xl p-2 
+                          backdrop-blur-2xl rounded-3xl p-0.5 
                           border border-gray-200/50 dark:border-gray-700/50
-                          shadow-xl shadow-gray-900/10 dark:shadow-black/20">
+                          shadow-lg shadow-gray-900/10 dark:shadow-black/20">
             
             {/* 左箭头 */}
             <motion.button
@@ -365,7 +354,7 @@ const OnboardingFeatures = () => {
                          dark:hover:bg-gray-700/50 
                          disabled:opacity-30 disabled:cursor-not-allowed
                          flex items-center justify-center transition-all duration-300
-                         active:scale-95"
+                         active:scale-95 aigc-native-button"
               whileHover={{ scale: currentIndex === 0 ? 1 : 1.05 }}
               whileTap={{ scale: currentIndex === 0 ? 1 : 0.95 }}
             >
@@ -386,7 +375,7 @@ const OnboardingFeatures = () => {
                          dark:hover:bg-gray-700/50 
                          disabled:opacity-30 disabled:cursor-not-allowed
                          flex items-center justify-center transition-all duration-300
-                         active:scale-95"
+                         active:scale-95 aigc-native-button"
               whileHover={{ scale: currentIndex >= currentFeatures.length ? 1 : 1.05 }}
               whileTap={{ scale: currentIndex >= currentFeatures.length ? 1 : 0.95 }}
             >
