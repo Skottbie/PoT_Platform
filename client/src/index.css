@@ -433,3 +433,11 @@
   --neon-color: hsl(330, 95%, 70%);
   --neon-shadow: hsl(330, 95%, 70%);
 }
+
+.mobile-feature-swiper {
+  overflow: visible !important;
+}
+
+.mobile-feature-swiper .swiper-slide {
+  height: auto;
+}

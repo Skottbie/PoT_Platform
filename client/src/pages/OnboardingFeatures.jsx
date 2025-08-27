@@ -2,6 +2,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence, useAnimation } from 'framer-motion';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Navigation } from 'swiper/modules';
+import 'swiper/css';
+import 'swiper/css/navigation';
 import { 
   Search, 
   Brain, 
@@ -29,9 +33,7 @@ const OnboardingFeatures = () => {
   const [selectedFeature, setSelectedFeature] = useState(null);
   const [showModal, setShowModal] = useState(false);
   
-  // 🆕 移动端滑动相关状态
-  const [touchStart, setTouchStart] = useState(0);
-  const [touchEnd, setTouchEnd] = useState(0);
+  const [swiperRef, setSwiperRef] = useState(null);
 
   const pageControls = useAnimation();
   const headerControls = useAnimation();
@@ -129,50 +131,29 @@ const OnboardingFeatures = () => {
     runEntranceAnimation();
   }, [pageControls, headerControls, cardsControls, isMobile]);
 
-  // 🆕 移动端滑动事件处理
-  const handleTouchStart = useCallback((e) => {
-    setTouchStart(e.targetTouches[0].clientX);
-  }, []);
-
-  const handleTouchMove = useCallback((e) => {
-    setTouchEnd(e.targetTouches[0].clientX);
-  }, []);
-
-  const handleTouchEnd = useCallback(() => {
-    if (!touchStart || !touchEnd) return;
-    
-    const distance = touchStart - touchEnd;
-    const isLeftSwipe = distance > 50;
-    const isRightSwipe = distance < -50;
-
-    if (isLeftSwipe && currentIndex < currentFeatures.length) {
-      handleNext();
+  // Swiper 滑动事件处理
+  const handleSlideChange = useCallback((swiper) => {
+    const newIndex = swiper.activeIndex;
+    setCurrentIndex(newIndex);
+    if (newIndex === currentFeatures.length) {
+      setShowFinalCTA(true);
+    } else {
+      setShowFinalCTA(false);
     }
-    if (isRightSwipe && currentIndex > 0) {
-      handlePrev();
-    }
-  }, [touchStart, touchEnd, currentIndex, currentFeatures.length]);
+  }, [currentFeatures.length]);
 
   // 移动端滑动控制
   const handleNext = useCallback(() => {
-    const newIndex = currentIndex + 1;
-    if (newIndex <= currentFeatures.length) {
-      setCurrentIndex(newIndex);
-      if (newIndex === currentFeatures.length) {
-        setShowFinalCTA(true);
-      }
+    if (swiperRef && currentIndex < currentFeatures.length) {
+      swiperRef.slideNext();
     }
-  }, [currentIndex, currentFeatures.length]);
+  }, [swiperRef, currentIndex, currentFeatures.length]);
 
   const handlePrev = useCallback(() => {
-    const newIndex = currentIndex - 1;
-    if (newIndex >= 0) {
-      setCurrentIndex(newIndex);
-      if (newIndex < currentFeatures.length) {
-        setShowFinalCTA(false);
-      }
+    if (swiperRef && currentIndex > 0) {
+      swiperRef.slidePrev();
     }
-  }, [currentIndex, currentFeatures.length]);
+  }, [swiperRef, currentIndex]);
 
   // 🆕 卡片点击处理
   const handleCardClick = useCallback((feature) => {
@@ -563,35 +544,36 @@ const OnboardingFeatures = () => {
                 }
               }}
             >
-              <div
-                className="flex transition-transform duration-300 ease-out"
-                style={{
-                  transform: `translateX(-${currentIndex * (100 / (currentFeatures.length + 1))}%)`,
-                  width: `${(currentFeatures.length + 1) * 100}%`
-                }}
-                onTouchStart={handleTouchStart}
-                onTouchMove={handleTouchMove}
-                onTouchEnd={handleTouchEnd}
+              <Swiper
+                onSwiper={setSwiperRef}
+                onSlideChange={handleSlideChange}
+                modules={[Navigation]}
+                spaceBetween={16}
+                slidesPerView={1}
+                allowTouchMove={true}
+                simulateTouch={true}
+                touchStartPreventDefault={false}
+                className="mobile-feature-swiper"
               >
                 {/* 功能卡片 */}
                 {currentFeatures.map((feature, index) => (
-                  <div key={index} style={{ width: `${100 / (currentFeatures.length + 1)}%` }} className="flex-shrink-0 px-4">
+                  <SwiperSlide key={index} className="px-4">
                     <MobileFeatureCard feature={feature} onClick={handleCardClick} />
-                  </div>
+                  </SwiperSlide>
                 ))}
                 
                 {/* 移动端CTA卡片 */}
-                <div style={{ width: `${100 / (currentFeatures.length + 1)}%` }} className="flex-shrink-0 px-4">
+                <SwiperSlide className="px-4">
                   <div className="bg-white/90 dark:bg-gray-100/10 backdrop-blur-sm rounded-2xl p-8 
                                   shadow-sm border border-gray-200/30 dark:border-gray-700/30
                                   flex flex-col items-center justify-center min-h-[320px]">
                     <MobileFinalCTA />
                   </div>
-                </div>
-              </div>
+                </SwiperSlide>
+              </Swiper>
             </motion.div>
 
-            {/* 🆕 Apple风格滑动控制按钮（参考图1样式） */}
+            {/* Apple风格滑动控制按钮保持完全不变 */}
             <div className="flex justify-center items-center mt-6">
               <div className="flex space-x-2 bg-white/80 dark:bg-gray-800/80 rounded-full p-1 
                               shadow-sm border border-gray-200/50 dark:border-gray-700/50">
@@ -599,8 +581,8 @@ const OnboardingFeatures = () => {
                   onClick={handlePrev}
                   disabled={currentIndex === 0}
                   className="p-2 rounded-full transition-colors
-                             disabled:opacity-30 disabled:cursor-not-allowed
-                             hover:bg-gray-100 dark:hover:bg-gray-700/70 aigc-native-button"
+                            disabled:opacity-30 disabled:cursor-not-allowed
+                            hover:bg-gray-100 dark:hover:bg-gray-700/70 aigc-native-button"
                 >
                   <ChevronLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" strokeWidth={1.5} />
                 </button>
@@ -609,8 +591,8 @@ const OnboardingFeatures = () => {
                   onClick={handleNext}
                   disabled={currentIndex >= currentFeatures.length}
                   className="p-2 rounded-full transition-colors
-                             disabled:opacity-30 disabled:cursor-not-allowed
-                             hover:bg-gray-100 dark:hover:bg-gray-700/70 aigc-native-button"
+                            disabled:opacity-30 disabled:cursor-not-allowed
+                            hover:bg-gray-100 dark:hover:bg-gray-700/70 aigc-native-button"
                 >
                   <ChevronRight className="w-5 h-5 text-gray-600 dark:text-gray-400" strokeWidth={1.5} />
                 </button>
