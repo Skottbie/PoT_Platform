@@ -29,9 +29,9 @@
    ======================================== */
 
 /* 🌞 Light Mode: 替换 bg-gray-50 */
-.bg-gray-50 {
+.aurora-page-bg {
   /* Light Mode 基础色 + 极光 */
-  background: 
+  background-image: 
     /* 极光层 */
     radial-gradient(
       ellipse 1200px 800px at 20% 30%, 
@@ -72,9 +72,9 @@
    ======================================== */
 
 /* 🌙 Dark Mode: 覆盖 bg-gray-50 为深色 + Cyberpunk极光 */
-.dark .bg-gray-50 {
+.dark .aurora-page-bg {
   /* Dark Mode 基础色 + Cyberpunk极光 */
-  background: 
+  background-image: 
     /* Cyberpunk极光层 */
     radial-gradient(
       ellipse 1200px 800px at 25% 25%, 
@@ -116,12 +116,12 @@
 
 /* 处理可能使用 bg-gray-900 的元素 */
 .bg-gray-900 {
-  background: linear-gradient(to bottom, #f9fafb, #f9fafb) !important;
+  background-image: linear-gradient(to bottom, #f9fafb, #f9fafb) !important;
 }
 
 .dark .bg-gray-900 {
   /* 确保dark mode下 bg-gray-900 也有极光 */
-  background: 
+  background-image: 
     radial-gradient(
       ellipse 1000px 600px at 30% 40%, 
       var(--aurora-color-1), 
@@ -251,7 +251,7 @@
 
 /* 📱 移动端优化 */
 @media (max-width: 768px) {
-  .bg-gray-50 {
+   .aurora-page-bg {
     background: 
       radial-gradient(
         ellipse 800px 600px at 30% 30%, 
