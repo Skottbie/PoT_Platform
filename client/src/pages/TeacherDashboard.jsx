@@ -930,7 +930,7 @@ const TeacherDashboard = () => {
   return (
     <PullToRefreshContainer 
       onRefresh={handlePullRefresh}
-      className="min-h-screen bg-gray-50 dark:bg-gray-900 py-4 sm:py-10 px-2 sm:px-4 transition-colors duration-300 aurora-page-bg"
+      className="min-h-screen bg-gray-50 dark:bg-gray-900 py-4 sm:py-10 px-2 sm:px-4 transition-colors duration-300"
       disabled={loading || submitting}
     >
       <div className="max-w-4xl mx-auto space-y-6">

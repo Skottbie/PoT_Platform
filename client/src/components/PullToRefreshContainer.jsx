@@ -32,6 +32,7 @@ const PullToRefreshContainer = ({
         height: '100%',
         minHeight: '100vh',
         position: 'relative',
+        background: 'transparent',
         // 🔧 重要：不设置 overflow: hidden，让页面自然滚动
       }}
     >
@@ -51,6 +52,7 @@ const PullToRefreshContainer = ({
           transition: isRefreshing ? 'none' : 'transform 0.3s ease-out',
           transform: `translateY(${isPulling || isRefreshing ? Math.min(pullDistance, threshold) : 0}px)`,
           // 🔧 重要：让内容正常流动，不设置特殊的滚动属性
+          background: 'transparent',
         }}
       >
         {children}

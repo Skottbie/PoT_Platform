@@ -154,7 +154,7 @@ const ProtectedLayout = ({ children }) => {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen  aurora-page-bg">
       <ResponsiveNavbar user={user} onUserUpdate={handleUserUpdate} />
       <main className="px-4 py-6 md:px-6">
         {children}
