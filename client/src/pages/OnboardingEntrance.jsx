@@ -3,6 +3,14 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence, useAnimation } from 'framer-motion';
 
+const ANIMATION_STATES = {
+    STEP1_TYPING: 'step1_typing',
+    STEP1_COMPLETE: 'step1_complete', 
+    BACKSPACING: 'backspacing',
+    STEP2_TYPING: 'step2_typing',
+    STEP2_COMPLETE: 'step2_complete'
+  };
+
 const OnboardingEntrance = () => {
   const navigate = useNavigate();
   const [isMobile, setIsMobile] = useState(false);
@@ -23,13 +31,7 @@ const OnboardingEntrance = () => {
     backspaceComplete: false // 新增：回撤完成状态
   });
 
-  const ANIMATION_STATES = {
-    STEP1_TYPING: 'step1_typing',
-    STEP1_COMPLETE: 'step1_complete', 
-    BACKSPACING: 'backspacing',
-    STEP2_TYPING: 'step2_typing',
-    STEP2_COMPLETE: 'step2_complete'
-  };
+
 
 
 
@@ -86,97 +88,7 @@ const OnboardingEntrance = () => {
     }
   }, []);
   
-  const handleFastForward = useCallback(() => {
-    clearAllTimeouts();
-    
-    switch (animationState) {
-      case ANIMATION_STATES.STEP1_TYPING:
-        // 快进到Step1完成状态
-        if (isMobile) {
-          setTypingState(prev => ({
-            ...prev,
-            mobileFirst: texts.step1.mobile.first,
-            mobileSecond: texts.step1.mobile.second,
-            isComplete: true,
-            showCursor: false,
-            currentTypingColumn: 2
-          }));
-        } else {
-          setTypingState(prev => ({
-            ...prev,
-            desktopEn: texts.step1.desktop.en,
-            desktopZh: texts.step1.desktop.zh,
-            isComplete: true,
-            showCursor: false
-          }));
-        }
-        
-        setAnimationState(ANIMATION_STATES.STEP1_COMPLETE);
-        
-        // 立即触发按钮显示动画
-        sloganControls.start({
-          y: -50,
-          transition: { duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }
-        });
-        
-        buttonsControls.start({
-          opacity: 1,
-          y: 0,
-          scale: 1,
-          pointerEvents: 'auto',
-          transition: { duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }
-        });
-        
-        brandControls.start({
-          opacity: 1,
-          y: 0,
-          scale: 1,
-          transition: { duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }
-        });
-        break;
-        
-      case ANIMATION_STATES.BACKSPACING:
-        // 快进到Step2开始
-        setTypingState(prev => ({
-          ...prev,
-          desktopEn: '',
-          desktopZh: '', 
-          mobileFirst: '',
-          mobileSecond: '',
-          backspaceComplete: true,
-          isBackspacing: false,
-          showCursor: false
-        }));
-        
-        setCurrentStep(2);
-        setTimeout(() => {
-          runStep2Animation();
-        }, 100);
-        break;
-        
-      case ANIMATION_STATES.STEP2_TYPING:
-        // 快进到Step2完成状态
-        setTypingState(prev => ({
-          ...prev,
-          step2Text: texts.step2.text,
-          isComplete: true,
-          showCursor: false,
-          isBackspacing: false
-        }));
-        
-        setAnimationState(ANIMATION_STATES.STEP2_COMPLETE);
-        
-        // 立即显示身份按钮
-        buttonsControls.start({
-          opacity: 1,
-          y: 0,
-          scale: 1,
-          pointerEvents: 'auto',
-          transition: { duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }
-        });
-        break;
-    }
-  }, [animationState, isMobile, texts, clearAllTimeouts, sloganControls, buttonsControls, brandControls, runStep2Animation]);
+
 
   // Step1 打字动画效果
   const runStep1Animation = useCallback(() => {
@@ -443,6 +355,98 @@ const OnboardingEntrance = () => {
     };
   }, [texts.step2, buttonsControls]);
 
+  const handleFastForward = useCallback(() => {
+    clearAllTimeouts();
+    
+    switch (animationState) {
+      case ANIMATION_STATES.STEP1_TYPING:
+        // 快进到Step1完成状态
+        if (isMobile) {
+          setTypingState(prev => ({
+            ...prev,
+            mobileFirst: texts.step1.mobile.first,
+            mobileSecond: texts.step1.mobile.second,
+            isComplete: true,
+            showCursor: false,
+            currentTypingColumn: 2
+          }));
+        } else {
+          setTypingState(prev => ({
+            ...prev,
+            desktopEn: texts.step1.desktop.en,
+            desktopZh: texts.step1.desktop.zh,
+            isComplete: true,
+            showCursor: false
+          }));
+        }
+        
+        setAnimationState(ANIMATION_STATES.STEP1_COMPLETE);
+        
+        // 立即触发按钮显示动画
+        sloganControls.start({
+          y: -50,
+          transition: { duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }
+        });
+        
+        buttonsControls.start({
+          opacity: 1,
+          y: 0,
+          scale: 1,
+          pointerEvents: 'auto',
+          transition: { duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }
+        });
+        
+        brandControls.start({
+          opacity: 1,
+          y: 0,
+          scale: 1,
+          transition: { duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }
+        });
+        break;
+        
+      case ANIMATION_STATES.BACKSPACING:
+        // 快进到Step2开始
+        setTypingState(prev => ({
+          ...prev,
+          desktopEn: '',
+          desktopZh: '', 
+          mobileFirst: '',
+          mobileSecond: '',
+          backspaceComplete: true,
+          isBackspacing: false,
+          showCursor: false
+        }));
+        
+        setCurrentStep(2);
+        setTimeout(() => {
+          runStep2Animation();
+        }, 100);
+        break;
+        
+      case ANIMATION_STATES.STEP2_TYPING:
+        // 快进到Step2完成状态
+        setTypingState(prev => ({
+          ...prev,
+          step2Text: texts.step2.text,
+          isComplete: true,
+          showCursor: false,
+          isBackspacing: false
+        }));
+        
+        setAnimationState(ANIMATION_STATES.STEP2_COMPLETE);
+        
+        // 立即显示身份按钮
+        buttonsControls.start({
+          opacity: 1,
+          y: 0,
+          scale: 1,
+          pointerEvents: 'auto',
+          transition: { duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }
+        });
+        break;
+    }
+  }, [animationState, isMobile, texts, clearAllTimeouts, sloganControls, buttonsControls, brandControls, runStep2Animation]);
+
   // Step1初始动画
   useEffect(() => {
     if (currentStep === 1) {
@@ -582,6 +586,15 @@ const OnboardingEntrance = () => {
       });
       }, 800); // 与动画时长匹配
   }, [navigate, buttonsControls, sloganControls, brandControls]); // 🆕 添加 brandControls 依赖
+
+
+    // 组件卸载清理
+    useEffect(() => {
+      return () => {
+        clearAllTimeouts();
+      };
+    }, [clearAllTimeouts]);
+
 
   // iOS兼容的竖排文字组件
   const VerticalText = ({ text, showCursor, className }) => {
@@ -881,12 +894,7 @@ const OnboardingEntrance = () => {
   );
 };
 
-// 组件卸载清理
-useEffect(() => {
-  return () => {
-    clearAllTimeouts();
-  };
-}, [clearAllTimeouts]);
+
 
 
 export default OnboardingEntrance;
