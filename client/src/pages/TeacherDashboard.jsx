@@ -11,7 +11,8 @@ import toast from 'react-hot-toast';
 import PullToRefreshContainer from '../components/PullToRefreshContainer';
 import useAutoRefresh from '../hooks/useAutoRefresh';
 import { getGreeting } from '../utils/greetings';
-import NicknamePrompt from '../components/NicknamePrompt';
+import WelcomeOnboarding from '../components/WelcomeOnboarding';
+import { useSandbox } from '../contexts/SandboxContext';
 import React from 'react';
 import { 
   // 与StudentDashboard一致的图标
@@ -2357,10 +2358,11 @@ const TeacherDashboard = () => {
           confirmVariant={confirmDialog.confirmVariant}
           loading={batchLoading}
         />
-      <NicknamePrompt
-        user={user}
-        onUserUpdate={handleUserUpdate}
-      />
+        <WelcomeOnboarding 
+          user={user} 
+          onUserUpdate={handleUserUpdate} 
+          onClose={() => {}} 
+        />
     </PullToRefreshContainer>
   );
 };
