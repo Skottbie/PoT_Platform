@@ -1,7 +1,7 @@
 // client/src/contexts/SandboxContext.jsx
 // 🎯 沙盒模式状态管理 - 完全独立，不影响现有功能
 
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback } from 'react';
 
 const SandboxContext = createContext();
 
