@@ -890,25 +890,26 @@ const fetchInitialData = useCallback(async () => {
     }
   }, [fetchInitialData, fetchTasks, currentCategory]);
 
-  // 🔕 静默自动刷新函数（完全无感）
-  const handleSilentRefresh = useCallback(async () => {
-    try {
-      // 静默获取任务数据
-      const taskRes = await api.get(`/task/mine?category=${currentCategory}`);
-      if (taskRes.data) {
-        setTasks(prev => ({ ...prev, [currentCategory]: taskRes.data }));
-      }
-      
-      // 静默获取班级数据
-      const classRes = await api.get('/class/my-classes');
-      if (classRes.data.success) {
-        setMyClasses(classRes.data.classes);
-      }
-    } catch (error) {
-      // 只记录到控制台，不显示给用户
-      console.error('静默刷新失败:', error);
+const handleSilentRefresh = useCallback(async () => {
+  try {
+    // ✅ 使用沙盒API包装
+    const taskRes = await sandboxApiGet(`/task/mine?category=${currentCategory}`, 
+      () => api.get(`/task/mine?category=${currentCategory}`)
+    );
+    const classRes = await sandboxApiGet('/class/my-classes', 
+      () => api.get('/class/my-classes')
+    );
+    
+    if (taskRes.data) {
+      setTasks(prev => ({ ...prev, [currentCategory]: taskRes.data }));
     }
-  }, [currentCategory]);
+    if (classRes.data.success) {
+      setMyClasses(classRes.data.classes);
+    }
+  } catch (error) {
+    console.error('静默刷新失败:', error);
+  }
+}, [currentCategory, sandboxApiGet]);
 
   // ⏰ 自动定时刷新（使用静默函数）
   useAutoRefresh(handleSilentRefresh, {
