@@ -1,5 +1,5 @@
 // client/src/pages/OnboardingEntrance.jsx - Step 1→Step 2 完整实现
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence, useAnimation } from 'framer-motion';
 
@@ -23,9 +23,25 @@ const OnboardingEntrance = () => {
     backspaceComplete: false // 新增：回撤完成状态
   });
 
+  const ANIMATION_STATES = {
+    STEP1_TYPING: 'step1_typing',
+    STEP1_COMPLETE: 'step1_complete', 
+    BACKSPACING: 'backspacing',
+    STEP2_TYPING: 'step2_typing',
+    STEP2_COMPLETE: 'step2_complete'
+  };
+
+
+
   const sloganControls = useAnimation();
   const buttonsControls = useAnimation();
   const brandControls = useAnimation();
+
+
+  const [animationState, setAnimationState] = useState(ANIMATION_STATES.STEP1_TYPING);
+  const timeoutRefs = useRef([]);
+  const intervalRef = useRef(null);
+
 
   // 增强的设备检测
   useEffect(() => {
@@ -60,14 +76,118 @@ const OnboardingEntrance = () => {
     }
   }), []);
 
+
+  const clearAllTimeouts = useCallback(() => {
+    timeoutRefs.current.forEach(timeout => clearTimeout(timeout));
+    timeoutRefs.current = [];
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+  }, []);
+  
+  const handleFastForward = useCallback(() => {
+    clearAllTimeouts();
+    
+    switch (animationState) {
+      case ANIMATION_STATES.STEP1_TYPING:
+        // 快进到Step1完成状态
+        if (isMobile) {
+          setTypingState(prev => ({
+            ...prev,
+            mobileFirst: texts.step1.mobile.first,
+            mobileSecond: texts.step1.mobile.second,
+            isComplete: true,
+            showCursor: false,
+            currentTypingColumn: 2
+          }));
+        } else {
+          setTypingState(prev => ({
+            ...prev,
+            desktopEn: texts.step1.desktop.en,
+            desktopZh: texts.step1.desktop.zh,
+            isComplete: true,
+            showCursor: false
+          }));
+        }
+        
+        setAnimationState(ANIMATION_STATES.STEP1_COMPLETE);
+        
+        // 立即触发按钮显示动画
+        sloganControls.start({
+          y: -50,
+          transition: { duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }
+        });
+        
+        buttonsControls.start({
+          opacity: 1,
+          y: 0,
+          scale: 1,
+          pointerEvents: 'auto',
+          transition: { duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }
+        });
+        
+        brandControls.start({
+          opacity: 1,
+          y: 0,
+          scale: 1,
+          transition: { duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }
+        });
+        break;
+        
+      case ANIMATION_STATES.BACKSPACING:
+        // 快进到Step2开始
+        setTypingState(prev => ({
+          ...prev,
+          desktopEn: '',
+          desktopZh: '', 
+          mobileFirst: '',
+          mobileSecond: '',
+          backspaceComplete: true,
+          isBackspacing: false,
+          showCursor: false
+        }));
+        
+        setCurrentStep(2);
+        setTimeout(() => {
+          runStep2Animation();
+        }, 100);
+        break;
+        
+      case ANIMATION_STATES.STEP2_TYPING:
+        // 快进到Step2完成状态
+        setTypingState(prev => ({
+          ...prev,
+          step2Text: texts.step2.text,
+          isComplete: true,
+          showCursor: false,
+          isBackspacing: false
+        }));
+        
+        setAnimationState(ANIMATION_STATES.STEP2_COMPLETE);
+        
+        // 立即显示身份按钮
+        buttonsControls.start({
+          opacity: 1,
+          y: 0,
+          scale: 1,
+          pointerEvents: 'auto',
+          transition: { duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }
+        });
+        break;
+    }
+  }, [animationState, isMobile, texts, clearAllTimeouts, sloganControls, buttonsControls, brandControls, runStep2Animation]);
+
   // Step1 打字动画效果
   const runStep1Animation = useCallback(() => {
+    setAnimationState(ANIMATION_STATES.STEP1_TYPING);
     let timeouts = [];
     let blinkInterval;
 
     const handleStep1Complete = () => {
       setTypingState(prev => ({ ...prev, isComplete: true }));
-      
+      setAnimationState(ANIMATION_STATES.STEP1_COMPLETE);
+
       let blinkCount = 0;
       blinkInterval = setInterval(() => {
         setTypingState(prev => ({ ...prev, showCursor: !prev.showCursor }));
@@ -178,6 +298,8 @@ const OnboardingEntrance = () => {
       isComplete: false 
     }));
 
+    setAnimationState(ANIMATION_STATES.BACKSPACING);
+
     if (isMobile) {
       // 移动端：先回撤第二列，再回撤第一列
       const secondText = texts.step1.mobile.second;
@@ -267,6 +389,9 @@ const OnboardingEntrance = () => {
       backspaceComplete: false // 重置回撤完成状态
     }));
 
+    setAnimationState(ANIMATION_STATES.STEP2_TYPING);
+
+
     // Step2 打字动画（横向显示）
     for (let i = 0; i <= step2Text.length; i++) {
       timeouts.push(setTimeout(() => {
@@ -290,6 +415,8 @@ const OnboardingEntrance = () => {
           clearInterval(blinkInterval);
           blinkInterval = null;
           setTypingState(prev => ({ ...prev, showCursor: false }));
+
+          setAnimationState(ANIMATION_STATES.STEP2_COMPLETE);
 
           // 显示Step2按钮
           buttonsControls.start({
@@ -320,8 +447,10 @@ const OnboardingEntrance = () => {
   useEffect(() => {
     if (currentStep === 1) {
       const timeouts = runStep1Animation();
+      timeoutRefs.current = timeouts;
       return () => {
         timeouts.forEach(timeout => clearTimeout(timeout));
+        timeoutRefs.current = [];
       };
     }
   }, [currentStep, runStep1Animation]);
@@ -527,8 +656,11 @@ const OnboardingEntrance = () => {
     }
   };
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center px-4 py-8 overflow-hidden fixed inset-0">
+    return (
+      <div 
+        className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center px-4 py-8 overflow-hidden fixed inset-0"
+        onClick={handleFastForward}
+      >
       {/* 背景装饰 */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-purple-300 dark:bg-purple-900 rounded-full opacity-20 blur-3xl"></div>
@@ -654,6 +786,7 @@ const OnboardingEntrance = () => {
               style={{ 
                 pointerEvents: buttonsControls.opacity === 1 ? 'auto' : 'none' 
               }}
+              onClick={(e) => e.stopPropagation()}
             >
               <motion.button
                 onClick={handleExploreClick}
@@ -697,6 +830,7 @@ const OnboardingEntrance = () => {
               style={{ 
                 pointerEvents: buttonsControls.opacity === 1 ? 'auto' : 'none' 
               }}
+              onClick={(e) => e.stopPropagation()}
             >
               <motion.button
                 onClick={handleStudentSelect}
@@ -746,5 +880,13 @@ const OnboardingEntrance = () => {
     </div>
   );
 };
+
+// 组件卸载清理
+useEffect(() => {
+  return () => {
+    clearAllTimeouts();
+  };
+}, [clearAllTimeouts]);
+
 
 export default OnboardingEntrance;
