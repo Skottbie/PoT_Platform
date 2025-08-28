@@ -88,17 +88,153 @@ export const useSandboxData = () => {
       // 获取任务提交记录
       const taskId = url.split('/').pop();
       const submissions = getSandboxData('submissions')?.filter(sub => sub.task === taskId) || [];
+      const classes = getSandboxData('classes') || [];
       
-      return { data: submissions };
+      // 🎯 构建学生姓名映射（模拟后端的populate过程）
+      const studentNameMap = {};
+      classes.forEach(classData => {
+        classData.studentList.forEach(student => {
+          if (student.userId) {
+            studentNameMap[student.userId] = {
+              name: student.name,
+              email: `${student.name.toLowerCase().replace(/\s+/g, '')}@student.demo`
+            };
+          }
+        });
+      });
+      
+      // 🎯 为每个提交记录填充学生信息（模拟后端populate）
+      const enrichedSubmissions = submissions.map(submission => ({
+        ...submission,
+        student: studentNameMap[submission.student] ? {
+          _id: submission.student,
+          email: studentNameMap[submission.student].email,
+          name: studentNameMap[submission.student].name
+        } : {
+          _id: submission.student,
+          email: 'unknown@demo.com',
+          name: null
+        }
+      }));
+      
+      return { data: enrichedSubmissions };
     }
 
     if (url.includes('/download/')) {
-      // 下载AIGC日志
+      // 🎯 处理AIGC日志下载
       const logId = url.split('/').pop();
+      
+      // 🎯 从DEMO_DATA获取AIGC日志数据（直接从context获取）
       const aigcLogs = DEMO_DATA?.aigcLogs || {};
       const logContent = aigcLogs[logId] || [];
       
+      // 🎯 如果没找到对应的日志，返回示例数据
+      if (logContent.length === 0 && logId.startsWith('demo-aigc-log-')) {
+        return {
+          data: [
+            {
+              role: 'user',
+              content: '这是示例AIGC日志记录',
+              model: 'qwen-turbo',
+              timestamp: Date.now(),
+              potMode: false
+            },
+            {
+              role: 'assistant',
+              content: '这是AI的回复示例',
+              model: 'qwen-turbo',
+              timestamp: Date.now(),
+              potMode: false
+            }
+          ]
+        };
+      }
+      
       return { data: logContent };
+    }
+
+    // 🎯 新增：处理单个任务详情 /task/{id}
+    if (url.match(/\/task\/[^\/]+$/) && !url.includes('/mine') && !url.includes('/all')) {
+      const taskId = url.split('/').pop();
+      const task = getSandboxData('tasks')?.find(t => t._id === taskId);
+      
+      if (task) {
+        return { data: task };
+      } else {
+        // 如果找不到对应的示例任务，返回404模拟
+        throw new Error('任务不存在');
+      }
+    }
+
+    // 🎯 新增：处理班级提交情况 /task/{id}/class-status  
+    if (url.includes('/class-status')) {
+      const taskId = url.split('/')[2]; // 从 /task/{id}/class-status 中提取 id
+      const task = getSandboxData('tasks')?.find(t => t._id === taskId);
+      const classes = getSandboxData('classes') || [];
+      const submissions = getSandboxData('submissions') || [];
+      
+      if (!task) {
+        throw new Error('任务不存在');
+      }
+
+      // 构建班级提交状态数据
+      const classStatusList = classes.map(classData => {
+        const taskSubmissions = submissions.filter(sub => sub.task === taskId);
+        
+        // 构建提交映射
+        const submissionMap = {};
+        taskSubmissions.forEach(sub => {
+          submissionMap[sub.student] = {
+            submitted: true,
+            submittedAt: sub.submittedAt,
+            isLateSubmission: sub.isLateSubmission,
+            lateMinutes: sub.lateMinutes || 0
+          };
+        });
+
+        const students = classData.studentList.map(student => {
+          const submissionInfo = submissionMap[student.userId] || {};
+          
+          return {
+            name: student.name,
+            studentId: student.studentId,
+            userId: student.userId,
+            hasJoined: !!student.userId,
+            submitted: !!submissionInfo.submitted,
+            submittedAt: submissionInfo.submittedAt,
+            isLateSubmission: submissionInfo.isLateSubmission || false,
+            lateMinutes: submissionInfo.lateMinutes || 0
+          };
+        });
+
+        const totalStudents = students.length;
+        const joinedStudents = students.filter(s => s.hasJoined).length;
+        const submittedStudents = students.filter(s => s.submitted).length;
+        const lateSubmissions = students.filter(s => s.submitted && s.isLateSubmission).length;
+
+        return {
+          classId: classData._id,
+          className: classData.name,
+          totalStudents,
+          joinedStudents,
+          submittedStudents,
+          lateSubmissions,
+          students: students.sort((a, b) => a.studentId.localeCompare(b.studentId))
+        };
+      });
+
+      return {
+        data: {
+          success: true,
+          task: {
+            title: task.title,
+            deadline: task.deadline,
+            description: task.description,
+            allowLateSubmission: task.allowLateSubmission
+          },
+          classStatus: classStatusList
+        }
+      };
     }
 
     // 默认返回空数据

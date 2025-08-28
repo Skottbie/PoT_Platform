@@ -2479,7 +2479,7 @@ const getModelDisplayName = useCallback((modelValue, isPotMode = false) => {
                       <option value="qwen-flash">通义千问-Flash</option>
                       <option value="qwen-plus">通义千问-Plus</option>
                       <option value="deepseek-r1-distill">DeepSeek-R1</option>
-                      <option value="ernie-speed">ERNIE-Speed</option>
+                      <option value="ernie-speed">文心一言-Speed</option>
                       <option value="openai">ChatGPT*(维护中)</option>
                     </select>
                     }

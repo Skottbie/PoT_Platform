@@ -10,6 +10,8 @@ import toast from 'react-hot-toast';
 import PullToRefreshContainer from '../components/PullToRefreshContainer';
 import useAutoRefresh from '../hooks/useAutoRefresh';
 import { createPortal } from 'react-dom';
+import { useSandboxData } from '../hooks/useSandboxData';
+
 
 import { 
   FileText,
@@ -58,6 +60,8 @@ const TeacherTaskSubmissions = () => {
   const [submittingFeedback, setSubmittingFeedback] = useState(false);
   const [collapsedSubmissions, setCollapsedSubmissions] = useState({});
 
+  const { sandboxApiGet } = useSandboxData();
+
   // 格式化学生显示信息
   const formatStudentDisplay = (student) => {
     if (!student) return '未知';
@@ -82,10 +86,10 @@ const TeacherTaskSubmissions = () => {
     }));
   };
 
-  // 🔧 修复：将 refreshData 函数定义提前，避免初始化错误
   const refreshData = async () => {
     try {
-      const res = await api.get(`/submission/by-task/${taskId}`);
+      // 🎭 使用沙盒API包装
+      const res = await sandboxApiGet(`/submission/by-task/${taskId}`, () => api.get(`/submission/by-task/${taskId}`));
       setSubmissions(res.data);
     } catch (err) {
       console.error('刷新数据失败:', err);
@@ -93,15 +97,13 @@ const TeacherTaskSubmissions = () => {
     }
   };
 
-  // 🔧 修复：获取初始数据的函数也要提前定义
   const fetchTaskAndSubmissions = async () => {
     try {
-      // 获取任务信息
-      const taskRes = await api.get(`/task/${taskId}`);
+      // 🎭 使用沙盒API包装
+      const taskRes = await sandboxApiGet(`/task/${taskId}`, () => api.get(`/task/${taskId}`));
       setTask(taskRes.data);
 
-      // 获取提交记录
-      const res = await api.get(`/submission/by-task/${taskId}`);
+      const res = await sandboxApiGet(`/submission/by-task/${taskId}`, () => api.get(`/submission/by-task/${taskId}`));
       setSubmissions(res.data);
     } catch (err) {
       console.error('获取数据失败', err);

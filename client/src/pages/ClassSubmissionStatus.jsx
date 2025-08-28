@@ -7,6 +7,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import PullToRefreshContainer from '../components/PullToRefreshContainer';
 import useAutoRefresh from '../hooks/useAutoRefresh';
 import toast from 'react-hot-toast';
+import { useSandboxData } from '../hooks/useSandboxData';
+
 import { 
   BarChart3, 
   CheckCircle, 
@@ -28,10 +30,13 @@ const ClassSubmissionStatus = () => {
   const [data, setData] = useState(null);
   const [expandedClasses, setExpandedClasses] = useState(new Set());
 
+  const { sandboxApiGet } = useSandboxData();
+
   // 🔧 核心数据获取函数
   const fetchClassStatus = useCallback(async () => {
     try {
-      const res = await api.get(`/task/${taskId}/class-status`);
+      // 🎭 使用沙盒API包装
+      const res = await sandboxApiGet(`/task/${taskId}/class-status`, () => api.get(`/task/${taskId}/class-status`));
       setData(res.data);
     } catch (err) {
       console.error('获取班级提交情况失败:', err);
@@ -39,7 +44,7 @@ const ClassSubmissionStatus = () => {
     } finally {
       setLoading(false);
     }
-  }, [taskId, navigate]);
+  }, [taskId, navigate, sandboxApiGet]);
 
   useEffect(() => {
     fetchClassStatus();
@@ -48,24 +53,26 @@ const ClassSubmissionStatus = () => {
   // 🔧 修复：下拉刷新专用函数（包含toast）
   const handlePullRefresh = useCallback(async () => {
     try {
-      const res = await api.get(`/task/${taskId}/class-status`);
+      // 🎭 使用沙盒API包装
+      const res = await sandboxApiGet(`/task/${taskId}/class-status`, () => api.get(`/task/${taskId}/class-status`));
       setData(res.data);
       toast.success('刷新成功');
     } catch (err) {
       console.error('刷新失败:', err);
       toast.error('刷新失败，请重试');
     }
-  }, [taskId]);
+  }, [taskId, sandboxApiGet]);
 
   // 🔧 修复：自动刷新专用函数（静默，无toast）
   const handleAutoRefresh = useCallback(async () => {
     try {
-      const res = await api.get(`/task/${taskId}/class-status`);
+      // 🎭 使用沙盒API包装
+      const res = await sandboxApiGet(`/task/${taskId}/class-status`, () => api.get(`/task/${taskId}/class-status`));
       setData(res.data);
     } catch (err) {
       console.error('自动刷新失败:', err);
     }
-  }, [taskId]);
+  }, [taskId, sandboxApiGet]);
 
   // 🔧 使用独立的自动刷新函数
   useAutoRefresh(handleAutoRefresh, {
