@@ -442,10 +442,11 @@ export const SandboxProvider = ({ children }) => {
   };
 
   // 🎁 标记已看过欢迎提示
-  const markWelcomeSeen = () => {
+  const markWelcomeSeen = useCallback(() => {
     localStorage.setItem('hasSeenSandboxWelcome', 'true');
     setShowFirstTimeWelcome(false);
-  };
+    console.log('已标记看过沙盒欢迎提示');
+  }, []);
 
   // 🎯 获取沙盒数据（应用运行时修改）
   const getSandboxData = (dataType) => {

@@ -13,6 +13,8 @@ import useAutoRefresh from '../hooks/useAutoRefresh';
 import { getGreeting } from '../utils/greetings';
 import WelcomeOnboarding from '../components/WelcomeOnboarding';
 import { useSandbox } from '../contexts/SandboxContext';
+import SandboxBanner from '../components/SandboxBanner';
+import { useSandboxData } from '../hooks/useSandboxData';
 import React from 'react';
 import { 
   // 与StudentDashboard一致的图标
@@ -169,6 +171,8 @@ const TeacherDashboard = () => {
   // 固定欢迎词状态
   const [welcomeMessage, setWelcomeMessage] = useState('欢迎回来');
 
+  const { sandboxApiGet, sandboxApiPost } = useSandboxData();
+
   const handleUserUpdate = useCallback((updatedUser) => {
     setUser(updatedUser);
   }, []);
@@ -185,20 +189,20 @@ const TeacherDashboard = () => {
   }, []);
 
   // 🚀 并发获取所有初始数据
-  const fetchInitialData = useCallback(async () => {
-    try {
-      setLoading(true);
-      
-      // 并行请求所有关键数据
-      const promises = [
-        api.get('/user/profile'),
-        api.get('/class/my-classes'),
-        api.get('/task/mine?category=active'),
-        api.get('/task/mine?category=archived'),
-        api.get('/task/mine?category=deleted')
-      ];
+const fetchInitialData = useCallback(async () => {
+  try {
+    setLoading(true);
+    
+    // 🎭 用沙盒API包装原有的API调用
+    const promises = [
+      sandboxApiGet('/user/profile', () => api.get('/user/profile')),
+      sandboxApiGet('/class/my-classes', () => api.get('/class/my-classes')),
+      sandboxApiGet('/task/mine?category=active', () => api.get('/task/mine?category=active')),
+      sandboxApiGet('/task/mine?category=archived', () => api.get('/task/mine?category=archived')),
+      sandboxApiGet('/task/mine?category=deleted', () => api.get('/task/mine?category=deleted'))
+    ];
 
-      const results = await Promise.allSettled(promises);
+    const results = await Promise.allSettled(promises);
       
       // 处理用户信息
       if (results[0].status === 'fulfilled') {
@@ -230,7 +234,7 @@ const TeacherDashboard = () => {
     } finally {
       setLoading(false);
     }
-  }, [navigate]);
+  }, [navigate, sandboxApiGet]);
 
   useEffect(() => {
     fetchInitialData();
@@ -265,12 +269,15 @@ const TeacherDashboard = () => {
   // 📌 获取任务函数 - 优化为只在需要时请求
   const fetchTasks = useCallback(async (category = 'active') => {
     try {
-      const res = await api.get(`/task/mine?category=${category}`);
+      const res = await sandboxApiGet(
+        `/task/mine?category=${category}`, 
+        () => api.get(`/task/mine?category=${category}`)
+      );
       setTasks(prev => ({ ...prev, [category]: res.data }));
     } catch (err) {
       console.error('获取任务失败:', err);
     }
-  }, []);
+  }, [sandboxApiGet]); // 🔧 依赖数组更新
 
   // 📌 切换任务分类 - 延迟加载策略
   const handleCategoryChange = useCallback(async (category) => {
@@ -311,6 +318,8 @@ const TeacherDashboard = () => {
     }
 
     setSubmitting(true);
+
+    const res = await sandboxApiPost('/task', form, () => api.post('/task', form));
 
     // 🚀 乐观更新 - 立即显示成功状态
     const tempTask = {
@@ -373,7 +382,7 @@ const TeacherDashboard = () => {
     } finally {
       setSubmitting(false);
     }
-  }, [form]);
+  }, [form, sandboxApiPost, fetchInitialData]);
 
   // 📌 任务操作函数 - 添加乐观更新
   const handleTaskOperation = useCallback(async (taskId, operation, options = {}) => {
@@ -935,6 +944,7 @@ const TeacherDashboard = () => {
       disabled={loading || submitting}
     >
       <div className="max-w-4xl mx-auto space-y-6">
+        <SandboxBanner />
         {/* 欢迎区域 - 使用智能欢迎词 */}
         <motion.div
           className="mb-6"

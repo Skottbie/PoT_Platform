@@ -293,10 +293,10 @@ const UserProfile = () => {
                   />
                   <div className="flex-1">
                     <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                      显示昵称设置提醒
+                      显示新手引导提醒
                     </div>
                     <div className="text-xs text-gray-500 dark:text-gray-400">
-                      提醒我设置昵称
+                      包含设置昵称、沙盒模式选项
                     </div>
                   </div>
                 </label>
