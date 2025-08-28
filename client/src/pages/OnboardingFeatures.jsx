@@ -641,12 +641,12 @@ const [showDesktopCTA, setShowDesktopCTA] = useState(false);
                     </div>
                   </div>
 
-                  {/* 配图区域占位符 */}
+                  {/* 配图区域占位符
                   <div className="bg-gray-100 dark:bg-gray-800/50 rounded-xl p-8 text-center">
                     <p className="text-gray-500 dark:text-gray-400">
                       {feature.placeholder}
                     </p>
-                  </div>
+                  </div> */}
                 </div>
               </div>
             </motion.div>
@@ -816,9 +816,12 @@ const [showDesktopCTA, setShowDesktopCTA] = useState(false);
   );
 
   return (
-    <div className="h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 
-                    dark:from-gray-900 dark:via-gray-800 dark:to-purple-900
-                    flex flex-col items-center justify-center px-4 py-safe overflow-hidden fixed inset-0">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center px-4 py-8 overflow-hidden fixed inset-0">
+      {/* 背景装饰 */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-purple-300 dark:bg-purple-900 rounded-full opacity-20 blur-3xl"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-300 dark:bg-blue-900 rounded-full opacity-20 blur-3xl"></div>
+      </div>
       
       <motion.div
         className="w-full max-w-7xl mx-auto h-full flex flex-col justify-center"
