@@ -389,7 +389,8 @@ const TeacherTaskSubmissions = () => {
         setExpandedJsons((prev) => ({ ...prev, [aigcLogId]: null }));
       } else {
         try {
-          const res = await api.get(`/download/${aigcLogId}`);
+          // 🎭 使用沙盒API包装
+          const res = await sandboxApiGet(`/download/${aigcLogId}`, () => api.get(`/download/${aigcLogId}`));
           setExpandedJsons((prev) => ({ ...prev, [aigcLogId]: res.data }));
         } catch (error) {
           console.error('AIGC 记录加载失败:', error);

@@ -20,12 +20,14 @@ import Button from '../components/Button';
 import PullToRefreshContainer from '../components/PullToRefreshContainer';
 import useAutoRefresh from '../hooks/useAutoRefresh';
 import { useCallback } from 'react';
+import { useSandboxData } from '../hooks/useSandboxData';
 
 const MyClasses = () => {
   const navigate = useNavigate();
   const [classes, setClasses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const { sandboxApiGet } = useSandboxData();
 
   // 检测用户的动画偏好
   const prefersReducedMotion = useMemo(() => {
@@ -33,21 +35,22 @@ const MyClasses = () => {
   }, []);
 
   useEffect(() => {
-    const fetchClasses = async () => {
-      try {
-        const res = await api.get('/class/my-classes');
-        if (res.data.success) {
-          setClasses(res.data.classes);
-        } else {
-          setError(res.data.message || '获取班级失败');
-        }
-      } catch (err) {
-        console.error('❌ 获取班级失败:', err);
-        setError('网络错误或服务器异常');
-      } finally {
-        setLoading(false);
+  const fetchClasses = async () => {
+    try {
+      // 🎭 使用沙盒API包装
+      const res = await sandboxApiGet('/class/my-classes', () => api.get('/class/my-classes'));
+      if (res.data.success) {
+        setClasses(res.data.classes);
+      } else {
+        setError(res.data.message || '获取班级失败');
       }
-    };
+    } catch (err) {
+      console.error('❌ 获取班级失败:', err);
+      setError('网络错误或服务器异常');
+    } finally {
+      setLoading(false);
+    }
+  };
 
     fetchClasses();
   }, []);
@@ -60,29 +63,31 @@ const MyClasses = () => {
 
   const handlePullRefresh = useCallback(async () => {
     try {
-      const res = await api.get('/class/my-classes');
+      // 🎭 使用沙盒API包装
+      const res = await sandboxApiGet('/class/my-classes', () => api.get('/class/my-classes'));
       if (res.data.success) {
         setClasses(res.data.classes);
-        toast.success('刷新成功');
       }
+      toast.success('刷新成功');
     } catch (err) {
       console.error('刷新失败:', err);
       toast.error('刷新失败，请重试');
     }
-  }, []);
+  }, [sandboxApiGet]);
 
   // 🔕 静默自动刷新函数
   const handleSilentRefresh = useCallback(async () => {
     try {
-      const res = await api.get('/class/my-classes');
+      // 🎭 使用沙盒API包装
+      const res = await sandboxApiGet('/class/my-classes', () => api.get('/class/my-classes'));
       if (res.data.success) {
         setClasses(res.data.classes);
       }
     } catch (error) {
       console.error('静默刷新失败:', error);
     }
-  }, []);
-
+  }, [sandboxApiGet]);
+  
   // ⏰ 自动定时刷新（使用静默函数）
   useAutoRefresh(handleSilentRefresh, {
     interval: 180000, // 3分钟
