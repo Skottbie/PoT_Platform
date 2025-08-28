@@ -13,7 +13,10 @@ const SandboxBanner = () => {
     sandboxChanges 
   } = useSandbox();
 
-  if (!isSandboxMode) return null;
+  // 🎯 检查用户角色，只有教师端才显示沙盒横幅
+  const userRole = localStorage.getItem('role');
+  
+  if (!isSandboxMode || userRole !== 'teacher') return null;
 
   const handleExitSandbox = () => {
     toggleSandboxMode(false);
@@ -45,7 +48,7 @@ const SandboxBanner = () => {
               <span className="hidden sm:inline"> - 当前使用示例数据体验平台功能</span>
             </p>
             <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
-              沙盒模式提供示例数据，您无法在沙盒模式中提交任何更改。
+              沙盒模式提供示例数据，您无法在沙盒模式中提交任何更改。您可在用户设置页面退出沙盒模式。
               {sandboxChanges.size > 0 && (
                 <span className="ml-2">
                   • 已记录 {sandboxChanges.size} 个操作
@@ -68,7 +71,7 @@ const SandboxBanner = () => {
             </button>
           )}
           
-          {/* 退出沙盒模式 */}
+          {/* 退出沙盒模式
           <button
             onClick={handleExitSandbox}
             className="p-1.5 text-amber-600 hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300 
@@ -76,7 +79,7 @@ const SandboxBanner = () => {
             title="退出沙盒模式"
           >
             <X className="w-4 h-4" />
-          </button>
+          </button> */}
         </div>
       </div>
     </motion.div>

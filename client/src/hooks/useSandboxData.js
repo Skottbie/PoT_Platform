@@ -263,64 +263,33 @@ export const useSandboxData = () => {
     
   }, [isSandboxMode, getSandboxData, DEMO_DATA]);
 
-  // 🎯 拦截POST/PUT/DELETE操作（记录但不执行）
-  const interceptApiMutation = useCallback(async (method, url, data, originalApiCall) => {
+    // 🎯 拦截POST/PUT/DELETE操作（沙盒模式直接禁止修改）
+    const interceptApiMutation = useCallback(async (method, url, data, originalApiCall) => {
     if (!isSandboxMode) {
-      // 非沙盒模式，正常调用API
-      return await originalApiCall();
+        // 非沙盒模式，正常调用API
+        return await originalApiCall();
     }
 
-    // 🎭 沙盒模式下记录操作但不执行
-    console.log(`🎭 沙盒记录操作: ${method} ${url}`, data);
+    // 🚫 沙盒模式下直接禁止所有修改操作
+    console.log(`🎭 沙盒模式禁止操作: ${method} ${url}`, data);
     
-    // 模拟网络延迟
+    // 模拟网络延迟以提供真实的用户体验
     await new Promise(resolve => setTimeout(resolve, 300 + Math.random() * 200));
 
-    // 记录操作
-    recordSandboxChange(method, url, data);
-
-    // 根据操作类型返回模拟响应
-    if (url.includes('/task') && method === 'POST') {
-      // 创建任务
-      return {
+    // 抛出友好的错误信息
+    const errorMessage = '沙盒模式下无法进行修改操作';
+    const error = new Error(errorMessage);
+    error.response = {
         data: {
-          success: true,
-          message: '沙盒模式：任务创建成功（未实际保存）',
-          task: {
-            _id: `demo-new-task-${Date.now()}`,
-            ...data,
-            createdAt: new Date(),
-            createdBy: 'demo-teacher-1'
-          }
-        }
-      };
-    }
-
-    if (url.includes('/class') && method === 'POST') {
-      // 创建班级
-      return {
-        data: {
-          success: true,
-          message: '沙盒模式：班级创建成功（未实际保存）',
-          class: {
-            _id: `demo-new-class-${Date.now()}`,
-            ...data,
-            createdAt: new Date(),
-            teacherId: 'demo-teacher-1'
-          }
-        }
-      };
-    }
-
-    // 通用成功响应
-    return {
-      data: {
-        success: true,
-        message: `沙盒模式：${method} 操作已记录（未实际执行）`
-      }
+        success: false,
+        message: errorMessage,
+        sandboxMode: true
+        },
+        status: 403
     };
-
-  }, [isSandboxMode, recordSandboxChange]);
+    
+    throw error;
+    }, [isSandboxMode]);
 
   // 🎯 便捷的API封装函数
   const sandboxApiGet = useCallback((url, originalApiCall) => {

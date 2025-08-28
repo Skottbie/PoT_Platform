@@ -93,8 +93,14 @@ const WelcomeOnboarding = ({ user, onUserUpdate, onClose }) => {
         const updatedUser = response.data.user;
         onUserUpdate(updatedUser); // 调用Dashboard的用户更新函数
         
-        // 进入下一步：沙盒模式选择
-        setCurrentStep('sandbox');
+        // 🎯 根据用户角色决定下一步
+        if (user?.role === 'teacher') {
+          // 教师端：进入沙盒模式选择
+          setCurrentStep('sandbox');
+        } else {
+          // 学生端：直接完成，不显示沙盒选择
+          await handleStudentComplete();
+        }
       }
     } catch (error) {
       console.error('设置昵称失败:', error);
@@ -105,8 +111,36 @@ const WelcomeOnboarding = ({ user, onUserUpdate, onClose }) => {
   };
 
   // 处理跳过昵称设置，直接进入沙盒选择
-  const handleSkipNickname = () => {
-    setCurrentStep('sandbox');
+  const handleSkipNickname = async () => {
+    // 🎯 根据用户角色决定下一步
+    if (user?.role === 'teacher') {
+      // 教师端：进入沙盒模式选择
+      setCurrentStep('sandbox');
+    } else {
+      // 学生端：直接完成
+      await handleStudentComplete();
+    }
+  };
+
+const handleStudentComplete = async () => {
+    try {
+      await markWelcomeSeen();
+      toast.success('✨ 欢迎来到PoTAcademy！开始你的学习之旅');
+      
+      setCurrentStep('complete');
+      
+      // 延迟关闭
+      setTimeout(() => {
+        handleClose();
+        setTimeout(() => {
+          setShowCelebration(true);
+        }, 300);
+      }, 1500);
+      
+    } catch (error) {
+      console.error('完成设置失败:', error);
+      toast.error('操作失败，请重试');
+    }
   };
 
   // 处理沙盒模式选择
@@ -225,7 +259,7 @@ const WelcomeOnboarding = ({ user, onUserUpdate, onClose }) => {
                     <div className="bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 p-6 text-center relative">
                       <button
                         onClick={handleNeverShow}
-                        className="absolute top-4 right-4 p-1 hover:bg-white/20 rounded-full transition-colors"
+                        className="absolute top-4 right-4 p-1 hover:bg-white/20 rounded-full transition-colors aigc-native-button"
                         title="不再显示"
                       >
                         <X className="w-5 h-5 text-white" />
@@ -335,7 +369,7 @@ const WelcomeOnboarding = ({ user, onUserUpdate, onClose }) => {
                     <div className="bg-gradient-to-r from-indigo-500 via-purple-500 to-cyan-500 p-6 text-center relative">
                       <button
                         onClick={handleBack}
-                        className="absolute top-4 left-4 p-1 hover:bg-white/20 rounded-full transition-colors"
+                        className="absolute top-4 left-4 p-1 hover:bg-white/20 rounded-full transition-colors aigc-native-button"
                         title="返回上一步"
                       >
                         <ArrowLeft className="w-5 h-5 text-white" />
@@ -363,7 +397,7 @@ const WelcomeOnboarding = ({ user, onUserUpdate, onClose }) => {
                         className="w-full p-4 border-2 border-blue-200 dark:border-blue-700 rounded-xl
                                  hover:border-blue-400 dark:hover:border-blue-500
                                  hover:bg-blue-50 dark:hover:bg-blue-900/20
-                                 transition-all duration-200 text-left group"
+                                 transition-all duration-200 text-left group aigc-native-button"
                       >
                         <div className="flex items-start gap-3">
                           <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center flex-shrink-0">
@@ -392,7 +426,7 @@ const WelcomeOnboarding = ({ user, onUserUpdate, onClose }) => {
                         className="w-full p-4 border-2 border-gray-200 dark:border-gray-700 rounded-xl
                                  hover:border-gray-400 dark:hover:border-gray-500
                                  hover:bg-gray-50 dark:hover:bg-gray-700/20
-                                 transition-all duration-200 text-left group"
+                                 transition-all duration-200 text-left group aigc-native-button"
                       >
                         <div className="flex items-start gap-3">
                           <div className="w-10 h-10 bg-gradient-to-br from-gray-600 to-gray-800 rounded-xl flex items-center justify-center flex-shrink-0">
@@ -403,7 +437,7 @@ const WelcomeOnboarding = ({ user, onUserUpdate, onClose }) => {
                               ✨ 直接开始使用
                             </h3>
                             <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
-                              立即进入正常使用模式，从创建第一个班级或加入班级开始你的PoTAcademy之旅。
+                              立即进入正常使用模式，从创建第一个班级开始你的PoTAcademy之旅。
                             </p>
                             <div className="mt-2 flex items-center gap-1 text-xs text-gray-600 dark:text-gray-400">
                               <span>适合有经验的用户</span>

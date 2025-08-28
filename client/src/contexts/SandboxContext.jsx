@@ -392,34 +392,49 @@ const DEMO_DATA = {
 };
 
 export const SandboxProvider = ({ children }) => {
-  // 🎭 沙盒模式状态
-  const [isSandboxMode, setIsSandboxMode] = useState(false);
-  const [showFirstTimeWelcome, setShowFirstTimeWelcome] = useState(false);
+  // 🎭 沙盒模式状态 - 从localStorage初始化
+  const [isSandboxMode, setIsSandboxMode] = useState(() => {
+    try {
+      const stored = localStorage.getItem('potacademy_sandbox_mode');
+      return stored === 'true';
+    } catch (error) {
+      console.warn('读取沙盒模式状态失败:', error);
+      return false;
+    }
+  });
+  
+  const [showFirstTimeWelcome, setShowFirstTimeWelcome] = useState(() => {
+    try {
+      return localStorage.getItem('hasSeenSandboxWelcome') !== 'true';
+    } catch (error) {
+      console.warn('读取欢迎提示状态失败:', error);
+      return true;
+    }
+  });
   
   // 🗃️ 沙盒运行时数据（在内存中的临时修改）
   const [sandboxChanges, setSandboxChanges] = useState(new Map());
 
-  // 🎯 初始化检查（检查是否首次登录）
-  useEffect(() => {
-    const hasSeenWelcome = localStorage.getItem('hasSeenSandboxWelcome');
-    if (!hasSeenWelcome) {
-      setShowFirstTimeWelcome(true);
-    }
-  }, []);
-
-  // 🔧 沙盒模式切换
-  const toggleSandboxMode = (enabled) => {
+  // 🔧 沙盒模式切换 - 添加持久化
+  const toggleSandboxMode = useCallback((enabled) => {
     console.log(`沙盒模式 ${enabled ? '开启' : '关闭'}`);
     setIsSandboxMode(enabled);
+    
+    // 持久化到localStorage
+    try {
+      localStorage.setItem('potacademy_sandbox_mode', enabled.toString());
+    } catch (error) {
+      console.warn('保存沙盒模式状态失败:', error);
+    }
     
     // 清除之前的沙盒修改
     if (!enabled) {
       setSandboxChanges(new Map());
     }
-  };
+  }, []);
 
   // 📝 记录沙盒中的操作（暂时只记录，不实际执行）
-  const recordSandboxChange = (type, id, data) => {
+  const recordSandboxChange = useCallback((type, id, data) => {
     if (!isSandboxMode) return;
     
     const newChanges = new Map(sandboxChanges);
@@ -433,28 +448,32 @@ export const SandboxProvider = ({ children }) => {
     setSandboxChanges(newChanges);
     
     console.log(`沙盒操作记录: ${type}`, { id, data });
-  };
+  }, [isSandboxMode, sandboxChanges]);
 
   // 🧹 清空沙盒修改
-  const clearSandboxChanges = () => {
+  const clearSandboxChanges = useCallback(() => {
     setSandboxChanges(new Map());
     console.log('沙盒修改已清空');
-  };
+  }, []);
 
   // 🎁 标记已看过欢迎提示
   const markWelcomeSeen = useCallback(() => {
-    localStorage.setItem('hasSeenSandboxWelcome', 'true');
-    setShowFirstTimeWelcome(false);
-    console.log('已标记看过沙盒欢迎提示');
+    try {
+      localStorage.setItem('hasSeenSandboxWelcome', 'true');
+      setShowFirstTimeWelcome(false);
+      console.log('已标记看过沙盒欢迎提示');
+    } catch (error) {
+      console.warn('保存欢迎提示状态失败:', error);
+    }
   }, []);
 
   // 🎯 获取沙盒数据（应用运行时修改）
-    const getSandboxData = (dataType) => {
+  const getSandboxData = useCallback((dataType) => {
     if (!isSandboxMode) return null;
     
     // 🎯 对于aigcLogs，返回对象而不是数组
     if (dataType === 'aigcLogs') {
-        return DEMO_DATA.aigcLogs || {};
+      return DEMO_DATA.aigcLogs || {};
     }
     
     const baseData = DEMO_DATA[dataType] || [];
@@ -462,7 +481,7 @@ export const SandboxProvider = ({ children }) => {
     // TODO: 后续步骤中会实现应用运行时修改的逻辑
     // 目前先返回基础示例数据
     return baseData;
-    };
+  }, [isSandboxMode]);
 
   const value = {
     // 状态

@@ -7,19 +7,23 @@ import api from '../api/axiosInstance';
 import toast from 'react-hot-toast';
 import { ArrowLeft, User, Settings, Save, RotateCcw } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
+import { useSandbox } from '../contexts/SandboxContext';
 
 const UserProfile = () => {
   const navigate = useNavigate();
   const { theme, setTheme } = useTheme();
   const [user, setUser] = useState(null);
+  const { isSandboxMode, toggleSandboxMode } = useSandbox();
   const [formData, setFormData] = useState({
     nickname: '',
     theme: 'auto',
-    showNicknamePrompt: true
+    showNicknamePrompt: true,
+    sandboxMode: false
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [originalData, setOriginalData] = useState({});
+  
 
   // 获取用户信息
   useEffect(() => {
@@ -32,7 +36,8 @@ const UserProfile = () => {
         const initialData = {
           nickname: userData.nickname || '',
           theme: userData.preferences?.theme || theme,
-          showNicknamePrompt: userData.preferences?.showNicknamePrompt !== false
+          showNicknamePrompt: userData.preferences?.showNicknamePrompt !== false,
+          sandboxMode: isSandboxMode
         };
         setFormData(initialData);
         setOriginalData(initialData);
@@ -63,6 +68,11 @@ const UserProfile = () => {
     // 主题变更时立即应用
     if (field === 'theme') {
       setTheme(value);
+    }
+    
+    // 沙盒模式变更时立即应用
+    if (field === 'sandboxMode') {
+      toggleSandboxMode(value);
     }
   };
 
@@ -301,6 +311,35 @@ const UserProfile = () => {
                   </div>
                 </label>
               </div>
+
+              {/* 沙盒模式设置 - 仅教师端显示 */}
+              {user?.role === 'teacher' && (
+                <div>
+                  <label className="flex items-center gap-3 cursor-pointer p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-700">
+                    <input
+                      type="checkbox"
+                      checked={formData.sandboxMode}
+                      onChange={(e) => handleInputChange('sandboxMode', e.target.checked)}
+                      className="w-4 h-4 text-amber-600 bg-amber-100 border-amber-300 rounded 
+                               focus:ring-amber-500 focus:ring-2"
+                    />
+                    <div className="flex-1">
+                      <div className="text-sm font-medium text-amber-900 dark:text-amber-100 flex items-center gap-2">
+                        🎭 沙盒模式
+                        {formData.sandboxMode && (
+                          <span className="text-xs px-2 py-1 bg-amber-200 dark:bg-amber-800 text-amber-800 dark:text-amber-200 rounded-full">
+                            已启用
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-xs text-amber-700 dark:text-amber-300 mt-1">
+                        使用示例数据体验平台功能，您无法在沙盒模式中提交任何更改。
+                      </div>
+                    </div>
+                  </label>
+                </div>
+              )}
+
             </div>
           </motion.div>
 
