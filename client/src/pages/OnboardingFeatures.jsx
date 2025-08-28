@@ -197,7 +197,7 @@ const [showDesktopCTA, setShowDesktopCTA] = useState(false);
     teacher: [
       {
         icon: Search,
-        title: "学生AI使用全透明，教学超安心。",
+        title: ["学生AI使用全透明，", "教学超安心。"],
         description: "PoT(Proof of Thought)记录随任务捆绑提交，用好AI or 滥用AI？证据已到位，你说了算。",
         detailedDescription: "每次学生与AI的对话记录(PoT)记录都会完整保存并随作业一同提交。查看学生的思考过程、AI的引导轨迹，以及最终的成果输出。从问题到答案，整个协作链条一览无余，让您精准掌握学生的真实能力与AI依赖程度。",
         benefits: ["原始AI对话记录", "思维链条可视化", "学术诚信保障", "个性化指导依据"],
@@ -205,7 +205,7 @@ const [showDesktopCTA, setShowDesktopCTA] = useState(false);
       },
       {
         icon: Brain,
-        title: "思维轨迹，一目了然。",
+        title: ["思维轨迹，", "一目了然。"],
         description: "定制PoT-Mode智能体引导学生思考，精准把握掌握程度，个性化指导更高效，教学更轻松。",
         detailedDescription: "PoT定制智能体善用「苏格拉底式教学法」，循循善诱地引导学生独立思考。不直接提供答案，总提供思维启发。通过分析学生的回答模式、思维深度和推理逻辑，生成个性化的思维能力画像*，帮您发现每位学生的认知特点与潜力。",
         benefits: ["苏格拉底式引导", "思维能力画像*", "认知特点分析*", "个性化教学建议*"],
@@ -213,7 +213,7 @@ const [showDesktopCTA, setShowDesktopCTA] = useState(false);
       },
       {
         icon: Zap,
-        title: "教学管理，简约而强大。",
+        title: ["教学管理，", "简约而强大。"],
         description: "任务发布、班级管理、提交查阅，在手机上也能轻松完成。",
         detailedDescription: "一站式教师仪表盘设计，从任务创建到成果评阅，全流程移动适配。智能推荐任务模板*，批量管理多个班级，实时掌握提交进度。让繁琐的教务工作变得如iPhone般简约易用。",
         benefits: ["移动端100%适配", "智能任务模板*", "批量班级管理", "实时进度追踪"],
@@ -223,7 +223,7 @@ const [showDesktopCTA, setShowDesktopCTA] = useState(false);
     student: [
       {
         icon: Bot,
-        title: "PoT-Mode，启发不代替。",
+        title: ["PoT-Mode，", "启发不代替。"],
         description: "PoT(Proof of Thought)定制模型，个性化高效指导。所有任务，保质还保量。",
         detailedDescription: "专为学术思维训练设计的AI学习伙伴。它不会直接给出答案，而是通过精心定制的步骤，引导你自己解决问题。独属于你的24h学伴，帮你发现问题的本质，构建属于自己的知识框架，事半功倍。",
         benefits: ["启发式对话", "个性化引导", "思维能力提升", "学术诚信保障"],
@@ -231,7 +231,7 @@ const [showDesktopCTA, setShowDesktopCTA] = useState(false);
       },
       {
         icon: Shield,
-        title: "AI使用透明化，学术无忧。",
+        title: ["AI使用透明化，", "学术无忧。"],
         description: "记录AI协作全过程，展现真实思考轨迹。负责任的AI助力，提交作业更自信。",
         detailedDescription: "每一次AI协作都被完整记录，形成你的专属学习档案。向老师展示你的思考历程，AI赋能而非代替，体现你的学术诚信。在AI时代，透明度就是你的竞争优势。",
         benefits: ["完整协作记录", "学术诚信证明", "思考过程展示", "老师信任建立"],
@@ -239,7 +239,7 @@ const [showDesktopCTA, setShowDesktopCTA] = useState(false);
       },
       {
         icon: Layers,
-        title: "开始你的思考，AI友情客串。",
+        title:  ["开始你的思考，", "AI友情客串。"],
         description: "接入多种强力AIGC模型，移动端原生体验，学习无界限。",
         detailedDescription: "集成主流厂商最新顶级AI模型，尽情根据需求选择最适合的助手。无论是文本创作、数据分析还是创意设计，都能获得专业级的协助。移动端100%适配，随时随地开启深度学习。",
         benefits: ["多模型集成", "智能模型推荐*", "原生移动体验", "专业级协助"],
@@ -392,7 +392,15 @@ const [showDesktopCTA, setShowDesktopCTA] = useState(false);
         <div className="flex-1">
           {/* 标题 - 加大字号和字重 */}
           <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 leading-tight">
-            {feature.title}
+            {Array.isArray(feature.title) 
+              ? feature.title.map((line, index) => (
+                  <span key={index}>
+                    {line}
+                    {index < feature.title.length - 1 && <br />}
+                  </span>
+                ))
+              : feature.title
+            }
           </h3>
 
           {/* 描述 - 优化排版和字号 */}
@@ -452,7 +460,15 @@ const [showDesktopCTA, setShowDesktopCTA] = useState(false);
 
             {/* 标题 - 移动端大字号 */}
             <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 leading-tight">
-              {feature.title}
+              {Array.isArray(feature.title) 
+                ? feature.title.map((line, index) => (
+                    <span key={index}>
+                      {line}
+                      {index < feature.title.length - 1 && <br />}
+                    </span>
+                  ))
+                : feature.title
+              }
             </h3>
 
             {/* 描述 - 移动端优化 */}
@@ -557,7 +573,7 @@ const [showDesktopCTA, setShowDesktopCTA] = useState(false);
             <motion.div
               className={`fixed z-50 ${
                 isMobile 
-                  ? 'inset-x-4 bottom-4 top-20' 
+                  ? 'inset-x-4 bottom-10 top-20' 
                   : 'top-1/2 left-1/2 w-[600px] max-h-[80vh]'
               }`}
               initial={
@@ -613,9 +629,17 @@ const [showDesktopCTA, setShowDesktopCTA] = useState(false);
                 <div className="flex-1 overflow-y-auto p-6 space-y-6">
                   {/* 功能标题 */}
                   <div>
-                    <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 leading-tight">
-                      {feature.title}
-                    </h3>
+                  <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 leading-tight">
+                    {Array.isArray(feature.title) 
+                      ? feature.title.map((line, index) => (
+                          <span key={index}>
+                            {line}
+                            {index < feature.title.length - 1 && <br />}
+                          </span>
+                        ))
+                      : feature.title
+                    }
+                  </h3>
                     
                     {/* 详细描述 */}
                     <p className="text-gray-600 dark:text-gray-300 leading-relaxed text-base mb-6">

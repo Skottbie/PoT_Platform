@@ -89,6 +89,7 @@ const OnboardingEntrance = () => {
             opacity: 1,
             y: 0,
             scale: 1,
+            pointerEvents: 'auto',
             transition: {
               duration: 0.8,
               ease: [0.25, 0.46, 0.45, 0.94],
@@ -295,6 +296,7 @@ const OnboardingEntrance = () => {
             opacity: 1,
             y: 0,
             scale: 1,
+            pointerEvents: 'auto',
             transition: {
               duration: 0.8,
               ease: [0.25, 0.46, 0.45, 0.94],
@@ -369,72 +371,94 @@ const OnboardingEntrance = () => {
   }, [navigate]);
 
   const handleTeacherSelect = useCallback(() => {
-        // 添加按钮渐隐动画
-        buttonsControls.start({
-        opacity: 0,
-        y: 30,
-        scale: 0.95,
-        transition: {
-            duration: 0.6,
-            ease: [0.25, 0.46, 0.45, 0.94]
-        }
-        });
+      // 添加按钮渐隐动画
+      buttonsControls.start({
+      opacity: 0,
+      y: 30,
+      scale: 0.95,
+      transition: {
+          duration: 0.6,
+          ease: [0.25, 0.46, 0.45, 0.94]
+      }
+      });
 
-        // 添加文案回撤动画
-        sloganControls.start({
-        opacity: 0,
-        y: -30,
-        transition: {
-            duration: 0.8,
-            ease: [0.25, 0.46, 0.45, 0.94]
-        }
-        });
+      // 添加文案回撤动画
+      sloganControls.start({
+      opacity: 0,
+      y: -30,
+      transition: {
+          duration: 0.8,
+          ease: [0.25, 0.46, 0.45, 0.94]
+      }
+      });
 
-        // 延迟跳转，确保动画完成
-        setTimeout(() => {
-        navigate('/onboarding/features', {
-            state: { role: 'teacher', from: 'identity' },
-            replace: false
-        });
-        }, 800); // 与动画时长匹配
-    }, [navigate, buttonsControls, sloganControls]);
+      // 🆕 添加底部版权信息渐隐动画
+      brandControls.start({
+      opacity: 0,
+      y: 20,
+      scale: 0.95,
+      transition: {
+          duration: 0.6,
+          ease: [0.25, 0.46, 0.45, 0.94]
+      }
+      });
 
-    const handleStudentSelect = useCallback(() => {
-        // 添加按钮渐隐动画
-        buttonsControls.start({
-        opacity: 0,
-        y: 30,
-        scale: 0.95,
-        transition: {
-            duration: 0.6,
-            ease: [0.25, 0.46, 0.45, 0.94]
-        }
-        });
+      // 延迟跳转，确保动画完成
+      setTimeout(() => {
+      navigate('/onboarding/features', {
+          state: { role: 'teacher', from: 'identity' },
+          replace: false
+      });
+      }, 800); // 与动画时长匹配
+  }, [navigate, buttonsControls, sloganControls, brandControls]); // 🆕 添加 brandControls 依赖
 
-        // 添加文案回撤动画
-        sloganControls.start({
-        opacity: 0,
-        y: -30,
-        transition: {
-            duration: 0.8,
-            ease: [0.25, 0.46, 0.45, 0.94]
-        }
-        });
+  const handleStudentSelect = useCallback(() => {
+      // 添加按钮渐隐动画
+      buttonsControls.start({
+      opacity: 0,
+      y: 30,
+      scale: 0.95,
+      transition: {
+          duration: 0.6,
+          ease: [0.25, 0.46, 0.45, 0.94]
+      }
+      });
 
-        // 延迟跳转，确保动画完成
-        setTimeout(() => {
-        navigate('/onboarding/features', {
-            state: { role: 'student', from: 'identity' },
-            replace: false
-        });
-        }, 800); // 与动画时长匹配
-    }, [navigate, buttonsControls, sloganControls]);
+      // 添加文案回撤动画
+      sloganControls.start({
+      opacity: 0,
+      y: -30,
+      transition: {
+          duration: 0.8,
+          ease: [0.25, 0.46, 0.45, 0.94]
+      }
+      });
+
+      // 🆕 添加底部版权信息渐隐动画
+      brandControls.start({
+      opacity: 0,
+      y: 20,
+      scale: 0.95,
+      transition: {
+          duration: 0.6,
+          ease: [0.25, 0.46, 0.45, 0.94]
+      }
+      });
+
+      // 延迟跳转，确保动画完成
+      setTimeout(() => {
+      navigate('/onboarding/features', {
+          state: { role: 'student', from: 'identity' },
+          replace: false
+      });
+      }, 800); // 与动画时长匹配
+  }, [navigate, buttonsControls, sloganControls, brandControls]); // 🆕 添加 brandControls 依赖
 
   // iOS兼容的竖排文字组件
   const VerticalText = ({ text, showCursor, className }) => {
     if (isIOS) {
       return (
-        <div className={`flex flex-col items-center ${className}`}>
+        <div className={`flex flex-col items-center relative ${className}`}>
           {text.split('').map((char, index) => (
             <span 
               key={index} 
@@ -448,21 +472,28 @@ const OnboardingEntrance = () => {
             </span>
           ))}
           {showCursor && (
-            <motion.div
-              className="w-8 h-1 bg-gray-900 dark:bg-white mt-1"
-              animate={typingState.showCursor ? { opacity: 1 } : { opacity: 0 }}
-              transition={{ 
-                duration: 0.6,
-                repeat: typingState.isBackspacing ? Infinity : 0,
-                repeatType: "reverse"
-              }}
-            />
+                <motion.div
+                  className="absolute w-8 h-1 bg-gray-900 dark:bg-white"
+                  style={{
+                    bottom: '-8px',
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    willChange: 'opacity',
+                    contain: 'strict'
+                  }}
+                  animate={typingState.showCursor ? { opacity: 1 } : { opacity: 0 }}
+                  transition={{ 
+                    duration: 0.6,
+                    repeat: typingState.isBackspacing ? Infinity : 0,
+                    repeatType: "reverse"
+                  }}
+                />
           )}
         </div>
       );
     } else {
       return (
-        <div className={`flex flex-col items-center ${className}`}>
+        <div className={`flex flex-col items-center relative ${className}`}>
           <p 
             className="text-[2.75rem] sm:text-[3.5rem] font-bold text-gray-900 dark:text-white"
             style={{ 
@@ -474,15 +505,22 @@ const OnboardingEntrance = () => {
             {text}
           </p>
           {showCursor && (
-            <motion.div
-              className="w-8 h-1 bg-gray-900 dark:bg-white mt-4"
-              animate={typingState.showCursor ? { opacity: 1 } : { opacity: 0 }}
-              transition={{ 
-                duration: 0.6,
-                repeat: typingState.isBackspacing ? Infinity : 0,
-                repeatType: "reverse"
-              }}
-            />
+              <motion.div
+                className="absolute w-8 h-1 bg-gray-900 dark:bg-white"
+                style={{
+                  bottom: '-8px',
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  willChange: 'opacity',
+                  contain: 'strict'
+                }}
+                animate={typingState.showCursor ? { opacity: 1 } : { opacity: 0 }}
+                transition={{ 
+                  duration: 0.6,
+                  repeat: typingState.isBackspacing ? Infinity : 0,
+                  repeatType: "reverse"
+                }}
+              />
           )}
         </div>
       );
@@ -534,11 +572,18 @@ const OnboardingEntrance = () => {
                 className="space-y-6 flex flex-col items-center"
                 style={{ transform: 'translateX(12px)' }}
               >
-                <h1 className="text-4xl xl:text-5xl font-bold text-gray-900 dark:text-white tracking-tight text-center">
+                <h1 className="text-4xl xl:text-5xl font-bold text-gray-900 dark:text-white tracking-tight text-center relative">
                   {typingState.desktopEn}
                   {typingState.desktopZh === '' && (typingState.showCursor || typingState.isBackspacing) && (
                     <motion.span
-                      className="w-1 h-12 xl:h-14 bg-gray-900 dark:bg-white ml-1 inline-block"
+                      className="absolute w-1 h-12 xl:h-14 bg-gray-900 dark:bg-white"
+                      style={{
+                        left: '100%',
+                        top: '0',
+                        marginLeft: '4px',
+                        willChange: 'opacity',
+                        contain: 'strict'
+                      }}
                       animate={typingState.showCursor ? { opacity: 1 } : { opacity: 0 }}
                       transition={{ 
                         duration: 0.6,
@@ -548,11 +593,18 @@ const OnboardingEntrance = () => {
                     />
                   )}
                 </h1>
-                <h2 className="text-4xl xl:text-5xl font-bold text-gray-900 dark:text-white tracking-tight text-center">
+                <h2 className="text-4xl xl:text-5xl font-bold text-gray-900 dark:text-white tracking-tight text-center relative">
                   {typingState.desktopZh}
                   {typingState.desktopZh !== '' && (typingState.showCursor || typingState.isBackspacing) && (
                     <motion.span
-                      className="w-1 h-12 xl:h-14 bg-gray-900 dark:bg-white ml-1 inline-block"
+                      className="absolute w-1 h-12 xl:h-14 bg-gray-900 dark:bg-white"
+                      style={{
+                        left: '100%',
+                        top: '0',
+                        marginLeft: '4px',
+                        willChange: 'opacity',
+                        contain: 'strict'
+                      }}
                       animate={typingState.showCursor ? { opacity: 1 } : { opacity: 0 }}
                       transition={{ 
                         duration: 0.6,
@@ -567,15 +619,22 @@ const OnboardingEntrance = () => {
           ) : (
             // Step 2 标语（横向显示）
             <div className="text-center">
-              <h1 className="text-4xl xl:text-5xl font-bold text-gray-900 dark:text-white tracking-tight">
+              <h1 className="text-4xl xl:text-5xl font-bold text-gray-900 dark:text-white tracking-tight relative">
                 {typingState.step2Text}
                 {(typingState.showCursor || !typingState.isComplete) && (
                   <motion.span
-                    className="w-1 h-12 xl:h-14 bg-gray-900 dark:bg-white ml-1 inline-block"
+                    className="absolute w-1 h-12 xl:h-14 bg-gray-900 dark:bg-white"
+                    style={{
+                      left: '100%',
+                      top: '0',
+                      marginLeft: '4px',
+                      willChange: 'opacity',
+                      contain: 'strict'
+                    }}
                     animate={typingState.showCursor ? { opacity: 1 } : { opacity: 0 }}
                     transition={{ 
                       duration: 0.6,
-                      repeat: typingState.isComplete ? 0 : Infinity,
+                      repeat: typingState.isBackspacing ? Infinity : 0,
                       repeatType: "reverse"
                     }}
                   />
@@ -590,8 +649,11 @@ const OnboardingEntrance = () => {
           {currentStep === 1 && (
             <motion.div
               className="space-y-4 sm:space-y-0 sm:space-x-6 sm:flex sm:justify-center sm:items-center"
-              initial={{ opacity: 0, y: 30, scale: 0.95 }}
+              initial={{ opacity: 0, y: 30, scale: 0.95, pointerEvents: 'none' }}
               animate={buttonsControls}
+              style={{ 
+                pointerEvents: buttonsControls.opacity === 1 ? 'auto' : 'none' 
+              }}
             >
               <motion.button
                 onClick={handleExploreClick}
@@ -630,8 +692,11 @@ const OnboardingEntrance = () => {
           {currentStep === 2 && (
             <motion.div
               className="space-y-4 sm:space-y-0 sm:space-x-6 sm:flex sm:justify-center sm:items-center"
-              initial={{ opacity: 0, y: 30, scale: 0.95 }}
+              initial={{ opacity: 0, y: 30, scale: 0.95, pointerEvents: 'none' }}
               animate={buttonsControls}
+              style={{ 
+                pointerEvents: buttonsControls.opacity === 1 ? 'auto' : 'none' 
+              }}
             >
               <motion.button
                 onClick={handleStudentSelect}
