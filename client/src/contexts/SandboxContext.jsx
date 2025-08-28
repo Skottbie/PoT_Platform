@@ -449,15 +449,20 @@ export const SandboxProvider = ({ children }) => {
   }, []);
 
   // 🎯 获取沙盒数据（应用运行时修改）
-  const getSandboxData = (dataType) => {
+    const getSandboxData = (dataType) => {
     if (!isSandboxMode) return null;
+    
+    // 🎯 对于aigcLogs，返回对象而不是数组
+    if (dataType === 'aigcLogs') {
+        return DEMO_DATA.aigcLogs || {};
+    }
     
     const baseData = DEMO_DATA[dataType] || [];
     
     // TODO: 后续步骤中会实现应用运行时修改的逻辑
     // 目前先返回基础示例数据
     return baseData;
-  };
+    };
 
   const value = {
     // 状态

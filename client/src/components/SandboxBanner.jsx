@@ -45,7 +45,7 @@ const SandboxBanner = () => {
               <span className="hidden sm:inline"> - 当前使用示例数据体验平台功能</span>
             </p>
             <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
-              所有操作不会被保存，你可以安全地探索各种功能
+              沙盒模式提供示例数据，您无法在沙盒模式中提交任何更改。
               {sandboxChanges.size > 0 && (
                 <span className="ml-2">
                   • 已记录 {sandboxChanges.size} 个操作

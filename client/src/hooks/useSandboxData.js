@@ -121,36 +121,56 @@ export const useSandboxData = () => {
     }
 
     if (url.includes('/download/')) {
-      // 🎯 处理AIGC日志下载
-      const logId = url.split('/').pop();
-      
-      // 🎯 从DEMO_DATA获取AIGC日志数据（直接从context获取）
-      const aigcLogs = DEMO_DATA?.aigcLogs || {};
-      const logContent = aigcLogs[logId] || [];
-      
-      // 🎯 如果没找到对应的日志，返回示例数据
-      if (logContent.length === 0 && logId.startsWith('demo-aigc-log-')) {
+    // 🎯 处理AIGC日志下载
+    const logId = url.split('/').pop();
+    
+    // 🎯 正确获取沙盒AIGC日志数据
+    const allAigcLogs = getSandboxData('aigcLogs') || {};
+    const logContent = allAigcLogs[logId];
+    
+    // 🎯 如果找到对应的日志数据，返回
+    if (logContent && Array.isArray(logContent)) {
+        return { data: logContent };
+    }
+    
+    // 🎯 如果没找到，但是logId格式正确，返回通用示例数据
+    if (logId && logId.startsWith('demo-aigc-log-')) {
         return {
-          data: [
+        data: [
             {
-              role: 'user',
-              content: '这是示例AIGC日志记录',
-              model: 'qwen-turbo',
-              timestamp: Date.now(),
-              potMode: false
+            role: 'user',
+            content: '请帮我分析这个学习问题...',
+            model: 'pot-tutor',
+            timestamp: Date.now() - 300000,
+            potMode: true
             },
             {
-              role: 'assistant',
-              content: '这是AI的回复示例',
-              model: 'qwen-turbo',
-              timestamp: Date.now(),
-              potMode: false
+            role: 'assistant',
+            content: '很好的问题！让我们先从你的理解开始，你觉得这个问题的关键点可能在哪里呢？',
+            model: 'pot-tutor',
+            timestamp: Date.now() - 280000,
+            potMode: true
+            },
+            {
+            role: 'user',
+            content: '我觉得可能是概念理解不够深入',
+            model: 'pot-tutor',
+            timestamp: Date.now() - 200000,
+            potMode: true
+            },
+            {
+            role: 'assistant',
+            content: '很好的洞察！那具体是哪个概念让你感到困惑？我们可以一步步来分析。',
+            model: 'pot-tutor',
+            timestamp: Date.now() - 180000,
+            potMode: true
             }
-          ]
+        ]
         };
-      }
-      
-      return { data: logContent };
+    }
+    
+    // 🎯 其他情况返回空数组
+    return { data: [] };
     }
 
     // 🎯 新增：处理单个任务详情 /task/{id}
