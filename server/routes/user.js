@@ -91,7 +91,8 @@ router.put('/preferences', verifyToken, async (req, res) => {
       theme, 
       language, 
       rememberMe, 
-      showNicknamePrompt 
+      showNicknamePrompt,
+      sandboxMode
     } = req.body;
     
     const updateData = {};
@@ -139,6 +140,36 @@ router.put('/preferences', verifyToken, async (req, res) => {
       }
       updateData['preferences.showNicknamePrompt'] = showNicknamePrompt;
     }
+
+    // 🚫 验证并设置沙盒模式偏好（仅教师端可用）
+  if (sandboxMode !== undefined) {
+    if (typeof sandboxMode !== 'boolean') {
+      return res.status(400).json({
+        success: false,
+        message: '沙盒模式设置必须是布尔值'
+      });
+    }
+    
+    // 🚫 安全检查：只有教师角色才能启用沙盒模式
+    const currentUser = await User.findById(req.user.id);
+    if (!currentUser) {
+      return res.status(404).json({
+        success: false,
+        message: '用户不存在'
+      });
+    }
+    
+    if (currentUser.role !== 'teacher' && sandboxMode === true) {
+      return res.status(403).json({
+        success: false,
+        message: '只有教师角色才能启用沙盒模式'
+      });
+    }
+    
+    updateData['preferences.sandboxMode'] = sandboxMode;
+  }
+
+
     
     // 如果没有要更新的数据
     if (Object.keys(updateData).length === 0) {

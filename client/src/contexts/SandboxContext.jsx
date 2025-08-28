@@ -392,16 +392,28 @@ const DEMO_DATA = {
 };
 
 export const SandboxProvider = ({ children }) => {
-  // 🎭 沙盒模式状态 - 从localStorage初始化
-  const [isSandboxMode, setIsSandboxMode] = useState(() => {
-    try {
-      const stored = localStorage.getItem('potacademy_sandbox_mode');
-      return stored === 'true';
-    } catch (error) {
-      console.warn('读取沙盒模式状态失败:', error);
+// 🚫 安全的沙盒模式状态初始化 - 基于用户角色验证
+const [isSandboxMode, setIsSandboxMode] = useState(() => {
+  try {
+    const userRole = localStorage.getItem('role');
+    // 🚫 学生角色强制禁用沙盒模式
+    if (userRole === 'student') {
+      localStorage.removeItem('potacademy_sandbox_mode'); // 清除可能的篡改
       return false;
     }
-  });
+    
+    // 教师角色才允许从localStorage读取
+    if (userRole === 'teacher') {
+      const stored = localStorage.getItem('potacademy_sandbox_mode');
+      return stored === 'true';
+    }
+    
+    return false;
+  } catch (error) {
+    console.warn('读取沙盒模式状态失败:', error);
+    return false;
+  }
+});
   
   const [showFirstTimeWelcome, setShowFirstTimeWelcome] = useState(() => {
     try {
@@ -415,23 +427,56 @@ export const SandboxProvider = ({ children }) => {
   // 🗃️ 沙盒运行时数据（在内存中的临时修改）
   const [sandboxChanges, setSandboxChanges] = useState(new Map());
 
-  // 🔧 沙盒模式切换 - 添加持久化
-  const toggleSandboxMode = useCallback((enabled) => {
+// 🚫 安全的沙盒模式切换 - 添加角色验证
+const toggleSandboxMode = useCallback((enabled) => {
+  try {
+    const userRole = localStorage.getItem('role');
+    
+    // 🚫 关键安全检查：学生角色绝对禁止启用沙盒模式
+    if (userRole === 'student') {
+      if (enabled) {
+        console.warn('🚫 安全警告：学生角色尝试启用沙盒模式，已阻止');
+        toast.error('学生角色无权限使用沙盒模式');
+        return;
+      }
+      // 学生角色只允许禁用（清理状态）
+      setIsSandboxMode(false);
+      localStorage.removeItem('potacademy_sandbox_mode');
+      return;
+    }
+    
+    // 🚫 只有教师角色才能启用沙盒模式
+    if (userRole !== 'teacher' && enabled) {
+      console.warn('🚫 安全警告：非教师角色尝试启用沙盒模式，已阻止');
+      toast.error('只有教师角色才能启用沙盒模式');
+      return;
+    }
+    
     console.log(`沙盒模式 ${enabled ? '开启' : '关闭'}`);
     setIsSandboxMode(enabled);
     
-    // 持久化到localStorage
-    try {
-      localStorage.setItem('potacademy_sandbox_mode', enabled.toString());
-    } catch (error) {
-      console.warn('保存沙盒模式状态失败:', error);
+    // 持久化到localStorage（仅教师角色）
+    if (userRole === 'teacher') {
+      try {
+        if (enabled) {
+          localStorage.setItem('potacademy_sandbox_mode', 'true');
+        } else {
+          localStorage.removeItem('potacademy_sandbox_mode');
+        }
+      } catch (error) {
+        console.warn('保存沙盒模式状态失败:', error);
+      }
     }
     
     // 清除之前的沙盒修改
     if (!enabled) {
       setSandboxChanges(new Map());
     }
-  }, []);
+  } catch (error) {
+    console.error('切换沙盒模式失败:', error);
+    toast.error('操作失败，请重试');
+  }
+}, []);
 
   // 📝 记录沙盒中的操作（暂时只记录，不实际执行）
   const recordSandboxChange = useCallback((type, id, data) => {

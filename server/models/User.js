@@ -52,6 +52,11 @@ const UserSchema = new mongoose.Schema({
     showNicknamePrompt: {
       type: Boolean,
       default: true  // 新用户默认显示昵称设置提醒
+    },
+    // 🆕 新增：沙盒模式偏好（仅教师端可用）
+    sandboxMode: {
+      type: Boolean,
+      default: false  // 默认关闭沙盒模式
     }
   },
   
@@ -136,6 +141,27 @@ UserSchema.methods.setNickname = function(nickname) {
 // 🆕 禁用昵称提醒的便捷方法
 UserSchema.methods.disableNicknamePrompt = function() {
   this.preferences.showNicknamePrompt = false;
+  return this.save();
+};
+
+// 🚫 安全校验：学生角色强制禁用沙盒模式
+UserSchema.pre('save', function(next) {
+  // 如果是学生角色，强制禁用沙盒模式
+  if (this.role === 'student' && this.preferences.sandboxMode === true) {
+    this.preferences.sandboxMode = false;
+    console.warn(`强制禁用学生用户 ${this.email} 的沙盒模式`);
+  }
+  next();
+});
+
+// 🆕 安全切换沙盒模式的便捷方法
+UserSchema.methods.setSandboxMode = function(enabled) {
+  // 只有教师角色才能启用沙盒模式
+  if (this.role !== 'teacher' && enabled) {
+    throw new Error('只有教师角色才能启用沙盒模式');
+  }
+  
+  this.preferences.sandboxMode = enabled;
   return this.save();
 };
 
