@@ -167,9 +167,6 @@ const Register = () => {
               <h1 className="text-3xl font-light text-gray-800 dark:text-gray-100 mb-2">
                 创建账号
               </h1>
-              <p className="text-gray-600 dark:text-gray-400 text-sm">
-                加入 PoT Academy，开始你的学习之旅
-              </p>
             </motion.div>
 
             {/* 注册卡片 */}
@@ -315,7 +312,7 @@ const Register = () => {
               </motion.div>
             </motion.div>
 
-            {/* 安全提示 */}
+            {/* 安全提示
             <motion.div
               className="mt-6 p-4 bg-green-50/50 dark:bg-green-900/20 rounded-xl border border-green-200/50 dark:border-green-700/50"
               initial={{ opacity: 0 }}
@@ -325,7 +322,7 @@ const Register = () => {
               <p className="text-xs text-green-700 dark:text-green-300 text-center leading-relaxed">
                 🎓 感谢参与封测！你的反馈将帮助我们打造更好的学习体验
               </p>
-            </motion.div>
+            </motion.div> */}
           </motion.div>
         )}
       </AnimatePresence>
@@ -342,8 +339,8 @@ const Register = () => {
           >
             <motion.div
               className={`bg-white dark:bg-gray-800 rounded-3xl shadow-2xl border border-gray-200/50 dark:border-gray-700/50 w-full ${
-                isMobile ? 'max-w-sm max-h-[90vh]' : 'max-w-lg max-h-[85vh]'
-              } overflow-hidden`}
+              isMobile ? 'max-w-sm max-h-[75vh]' : 'max-w-lg max-h-[85vh]'
+              } flex flex-col`}
               initial={isMobile ? { opacity: 0, y: '100%' } : { opacity: 0, scale: 0.9, y: 20 }}
               animate={isMobile ? { opacity: 1, y: 0 } : { opacity: 1, scale: 1, y: 0 }}
               exit={isMobile ? { opacity: 0, y: '100%' } : { opacity: 0, scale: 0.9, y: 20 }}
@@ -365,7 +362,8 @@ const Register = () => {
               </div>
 
               {/* 内容区域 */}
-              <div className="p-6 overflow-y-auto flex-1 space-y-5">
+              <div className="flex-1 overflow-y-auto">
+                <div className="p-6 space-y-5">
                 {/* 安全保障 */}
                 <div className="space-y-4">
                   <div className="flex items-start gap-3">
@@ -377,7 +375,7 @@ const Register = () => {
                         你的信息，安全无虞。
                       </h3>
                       <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
-                        我们采用<strong>企业级安全加密技术</strong>来保护你的账户密码。所有作业文件、图片和学习记录都通过高级加密和安全存储系统妥善保管，保障你的数据完整性和隐私。
+                        我们采用<strong>企业级安全加密技术</strong>来保护你的敏感信息。所有作业文件、图片和学习记录都通过高级加密和安全存储系统妥善保管，保障你的数据完整性和隐私。
                       </p>
                       <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed mt-2">
                         我们建立了完善的异常行为监控系统，为你的每一次学习和学术工作保驾护航。
@@ -417,15 +415,15 @@ const Register = () => {
                   {/* 协议链接 */}
                   <div className="text-center">
                     <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
-                      通过继续注册，你同意遵守相关条款
+                      通过继续注册，你同意遵守以下协议
                     </p>
                     <button
                       type="button"
                       onClick={handleShowFullAgreement}
-                      className="text-sm text-blue-600 dark:text-blue-400 hover:underline font-medium flex items-center gap-1 mx-auto"
+                      className="text-sm text-blue-600 dark:text-blue-400 hover:underline font-medium flex items-center gap-1 mx-auto aigc-native-button"
                     >
                       <FileText className="w-4 h-4" />
-                      📋 查看完整封测参与协议
+                      查看完整封测参与协议
                       <ChevronRight className="w-3 h-3" />
                     </button>
                   </div>
@@ -451,6 +449,7 @@ const Register = () => {
                   </div>
                 </div>
               </div>
+              </div>
 
               {/* 底部按钮 */}
               <div className="px-6 pb-6 space-y-3">
@@ -469,7 +468,7 @@ const Register = () => {
                   onClick={handleDecline}
                   className="w-full py-2.5 px-4 text-gray-600 dark:text-gray-400 
                            hover:text-gray-800 dark:hover:text-gray-200
-                           font-medium text-sm transition-colors duration-200"
+                           font-medium text-sm transition-colors duration-200 aigc-native-button"
                 >
                   暂不参与
                 </button>
@@ -539,7 +538,7 @@ const Register = () => {
                     
                     <div className="mt-4 p-4 bg-blue-50/80 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
                       <p className="text-sm text-blue-800 dark:text-blue-200">
-                        <strong>【显著提示】</strong> 您点击"我已阅读并同意"或实际使用平台，即视为您已充分理解并接受本协议及其附件（含《隐私政策》《漏洞报告与披露政策》）。
+                        <strong>【显著提示】</strong> 您若进行注册账号操作，即视为您已充分理解并接受本协议。
                       </p>
                     </div>
                   </section>
@@ -552,7 +551,7 @@ const Register = () => {
                     <div className="space-y-2 text-sm leading-relaxed">
                       <p>1. 本协议是您与运营方就封测活动达成的具有法律约束力的电子协议。</p>
                       <p>2. 本协议适用于您在测试期内的一切相关行为，包括注册、登录、使用、信息发布、数据传输、反馈提交与漏洞报告等。</p>
-                      <p>3. 若您不同意本协议任何条款，应立即停止使用并注销账号。</p>
+                      <p>3. 若您不同意本协议任何条款，应立即停止使用并联系我们注销账号（若适用）。</p>
                     </div>
                   </section>
 
@@ -599,7 +598,7 @@ const Register = () => {
                         <li>上传/传播违法、有害、虚假、淫秽、暴力、侵权内容或可能危害网络安全的代码/文件；</li>
                         <li>侵犯任何第三方合法权益。</li>
                       </ol>
-                      <p>3. <strong>善意报告"安全港"</strong>：若您在<strong>正常使用中偶然发现</strong>疑似漏洞，<strong>应当</strong>依《漏洞报告与披露政策》（附件二）通过指定渠道上报，期间<strong>不得扩大量级验证、不得对外披露或用于牟利</strong>；我们在合规前提下对<strong>善意、及时、配合修复</strong>的研究者给予<strong>不予追责的承诺</strong>（法律法规另有规定或存在恶意/实际损害的除外）。</p>
+                      <p>3. <strong>善意报告"安全港"</strong>：若您在<strong>正常使用中偶然发现</strong>疑似漏洞，<strong>应当</strong>通过指定渠道（平台反馈途径）上报，期间<strong>不得扩大量级验证、不得对外披露或用于牟利</strong>；我们在合规前提下对<strong>善意、及时、配合修复</strong>的研究者给予<strong>不予追责的承诺</strong>（法律法规另有规定或存在恶意/实际损害的除外）。</p>
                       <p>4. <strong>违规处理</strong>：我们可视情形对违规用户采取<strong>警告、功能限制、下线内容、冻结/注销账号、追究法律责任</strong>等措施。</p>
                     </div>
                   </section>
@@ -620,11 +619,11 @@ const Register = () => {
                   {/* 第七条 数据与隐私保护 */}
                   <section>
                     <h4 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-3">
-                      第七条 数据与隐私保护（摘要）
+                      第七条 数据与隐私保护
                     </h4>
                     <div className="space-y-2 text-sm leading-relaxed">
                       <p>1. 我们将遵守适用法律开展个人信息处理，仅收集实现功能所必要的数据。</p>
-                      <p>2. <strong>告知要素</strong>：我们会以《隐私政策》（附件一）明确<strong>处理者名称及联系方式、目的、方式、类型、保存期限、共享/委托处理/对外提供情况、跨境传输、用户权利与行使方式</strong>等。</p>
+                      <p>2. <strong>告知要素</strong>：我们明确<strong>处理者名称及联系方式、目的、方式、类型、保存期限、共享/委托处理/对外提供情况、跨境传输、用户权利与行使方式</strong>等。</p>
                       <p>3. <strong>安全措施</strong>：采用行业通行措施（如<strong>bcrypt</strong>口令哈希、访问控制、加密存储、异常监测、最小化授权、审计日志与脱敏处理等）。</p>
                       <p>4. <strong>用户权利</strong>：依法享有<strong>查询/复制、更正、补充、删除、撤回同意、账户注销</strong>等权利；我们将设置便捷通道处理您的请求。</p>
                       <p>5. <strong>跨境传输</strong>：若涉及跨境处理个人信息，我们将依法履行评估、合同、认证或其他合规义务，并<strong>征得必要同意</strong>。</p>
@@ -632,11 +631,11 @@ const Register = () => {
                       <p>7. <strong>日志与遥测</strong>：为保障安全与改进体验，您同意我们在封测范围内记录必要的<strong>技术日志与故障诊断信息</strong>，并仅用于安全与改进之目的。</p>
                     </div>
                     
-                    <div className="mt-4 p-3 bg-gray-100/80 dark:bg-gray-700/30 rounded-lg">
+                    {/* <div className="mt-4 p-3 bg-gray-100/80 dark:bg-gray-700/30 rounded-lg">
                       <p className="text-xs text-gray-600 dark:text-gray-400">
                         完整规则以《隐私政策》（附件一）为准；若本条与附件不一致，以<strong>对用户更有利</strong>者为准。
                       </p>
-                    </div>
+                    </div> */}
                   </section>
 
                   {/* 第八条 测试期风险提示与免责声明 */}
@@ -647,7 +646,7 @@ const Register = () => {
                     
                     <div className="bg-red-50/80 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4 mb-4">
                       <p className="text-sm text-red-800 dark:text-red-200 font-semibold">
-                        【重要提示—责任限制】请您务必仔细阅读并以<strong>加粗/弹窗</strong>等方式确认。
+                        【重要提示—责任限制】请您务必仔细阅读并确认。
                       </p>
                     </div>
                     
@@ -692,7 +691,7 @@ const Register = () => {
                       第十一条 变更与通知
                     </h4>
                     <div className="space-y-2 text-sm leading-relaxed">
-                      <p>1. 我们可以<strong>合理通知</strong>后对本协议与附件进行更新；涉及<strong>个人信息处理目的、方式、类型、共享或保存期限等重大变化</strong>的，将<strong>再次征得您的明示同意</strong>。</p>
+                      <p>1. 我们可以<strong>合理通知</strong>后对本协议（及附件，若适用）进行更新；涉及<strong>个人信息处理目的、方式、类型、共享或保存期限等重大变化</strong>的，将<strong>再次征得您的明示同意</strong>。</p>
                       <p>2. 我们将通过<strong>站内通知/弹窗/邮件/页面公告</strong>等至少一种方式进行提示；您继续使用即视为同意更新条款。</p>
                     </div>
                   </section>
@@ -729,7 +728,7 @@ const Register = () => {
                       <p>2. <strong>转让</strong>：未经我们书面同意，您不得转让本协议项下权利义务；我们可在<strong>不降低您权利</strong>的前提下，将相关权利义务转让给关联方或继受公司，并予以公告/通知。</p>
                       <p>3. <strong>条款独立</strong>：任一条款被判无效，不影响其他条款之效力。</p>
                       <p>4. <strong>版本与语言</strong>：本协议以中文为准。我们会保留版本号与生效日期以供查验。</p>
-                      <p>5. <strong>完整协议</strong>：本协议与附件构成双方就封测事项达成的完整协议。</p>
+                      <p>5. <strong>完整协议</strong>：本协议构成双方就封测事项达成的完整协议。</p>
                     </div>
                   </section>
 
