@@ -320,7 +320,7 @@ const UserProfileModal = ({ isOpen, onClose, user, onUserUpdate }) => {
                           显示新手引导提醒
                         </div>
                         <div className="text-xs text-gray-500 dark:text-gray-400">
-                          包含设置昵称、沙盒模式选项
+                          助您快速上手平台
                         </div>
                       </div>
                     </label>

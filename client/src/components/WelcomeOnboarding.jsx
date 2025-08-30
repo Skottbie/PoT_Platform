@@ -259,21 +259,17 @@ const handleStudentComplete = async () => {
                     <div className="bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 p-6 text-center relative">
                       <button
                         onClick={handleNeverShow}
-                        className="absolute top-4 right-4 p-1 hover:bg-white/20 rounded-full transition-colors aigc-native-button"
+                        className="absolute top-4 right-4 h-8 w-8 flex justify-center items-center hover:bg-white/20 rounded-full transition-colors aigc-native-button"
                         title="不再显示"
                       >
                         <X className="w-5 h-5 text-white" />
                       </button>
                       
-                      <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4 backdrop-blur-sm">
-                        <Sparkles className="w-8 h-8 text-white" />
-                      </div>
-                      
                       <h2 className="text-xl font-bold text-white mb-2">
                         欢迎来到PoTAcademy
                       </h2>
                       <p className="text-white/90 text-sm">
-                        先设置一个个性昵称吧！
+                        先设置一个昵称吧！
                       </p>
                     </div>
 
@@ -345,7 +341,7 @@ const handleStudentComplete = async () => {
                                      hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 
                                      rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                           >
-                            跳过，使用邮箱前缀
+                            跳过
                           </button>
                           <button
                             onClick={handleNeverShow}
@@ -375,9 +371,6 @@ const handleStudentComplete = async () => {
                         <ArrowLeft className="w-5 h-5 text-white" />
                       </button>
                       
-                      <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4 backdrop-blur-sm">
-                        <BookOpen className="w-8 h-8 text-white" />
-                      </div>
                       
                       <h2 className="text-xl font-bold text-white mb-2">
                         选择体验方式

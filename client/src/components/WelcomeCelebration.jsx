@@ -152,7 +152,7 @@ const WelcomeCelebration = ({ user, isVisible, onClose }) => {
                        hover:from-blue-600 hover:to-purple-700 transition-all duration-200 text-sm font-medium
                        focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800"
             >
-              开始体验 ✨
+              开始体验
             </motion.button>
           </motion.div>
         </div>

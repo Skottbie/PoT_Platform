@@ -23,6 +23,40 @@ const generateTokens = (user) => {
   return { accessToken, refreshToken };
 };
 
+// 📌 新增：注册接口
+router.post('/register', async (req, res) => {
+  const { email, password, role, inviteCode } = req.body;
+  
+  try {
+    // 邀请码验证
+    const teacherInviteCode = process.env.TEACHER_INVITE_CODE;
+    const studentInviteCode = process.env.STUDENT_INVITE_CODE;
+    
+    if (role === 'teacher' && inviteCode !== teacherInviteCode) {
+      return res.status(400).json({ message: '教师邀请码不正确' });
+    }
+    if (role === 'student' && inviteCode !== studentInviteCode) {
+      return res.status(400).json({ message: '学生邀请码不正确' });
+    }
+    
+    // 重复用户检查
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ message: '用户已存在' });
+    }
+    
+    // 密码加密
+    const hashed = await bcrypt.hash(password, 10);
+    const user = new User({ email, password: hashed, role });
+    await user.save();
+    
+    res.status(201).json({ message: '注册成功' });
+  } catch (err) {
+    console.error('注册失败:', err);
+    res.status(500).json({ message: '服务器错误' });
+  }
+});
+
 // 登录接口
 router.post('/login', async (req, res) => {
   const { email, password, rememberMe = false } = req.body;
@@ -59,7 +93,8 @@ router.post('/login', async (req, res) => {
       // 删除最旧的token
       const oldestToken = await RefreshToken.findOne({
         userId: user._id,
-        isRevoked: false
+        isRevoked: false,
+        expiresAt: { $gte: new Date() }
       }).sort({ createdAt: 1 });
       
       if (oldestToken) {
@@ -75,50 +110,46 @@ router.post('/login', async (req, res) => {
       expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30天
       rememberMe
     });
+    
     await refreshTokenDoc.save();
 
-    // 设置httpOnly cookie
-    const cookieOptions = {
+    // 设置cookie
+    res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 30 * 24 * 60 * 60 * 1000 // 30天
-    };
+      sameSite: 'strict',
+      maxAge: rememberMe ? 30 * 24 * 60 * 60 * 1000 : 24 * 60 * 60 * 1000
+    });
 
-    res.cookie('refreshToken', refreshToken, cookieOptions);
-    
     res.json({
       token: accessToken,
       role: user.role,
-      expiresIn: 2 * 60 * 60, // 2小时
-      rememberMe
+      expiresIn: 2 * 60 * 60 // 2小时
     });
   } catch (err) {
-    console.error('登录错误:', err);
+    console.error('登录失败:', err);
     res.status(500).json({ message: '服务器错误' });
   }
 });
 
-// 刷新token接口 - 简化版本
+// 刷新token接口
 router.post('/refresh', async (req, res) => {
   const { refreshToken } = req.cookies;
   
   if (!refreshToken) {
-    return res.status(401).json({ message: '未找到refresh token' });
+    return res.status(401).json({ message: '未提供refresh token' });
   }
-
+  
   try {
-    // 验证refresh token
     const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
     
-    // 检查数据库中的refresh token
-    const tokenDoc = await RefreshToken.findOne({ 
-      token: refreshToken, 
+    const tokenDoc = await RefreshToken.findOne({
+      token: refreshToken,
       userId: decoded.id,
       isRevoked: false,
-      expiresAt: { $gt: new Date() }
+      expiresAt: { $gte: new Date() }
     });
-
+    
     if (!tokenDoc) {
       return res.status(401).json({ message: 'Refresh token无效' });
     }

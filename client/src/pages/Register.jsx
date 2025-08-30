@@ -347,7 +347,7 @@ const Register = () => {
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
             >
               {/* 头部 */}
-              <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 px-6 py-5 text-center relative">
+              <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 px-6 py-5 text-center relative rounded-t-3xl">
                 <div className="flex items-center justify-center gap-3 mb-2">
                   <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
                     <Shield className="w-5 h-5 text-white" />
@@ -461,7 +461,7 @@ const Register = () => {
                            transition-all duration-200 ease-out
                            focus:outline-none focus:ring-4 focus:ring-blue-500/50"
                 >
-                  ✅ 我已阅读并同意，继续注册
+                  我已阅读并同意，继续注册
                 </button>
                 
                 <button
@@ -506,7 +506,7 @@ const Register = () => {
                 </div>
                 <button
                   onClick={handleCloseFullAgreement}
-                  className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full transition-colors"
+                  className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full transition-colors aigc-native-button"
                 >
                   <X className="w-5 h-5 text-gray-600 dark:text-gray-400" />
                 </button>
